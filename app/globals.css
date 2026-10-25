@@ -1,0 +1,635 @@
+@import "tailwindcss";
+
+/* -------------------------------------------------------------------------- */
+/* MSI Fluid Animation Suites                                                 */
+/* -------------------------------------------------------------------------- */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-7px); }
+}
+
+@keyframes floatReverse {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(6px); }
+}
+
+@keyframes pulseBeacon {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(137, 25, 14, 0.45); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(137, 25, 14, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(137, 25, 14, 0); }
+}
+
+@keyframes pulseGold {
+  0% { transform: scale(0.96); box-shadow: 0 0 0 0 rgba(239, 201, 136, 0.55); }
+  70% { transform: scale(1); box-shadow: 0 0 0 12px rgba(239, 201, 136, 0); }
+  100% { transform: scale(0.96); box-shadow: 0 0 0 0 rgba(239, 201, 136, 0); }
+}
+
+@keyframes marqueeScroll {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
+}
+
+@keyframes marqueeScrollReverse {
+  0%   { transform: translate3d(-50%, 0, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes kenBurnsSlow {
+  0%   { transform: scale(1.0); }
+  50%  { transform: scale(1.05); }
+  100% { transform: scale(1.0); }
+}
+
+/* Animation Utility Classes */
+.animate-fadeIn {
+  animation: fadeIn 350ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-slideUp {
+  animation: slideUp 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-slideDown {
+  animation: slideDown 350ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-float {
+  animation: floatSlow 5s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: floatReverse 6s ease-in-out infinite;
+}
+
+.animate-pulse-beacon {
+  animation: pulseBeacon 2.2s infinite;
+}
+
+.animate-pulse-gold {
+  animation: pulseGold 2.4s infinite;
+}
+
+.animate-ken-burns {
+  animation: kenBurnsSlow 18s ease-in-out infinite alternate;
+}
+
+/* Scale & state utilities */
+.scale-102 { transform: scale(1.02); }
+.scale-103 { transform: scale(1.03); }
+.scale-105 { transform: scale(1.05); }
+.scale-108 { transform: scale(1.08); }
+.active\:scale-98:active { transform: scale(0.98); }
+.active\:scale-95:active { transform: scale(0.95); }
+
+/* Infinite Marquee Architecture */
+.marquee-container {
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  user-select: none;
+  width: 100%;
+  mask-image: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 1) 12%,
+    rgba(0, 0, 0, 1) 88%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 1) 12%,
+    rgba(0, 0, 0, 1) 88%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: marqueeScroll 32s linear infinite;
+}
+
+.marquee-track-reverse {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: marqueeScrollReverse 36s linear infinite;
+}
+
+.marquee-container:hover .marquee-track,
+.marquee-container:hover .marquee-track-reverse {
+  animation-play-state: paused;
+}
+
+@theme {
+  --color-maroon: #89190E;
+  --color-maroon-dark: #65130D;
+  --color-gold: #EFC988;
+  --color-gold-light: #F7E5BF;
+  --color-cream: #FFF9EF;
+  --color-cream-icon: #FFF3DD;
+  --color-navy: #10233F;
+  --color-navy-light: #1c355e;
+  --color-secondary: #526174;
+  --color-border-msi: #E8DCCB;
+  
+  --font-serif: var(--font-playfair), "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-jakarta), system-ui, -apple-system, sans-serif;
+}
+
+:root {
+  --maroon: #89190E;
+  --maroon-dark: #65130D;
+  --gold: #EFC988;
+  --gold-light: #F7E5BF;
+  --cream: #FFF9EF;
+  --cream-icon: #FFF3DD;
+  --navy: #10233F;
+  --secondary: #526174;
+  --border-msi: #E8DCCB;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+body {
+  background-color: var(--cream);
+  color: var(--navy);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  max-width: 100%;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Glassmorphism Navbar Capsule */
+.glass-navbar {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 10px 40px rgba(16, 35, 63, 0.08);
+  transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-navbar-scrolled {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(232, 220, 203, 0.7);
+  box-shadow: 0 14px 45px rgba(16, 35, 63, 0.12);
+}
+
+/* Feature Strip Floating Glass Card */
+.glass-feature-strip {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20px 60px rgba(16, 35, 63, 0.10);
+}
+
+/* Left Hero Gradient Overlay */
+.hero-text-overlay {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 249, 239, 0.98) 0%,
+    rgba(255, 249, 239, 0.93) 30%,
+    rgba(255, 249, 239, 0.52) 50%,
+    rgba(255, 249, 239, 0) 70%
+  );
+}
+
+@media (max-width: 1024px) {
+  .hero-text-overlay {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 249, 239, 0.97) 0%,
+      rgba(255, 249, 239, 0.90) 60%,
+      rgba(255, 249, 239, 0.35) 100%
+    );
+  }
+}
+
+/* Hand-drawn gold underline */
+.curved-gold-underline {
+  filter: drop-shadow(0 2px 5px rgba(239, 201, 136, 0.45));
+}
+
+/* Luxury Interactive Hover Physics */
+.btn-hover-lift {
+  transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 250ms cubic-bezier(0.16, 1, 0.3, 1), background-color 200ms ease;
+}
+
+.btn-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(137, 25, 14, 0.28);
+}
+
+.card-luxury-hover {
+  transition: transform 350ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 350ms cubic-bezier(0.16, 1, 0.3, 1), border-color 300ms ease;
+}
+
+.card-luxury-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 45px rgba(16, 35, 63, 0.10);
+  border-color: #EFC988;
+}
+
+/* Shimmer Highlight Effect */
+.shimmer-bg {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #FFF9EF;
+}
+::-webkit-scrollbar-thumb {
+  background: #E8DCCB;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #89190E;
+}
+
+/* ============================================================ */
+/* ChainGPT-Inspired Design System — MSI Adaptation             */
+/* ============================================================ */
+
+/* ── Giant Stencil Marquee Text Scroll ─────────────────────── */
+@keyframes stencilScroll {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
+}
+
+@keyframes stencilScrollReverse {
+  0%   { transform: translate3d(-50%, 0, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+.stencil-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: stencilScroll 22s linear infinite;
+}
+
+.stencil-track-reverse {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: stencilScrollReverse 26s linear infinite;
+}
+
+/* ── Blueprint / Tech Grid Overlay ─────────────────────────── */
+.blueprint-grid {
+  background-image:
+    linear-gradient(rgba(16, 35, 63, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 35, 63, 0.06) 1px, transparent 1px);
+  background-size: 52px 52px;
+}
+
+.blueprint-grid-gold {
+  background-image:
+    linear-gradient(rgba(239, 201, 136, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(239, 201, 136, 0.12) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.blueprint-dot-grid {
+  background-image: radial-gradient(circle, rgba(137, 25, 14, 0.18) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ── HUD Corner Bracket Decoration ─────────────────────────── */
+.hud-bracket {
+  position: relative;
+}
+.hud-bracket::before,
+.hud-bracket::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  transition: all 350ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hud-bracket::before {
+  top: 0; left: 0;
+  border-top: 2px solid #EFC988;
+  border-left: 2px solid #EFC988;
+}
+.hud-bracket::after {
+  bottom: 0; right: 0;
+  border-bottom: 2px solid #EFC988;
+  border-right: 2px solid #EFC988;
+}
+.hud-bracket:hover::before,
+.hud-bracket:hover::after {
+  width: 20px;
+  height: 20px;
+  border-color: #89190E;
+}
+
+.hud-bracket-maroon::before,
+.hud-bracket-maroon::after {
+  border-color: #89190E;
+}
+
+/* ── Chamfered / Cut-Corner CTA Button ─────────────────────── */
+.btn-chamfered {
+  position: relative;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-chamfered::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  background: rgba(255,255,255,0.1);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.btn-chamfered:hover::before { opacity: 1; }
+.btn-chamfered:hover { transform: translateY(-2px); }
+.btn-chamfered:active { transform: translateY(0) scale(0.98); }
+
+/* ── Scan-Line Overlay ─────────────────────────────────────── */
+@keyframes scanLine {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+.scan-line-effect::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(239,201,136,0.4) 50%, transparent 100%);
+  animation: scanLine 4s linear infinite;
+  pointer-events: none;
+}
+
+/* ── HUD Corner Accent Dots ────────────────────────────────── */
+.hud-dot-tl,
+.hud-dot-tr,
+.hud-dot-bl,
+.hud-dot-br {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: #EFC988;
+}
+.hud-dot-tl { top: -3px;  left: -3px; }
+.hud-dot-tr { top: -3px;  right: -3px; }
+.hud-dot-bl { bottom: -3px; left: -3px; }
+.hud-dot-br { bottom: -3px; right: -3px; }
+
+/* ── Tech Blueprint Section Divider ────────────────────────── */
+.tech-divider {
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(239,201,136,0.3) 15%,
+    rgba(239,201,136,0.7) 50%,
+    rgba(239,201,136,0.3) 85%,
+    transparent 100%
+  );
+  position: relative;
+}
+.tech-divider::before {
+  content: '■';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 8px;
+  color: #EFC988;
+  background: #FFF9EF;
+  padding: 0 8px;
+  line-height: 1;
+}
+
+/* ── Typewriter Cursor ─────────────────────────────────────── */
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.cursor-blink {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: #89190E;
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: cursorBlink 1s step-end infinite;
+}
+
+/* ── Grid Card Number Badge ─────────────────────────────────── */
+.grid-number-badge {
+  font-family: 'Courier New', 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #EFC988;
+  line-height: 1;
+}
+
+/* ── Monospace Accent Text ──────────────────────────────────── */
+.mono-accent {
+  font-family: 'Courier New', 'JetBrains Mono', monospace;
+  letter-spacing: 0.05em;
+}
+
+/* ── Glowing border on hover ────────────────────────────────── */
+.glow-border-hover {
+  transition: box-shadow 350ms ease, border-color 350ms ease;
+}
+.glow-border-hover:hover {
+  box-shadow: 0 0 0 1px rgba(239,201,136,0.5), 0 0 20px rgba(239,201,136,0.12), 0 20px 50px rgba(16,35,63,0.10);
+  border-color: rgba(239,201,136,0.6) !important;
+}
+
+/* ── Vertical HUD tick marks ────────────────────────────────── */
+.hud-tick-left {
+  border-left: 2px solid rgba(239, 201, 136, 0.5);
+  padding-left: 12px;
+  position: relative;
+}
+.hud-tick-left::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 0;
+  width: 8px;
+  height: 2px;
+  background: #EFC988;
+}
+.hud-tick-left::after {
+  content: '';
+  position: absolute;
+  left: -1px;
+  bottom: 0;
+  width: 8px;
+  height: 2px;
+  background: #EFC988;
+}
+
+/* ── Blueprint card frame ───────────────────────────────────── */
+.blueprint-card {
+  position: relative;
+  background: white;
+  border: 1px solid #E8DCCB;
+  transition: all 350ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.blueprint-card::before,
+.blueprint-card::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  transition: all 350ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.blueprint-card::before {
+  top: -1px; left: -1px;
+  width: 20px; height: 20px;
+  border-top: 2px solid transparent;
+  border-left: 2px solid transparent;
+}
+.blueprint-card::after {
+  bottom: -1px; right: -1px;
+  width: 20px; height: 20px;
+  border-bottom: 2px solid transparent;
+  border-right: 2px solid transparent;
+}
+.blueprint-card:hover::before {
+  border-color: #EFC988;
+  width: 28px; height: 28px;
+}
+.blueprint-card:hover::after {
+  border-color: #89190E;
+  width: 28px; height: 28px;
+}
+.blueprint-card:hover {
+  border-color: rgba(239,201,136,0.5);
+  box-shadow: 0 20px 50px rgba(16,35,63,0.10);
+}
+
+/* ── MSI Official Logo Splash Animations ────────────────────── */
+@keyframes logoPulseGlow {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+    filter: drop-shadow(0 0 35px rgba(239, 201, 136, 0.45)) drop-shadow(0 15px 30px rgba(0, 0, 0, 0.7));
+  }
+  50% {
+    transform: translateY(-8px) scale(1.025);
+    filter: drop-shadow(0 0 55px rgba(239, 201, 136, 0.7)) drop-shadow(0 20px 40px rgba(137, 25, 14, 0.5));
+  }
+}
+
+@keyframes logoSheenSweep {
+  0% {
+    transform: translateX(-160%) skewX(-25deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.85;
+  }
+  45% {
+    transform: translateX(180%) skewX(-25deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(180%) skewX(-25deg);
+    opacity: 0;
+  }
+}
+
+@keyframes astrolabeRotate {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes astrolabeReverse {
+  0%   { transform: rotate(360deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes goldenAuraPulse {
+  0%, 100% {
+    transform: scale(0.92);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.65;
+  }
+}
+
+.animate-logo-float {
+  animation: logoPulseGlow 4s ease-in-out infinite;
+}
+
+.animate-sheen-sweep {
+  animation: logoSheenSweep 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-astrolabe {
+  animation: astrolabeRotate 22s linear infinite;
+}
+
+.animate-astrolabe-reverse {
+  animation: astrolabeReverse 15s linear infinite;
+}
+
+.animate-aura-pulse {
+  animation: goldenAuraPulse 3s ease-in-out infinite;
+}
+

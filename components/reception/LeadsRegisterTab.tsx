@@ -46,9 +46,21 @@ interface LeadsRegisterTabProps {
 }
 
 export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps) {
-  // Leads state persisted in localStorage
+  // Leads state persisted in localStorage & backend disk
   const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
-  const [showImportNotice, setShowImportNotice] = useState(true);
+
+  // Real Super Admin leads detected in dataset
+  const superAdminLeads = useMemo(() => {
+    return leads.filter(
+      (l) =>
+        (l.source && l.source.toLowerCase().includes('super admin')) ||
+        (l.agent && l.agent.toLowerCase().includes('super admin'))
+    );
+  }, [leads]);
+
+  // Only show the banner IF there are actually leads received from Super Admin AND not dismissed
+  const [importNoticeDismissed, setImportNoticeDismissed] = useState(false);
+  const showImportNotice = !importNoticeDismissed && superAdminLeads.length > 0;
 
   // Filter States
   const [activeTabFilter, setActiveTabFilter] = useState<
@@ -98,7 +110,7 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
   // Fetch leads from backend disk API + fallback to localStorage
   const fetchBackendLeads = async () => {
     try {
-      const res = await fetch('/api/admin/leads');
+      const res = await fetch('/api/admin/leads', { cache: 'no-store' });
       const data = await res.json();
       if (data.success && Array.isArray(data.leads)) {
         setLeads(data.leads);
@@ -117,7 +129,7 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
       const saved = localStorage.getItem('msi_reception_leads_data');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           setLeads(parsed);
         }
       }
@@ -125,6 +137,19 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
       console.warn('Could not read leads from localStorage:', err);
     }
     fetchBackendLeads();
+
+    // Cross-tab real-time listener via BroadcastChannel
+    let bc: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        bc = new BroadcastChannel('msi_sync_channel');
+        bc.onmessage = (event) => {
+          if (event.data?.type === 'LEADS_SYNC') {
+            fetchBackendLeads();
+          }
+        };
+      }
+    } catch (_) {}
 
     // Auto-poll every 6 seconds to keep telecalling desk fresh
     const pollTimer = setInterval(() => {
@@ -136,6 +161,7 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
     window.addEventListener('msi_leads_sync', handleSync);
     window.addEventListener('storage', handleSync);
     return () => {
+      if (bc) bc.close();
       clearInterval(pollTimer);
       window.removeEventListener('focus', handleSync);
       window.removeEventListener('msi_leads_sync', handleSync);
@@ -143,7 +169,7 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
     };
   }, []);
 
-  // Save leads helper
+  // Save leads helper (local cache only; server persistence handled by handleAddLeadSubmit & handleSaveRemark)
   const persistLeads = (updated: Lead[]) => {
     setLeads(updated);
     try {
@@ -151,9 +177,6 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
     } catch (err) {
       console.warn('Could not write leads to localStorage:', err);
     }
-    try {
-      window.dispatchEvent(new Event('msi_leads_sync'));
-    } catch (_) {}
   };
 
   // Metric Ribbon Calculations
@@ -210,7 +233,9 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
 
       // Source Dropdown
       if (sourceFilter !== 'All Sources') {
-        if (!lead.source.includes(sourceFilter) && sourceFilter !== lead.source) {
+        const sf = sourceFilter.toLowerCase();
+        const ls = (lead.source || '').toLowerCase();
+        if (!ls.includes(sf) && !sf.includes(ls)) {
           return false;
         }
       }
@@ -254,8 +279,8 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
     setNextTime('11:30 AM');
   };
 
-  // Save Remark Handler
-  const handleSaveRemark = (scheduleFollowup: boolean) => {
+  // Save Remark Handler (persisted to server disk and broadcast)
+  const handleSaveRemark = async (scheduleFollowup: boolean) => {
     if (!selectedLeadForRemark) return;
 
     const authorName = currentStaff?.name || 'Harshit';
@@ -277,35 +302,64 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
       nextFollowupTime: scheduleFollowup ? nextTime : undefined,
     };
 
+    const updatedLeadFields = {
+      status: modalStatus,
+      latestRemark: remarkText.trim() || `Outcome: ${selectedOutcome}`,
+      fullRemark: remarkText.trim() || `Outcome: ${selectedOutcome}`,
+      nextFollowupDate: scheduleFollowup ? nextDate : undefined,
+      nextFollowupTime: scheduleFollowup ? `${nextDate ? 'On Date ' : ''}${nextTime}` : selectedLeadForRemark.nextFollowupTime,
+      isOverdue: false,
+      overdueText: undefined,
+      dueText: scheduleFollowup ? `Scheduled for ${nextDate}` : undefined,
+      remarksHistory: [newRemarkRecord, ...(selectedLeadForRemark.remarksHistory || [])],
+    };
+
     const updated = leads.map((l) => {
       if (l.id === selectedLeadForRemark.id) {
         return {
           ...l,
-          status: modalStatus,
-          latestRemark: remarkText.trim() || `Outcome: ${selectedOutcome}`,
-          fullRemark: remarkText.trim() || `Outcome: ${selectedOutcome}`,
-          nextFollowupDate: scheduleFollowup ? nextDate : undefined,
-          nextFollowupTime: scheduleFollowup ? `${nextDate ? 'On Date ' : ''}${nextTime}` : l.nextFollowupTime,
-          isOverdue: false,
-          overdueText: undefined,
-          dueText: scheduleFollowup ? `Scheduled for ${nextDate}` : undefined,
-          remarksHistory: [newRemarkRecord, ...(l.remarksHistory || [])],
+          ...updatedLeadFields,
         };
       }
       return l;
     });
 
+    // 1. Optimistic instant local update
     persistLeads(updated);
+
+    const leadTargetName = selectedLeadForRemark.name;
+    const leadTargetId = selectedLeadForRemark.id;
     setSelectedLeadForRemark(null);
     showToast(
       scheduleFollowup
-        ? `Remark saved and follow-up scheduled for ${selectedLeadForRemark.name}!`
-        : `Telecall remark logged successfully for ${selectedLeadForRemark.name}!`
+        ? `Remark saved and follow-up scheduled for ${leadTargetName}!`
+        : `Telecall remark logged successfully for ${leadTargetName}!`
     );
+
+    // 2. Persist to server disk via PATCH
+    try {
+      await fetch('/api/admin/leads', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: leadTargetId,
+          updates: updatedLeadFields,
+        }),
+      });
+
+      // Broadcast to other tabs
+      try {
+        const bc = new BroadcastChannel('msi_sync_channel');
+        bc.postMessage({ type: 'LEADS_SYNC' });
+        bc.close();
+      } catch (_) {}
+    } catch (err) {
+      console.error('Failed to sync remark to backend disk:', err);
+    }
   };
 
-  // Add New Lead Submit
-  const handleAddLeadSubmit = (e: React.FormEvent) => {
+  // Add New Lead Submit (persisted to server disk and broadcast)
+  const handleAddLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newLeadName.trim()) {
       setAddLeadError('Please enter the prospect full name');
@@ -317,6 +371,7 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
       return;
     }
 
+    setAddLeadError('');
     const newId = `#MSI-LD-${Math.floor(1000 + Math.random() * 9000)}`;
     const nowFormatted = 'Today, ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
@@ -331,7 +386,7 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
       status: 'New',
       latestRemark: newLeadNotes.trim() || 'Direct inquiry registered at reception counter.',
       fullRemark: newLeadNotes.trim() || 'Direct inquiry registered at reception counter.',
-      agent: currentStaff?.name ? `${currentStaff.name} (Reception)` : 'Harshit (Reception)',
+      agent: currentStaff?.name ? `${currentStaff.name} (Reception Desk)` : 'Harshit (Reception Desk)',
       isOverdue: false,
       remarksHistory: [
         {
@@ -345,10 +400,11 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
       ],
     };
 
+    // 1. Optimistic instant local update
     const updated = [newLeadRecord, ...leads];
     persistLeads(updated);
 
-    // Reset Form & Close
+    // Reset Form & Close Modal
     setNewLeadName('');
     setNewLeadMobile('');
     setNewLeadLocation('');
@@ -356,6 +412,45 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
     setAddLeadError('');
     setShowAddLeadModal(false);
     showToast(`Lead registered successfully! Assigned Lead ID: ${newId}`);
+
+    // 2. Persist permanently to disk via backend API
+    try {
+      const res = await fetch('/api/admin/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lead: newLeadRecord,
+          name: newLeadRecord.name,
+          mobile: newLeadRecord.mobile,
+          location: newLeadRecord.location,
+          targetCourse: newLeadRecord.targetCourse,
+          source: newLeadRecord.source,
+          notes: newLeadRecord.latestRemark,
+          agent: newLeadRecord.agent,
+          id: newLeadRecord.id,
+          receivedDate: newLeadRecord.receivedDate,
+          status: newLeadRecord.status,
+          remarksHistory: newLeadRecord.remarksHistory,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && Array.isArray(data.leads)) {
+        setLeads(data.leads);
+        try {
+          localStorage.setItem('msi_reception_leads_data', JSON.stringify(data.leads));
+        } catch (_) {}
+      }
+
+      // Broadcast to other open tabs
+      try {
+        const bc = new BroadcastChannel('msi_sync_channel');
+        bc.postMessage({ type: 'LEADS_SYNC' });
+        bc.close();
+      } catch (_) {}
+    } catch (err) {
+      console.error('Failed to save lead to backend disk:', err);
+    }
   };
 
   // Helper for source badge styling
@@ -451,41 +546,41 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
         </div>
       )}
 
-      {/* 1. Incoming Import Notice Banner */}
+      {/* 1. Incoming Import Notice Banner - Dynamically displayed ONLY when Super Admin leads exist */}
       {showImportNotice && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#FFF3DD] border border-[#EFC988] px-4 py-3 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#FFF3DD] border border-[#EFC988] px-4 py-3 shadow-xs animate-in fade-in duration-300">
           <div className="flex items-center gap-3 min-w-0">
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#fed795] text-[#795c26] shrink-0">
               <Inbox className="w-4 h-4 font-bold" />
             </span>
             <div className="flex flex-wrap items-center gap-x-2 text-xs sm:text-sm text-[#10233F]">
-              <span className="font-bold text-[#89190E]">New Import Batch:</span>
+              <span className="font-bold text-[#89190E]">Super Admin Dispatched Leads:</span>
               <span>
-                14 Leads imported from Super Admin{' '}
+                {superAdminLeads.length} Lead{superAdminLeads.length > 1 ? 's' : ''} received from Super Admin{' '}
                 <code className="rounded bg-white/80 border border-[#EFC988] px-1.5 py-0.5 font-mono text-xs font-bold text-[#89190E]">
                   #MSI-IMP-2410
                 </code>
               </span>
-              <span className="text-[#526174] text-xs">• 25 minutes ago</span>
+              <span className="text-[#526174] text-xs font-mono">• Active in CRM</span>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={() => {
-                setSourceFilter('Super Admin');
+                setSourceFilter('Super Admin (#2410)');
                 setActiveTabFilter('all');
-                showToast('Filtered batch: Showing leads imported from Super Admin (#2410)');
+                showToast(`Filtered: Showing ${superAdminLeads.length} leads received from Super Admin`);
               }}
-              className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold text-[#89190E] bg-white/70 hover:bg-white border border-[#89190E]/20 transition-colors"
+              className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold text-[#89190E] bg-white/70 hover:bg-white border border-[#89190E]/20 transition-colors cursor-pointer"
             >
               <Eye className="w-3.5 h-3.5" />
-              <span>Filter This Batch</span>
+              <span>Filter These Leads</span>
             </button>
             <button
               type="button"
-              onClick={() => setShowImportNotice(false)}
-              className="flex h-6 w-6 items-center justify-center rounded-full text-[#526174] hover:bg-black/5 hover:text-[#10233F] transition-colors"
+              onClick={() => setImportNoticeDismissed(true)}
+              className="flex h-6 w-6 items-center justify-center rounded-full text-[#526174] hover:bg-black/5 hover:text-[#10233F] transition-colors cursor-pointer"
               title="Dismiss notice"
             >
               <X className="w-4 h-4" />

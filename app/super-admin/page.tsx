@@ -615,6 +615,8 @@ export default function SuperAdminMasterDashboard() {
             if (t === 'STUDENT_ENROLLED' || t === 'COURSE_ASSIGNED') {
               fetchCourses();
               fetchStudents();
+            } else if (t === 'LEADS_SYNC') {
+              fetchLeads();
             }
           };
         }
@@ -880,6 +882,11 @@ export default function SuperAdminMasterDashboard() {
         try {
           window.dispatchEvent(new Event('msi_leads_sync'));
         } catch (_) {}
+        try {
+          const bc = new BroadcastChannel('msi_sync_channel');
+          bc.postMessage({ type: 'LEADS_SYNC' });
+          bc.close();
+        } catch (_) {}
       } else {
         showToast(data.message || 'Failed to dispatch lead.');
       }
@@ -961,6 +968,11 @@ export default function SuperAdminMasterDashboard() {
         fetchLeads();
         try {
           window.dispatchEvent(new Event('msi_leads_sync'));
+        } catch (_) {}
+        try {
+          const bc = new BroadcastChannel('msi_sync_channel');
+          bc.postMessage({ type: 'LEADS_SYNC' });
+          bc.close();
         } catch (_) {}
       } else {
         showToast(data.message || 'Bulk import failed.');

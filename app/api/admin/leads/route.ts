@@ -156,62 +156,112 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, processed: metaLeadItems.length });
     }
 
-    // 3. Single Lead Generation from Super Admin
-    const { name, mobile, location, targetCourse, source, notes, agent } = body;
+    // 3. Single Lead Generation (from Super Admin or Reception Desk)
+    let newLead: Lead;
 
-    if (!name || !name.trim()) {
-      return NextResponse.json(
-        { success: false, message: 'Lead name is required.' },
-        { status: 400 }
-      );
-    }
+    if (body.lead && body.lead.name && body.lead.mobile) {
+      const raw = body.lead;
+      const cleanPhone = (raw.mobile || '').replace(/\D/g, '').slice(-10);
+      newLead = {
+        ...raw,
+        id: raw.id || `lead-rec-${Date.now().toString().slice(-6)}`,
+        mobile: cleanPhone.length === 10 ? `+91 ${cleanPhone.slice(0, 5)} ${cleanPhone.slice(5)}` : (raw.mobile || '').trim(),
+        location: (raw.location || 'Front Desk Walk-in').trim(),
+        targetCourse: raw.targetCourse || 'PCS-J Punjab Judicial Services',
+        source: raw.source || 'Walk-in Desk',
+        receivedDate: raw.receivedDate || 'Just now (Today)',
+        status: raw.status || 'New',
+        latestRemark: (raw.latestRemark || raw.notes || 'Inbound inquiry received at reception.').trim(),
+        fullRemark: (raw.fullRemark || raw.notes || raw.latestRemark || 'Inbound inquiry received at reception.').trim(),
+        agent: raw.agent || 'Harshit (Reception Desk)',
+        remarksHistory: Array.isArray(raw.remarksHistory) && raw.remarksHistory.length > 0 ? raw.remarksHistory : [
+          {
+            id: `rem-${Date.now()}`,
+            outcome: 'Connected — Interested',
+            text: raw.notes || raw.latestRemark || 'Initial front desk entry',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            author: raw.agent || 'Reception Desk',
+            leadStatus: raw.status || 'New',
+          },
+        ],
+      };
+    } else {
+      const { name, mobile, location, targetCourse, source, notes, agent, id, receivedDate, status, remarksHistory } = body;
 
-    if (!mobile || !mobile.trim()) {
-      return NextResponse.json(
-        { success: false, message: 'Valid mobile number is required.' },
-        { status: 400 }
-      );
+      if (!name || !name.trim()) {
+        return NextResponse.json(
+          { success: false, message: 'Lead name is required.' },
+          { status: 400 }
+        );
+      }
+
+      if (!mobile || !mobile.trim()) {
+        return NextResponse.json(
+          { success: false, message: 'Valid mobile number is required.' },
+          { status: 400 }
+        );
+      }
+
+      const cleanPhone = mobile.replace(/\D/g, '').slice(-10);
+
+      newLead = {
+        id: id || `lead-${Date.now().toString().slice(-6)}`,
+        name: name.trim(),
+        mobile: cleanPhone.length === 10 ? `+91 ${cleanPhone.slice(0, 5)} ${cleanPhone.slice(5)}` : mobile.trim(),
+        location: location?.trim() || 'Chandigarh / Mohali',
+        targetCourse: targetCourse || 'PCS-J Punjab Judicial Services',
+        source: (source || 'Super Admin (#2410)') as any,
+        receivedDate: receivedDate || 'Just now (Today)',
+        status: status || 'New',
+        latestRemark: notes?.trim() || 'Inbound lead entered via Portal Console.',
+        fullRemark: notes?.trim() || 'Inbound inquiry routed directly to Reception & Telecalling desk.',
+        agent: agent || 'Harshit (Reception Desk)',
+        remarksHistory: remarksHistory || [
+          {
+            id: `rem-${Date.now()}`,
+            outcome: 'Connected — Interested',
+            text: notes?.trim() || 'Generated via Portal Console',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            author: agent || 'Super Admin',
+            leadStatus: status || 'New',
+          },
+        ],
+      };
     }
 
     const leads = readLeadsFromDisk();
-    const cleanPhone = mobile.replace(/\D/g, '').slice(-10);
-
-    const newLead: Lead = {
-      id: `lead-sa-${Date.now().toString().slice(-6)}`,
-      name: name.trim(),
-      mobile: cleanPhone.length === 10 ? `+91 ${cleanPhone.slice(0, 5)} ${cleanPhone.slice(5)}` : mobile.trim(),
-      location: location?.trim() || 'Chandigarh / Mohali (NCR)',
-      targetCourse: targetCourse || 'PCS-J Punjab Judicial Services',
-      source: (source || 'Super Admin (#2410)') as any,
-      receivedDate: 'Just now (Today)',
-      status: 'New',
-      latestRemark: notes?.trim() || 'Inbound lead entered via Super Admin Master Console.',
-      fullRemark: notes?.trim() || 'Inbound inquiry routed directly to Reception & Telecalling desk.',
-      agent: agent || 'Harshit (Reception Desk)',
-      remarksHistory: [
-        {
-          id: `rem-${Date.now()}`,
-          outcome: 'Connected — Interested',
-          text: notes?.trim() || 'Generated via Super Admin Master Portal',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          author: 'Super Admin',
-          leadStatus: 'New',
-        },
-      ],
-    };
-
-    const updated = [newLead, ...leads];
+    const updated = [newLead, ...leads.filter((l) => l.id !== newLead.id)];
     writeLeadsToDisk(updated);
 
     return NextResponse.json({
       success: true,
-      message: 'New lead successfully generated and dispatched to Reception Desk.',
+      message: 'New lead successfully saved and dispatched to Reception Desk.',
       lead: newLead,
       leads: updated,
     });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: error?.message || 'Failed to save lead' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const body = await req.json();
+    if (Array.isArray(body.leads)) {
+      writeLeadsToDisk(body.leads);
+      return NextResponse.json({
+        success: true,
+        count: body.leads.length,
+        leads: body.leads,
+      });
+    }
+    return NextResponse.json({ success: false, message: 'Invalid leads array' }, { status: 400 });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: error?.message || 'Failed to sync leads' },
       { status: 500 }
     );
   }

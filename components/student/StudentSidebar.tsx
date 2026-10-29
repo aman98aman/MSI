@@ -110,10 +110,10 @@ export default function StudentSidebar({
                   onSelectTab(item.id);
                   if (onCloseMobile) onCloseMobile();
                 }}
-                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl transition-all text-left group ${
+                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl transition-all duration-200 text-left group cursor-pointer ${
                   isActive
-                    ? 'bg-[#89190E] text-white shadow-md shadow-[#89190E]/20'
-                    : 'text-[#10233F] hover:bg-[#FFF9EF] border border-transparent hover:border-[#E8DCCB]'
+                    ? 'glass-btn-maroon text-white shadow-lg'
+                    : 'text-[#10233F] hover:bg-white/80 border border-transparent hover:border-white hover:translate-x-0.5'
                 }`}
               >
                 <div className="flex items-center space-x-3 min-w-0">

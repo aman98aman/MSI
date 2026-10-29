@@ -633,3 +633,333 @@ img, video {
   animation: goldenAuraPulse 3s ease-in-out infinite;
 }
 
+/* ============================================================ */
+/* ULTRA-MODERN GLASSMORPHISM & DASHBOARD WIDGETS SUITE         */
+/* ============================================================ */
+
+/* ── Ambient Background Glow Orbs ──────────────────────────── */
+.ambient-glow-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glass-canvas-mesh {
+  background-color: #f1f4f9;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(137, 25, 14, 0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(239, 201, 136, 0.30) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(16, 35, 63, 0.08) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(239, 201, 136, 0.22) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(137, 25, 14, 0.14) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+.ambient-orb-maroon {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(137, 25, 14, 0.32) 0%, rgba(137, 25, 14, 0.06) 50%, transparent 70%);
+  filter: blur(50px);
+  animation: floatSlow 12s ease-in-out infinite alternate;
+}
+
+.ambient-orb-gold {
+  position: absolute;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(239, 201, 136, 0.48) 0%, rgba(239, 201, 136, 0.10) 50%, transparent 70%);
+  filter: blur(45px);
+  animation: floatReverse 14s ease-in-out infinite alternate;
+}
+
+.ambient-orb-navy {
+  position: absolute;
+  width: 560px;
+  height: 560px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16, 35, 63, 0.25) 0%, rgba(16, 35, 63, 0.05) 50%, transparent 70%);
+  filter: blur(55px);
+  animation: floatSlow 16s ease-in-out infinite alternate;
+}
+
+/* ── Glassmorphism Cards & Panels ──────────────────────────── */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 12px 36px -6px rgba(16, 35, 63, 0.08),
+    0 4px 12px -2px rgba(16, 35, 63, 0.04),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.03);
+  transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-panel-hover:hover {
+  transform: translateY(-4px) scale(1.008);
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(239, 201, 136, 0.85);
+  box-shadow:
+    0 20px 45px -8px rgba(16, 35, 63, 0.14),
+    0 0 25px rgba(239, 201, 136, 0.35),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 1);
+}
+
+.glass-panel-dark {
+  background: rgba(16, 35, 63, 0.86);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(239, 201, 136, 0.25);
+  box-shadow:
+    0 16px 45px -5px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
+  color: #FFF9EF;
+}
+
+.glass-panel-maroon {
+  background: linear-gradient(135deg, rgba(137, 25, 14, 0.90) 0%, rgba(101, 19, 13, 0.94) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(239, 201, 136, 0.35);
+  box-shadow:
+    0 16px 40px -5px rgba(137, 25, 14, 0.35),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* ── Ultra Modern Glass Buttons ────────────────────────────── */
+.glass-btn {
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.glass-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 70%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%
+  );
+  transform: skewX(-25deg);
+  transition: left 650ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.glass-btn:hover::before {
+  left: 160%;
+}
+
+.glass-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.glass-btn:active {
+  transform: translateY(0px) scale(0.98);
+}
+
+.glass-btn-maroon {
+  background: linear-gradient(135deg, rgba(137, 25, 14, 0.88) 0%, rgba(101, 19, 13, 0.94) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 6px 20px -2px rgba(137, 25, 14, 0.45),
+    0 0 12px rgba(239, 201, 136, 0.25),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.glass-btn-maroon:hover {
+  background: linear-gradient(135deg, rgba(163, 30, 17, 0.95) 0%, rgba(120, 23, 15, 0.98) 100%);
+  box-shadow:
+    0 10px 28px rgba(137, 25, 14, 0.55),
+    0 0 25px rgba(239, 201, 136, 0.45),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.6);
+}
+
+.glass-btn-navy {
+  background: linear-gradient(135deg, rgba(16, 35, 63, 0.88) 0%, rgba(7, 27, 55, 0.94) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 6px 20px -2px rgba(16, 35, 63, 0.45),
+    0 0 12px rgba(99, 102, 241, 0.25),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.glass-btn-navy:hover {
+  background: linear-gradient(135deg, rgba(24, 52, 94, 0.95) 0%, rgba(12, 36, 70, 0.98) 100%);
+  box-shadow:
+    0 10px 28px rgba(16, 35, 63, 0.55),
+    0 0 25px rgba(99, 102, 241, 0.4),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.5);
+}
+
+.glass-btn-gold {
+  background: linear-gradient(135deg, rgba(239, 201, 136, 0.95) 0%, rgba(212, 172, 102, 0.95) 100%);
+  color: #10233F;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 6px 20px rgba(239, 201, 136, 0.35),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.6);
+  font-weight: 700;
+}
+
+.glass-btn-gold:hover {
+  box-shadow:
+    0 10px 28px rgba(239, 201, 136, 0.5),
+    0 0 25px rgba(239, 201, 136, 0.4),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.8);
+}
+
+.glass-btn-frost {
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #10233F;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 4px 18px rgba(16, 35, 63, 0.08),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 1);
+}
+
+.glass-btn-frost:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(239, 201, 136, 0.85);
+  box-shadow:
+    0 8px 25px rgba(16, 35, 63, 0.12),
+    0 0 20px rgba(239, 201, 136, 0.35);
+}
+
+/* ── Glass Badge & Pill ────────────────────────────────────── */
+.glass-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 2px 8px rgba(16, 35, 63, 0.04);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+
+.glass-badge-maroon {
+  background: rgba(137, 25, 14, 0.10);
+  border-color: rgba(137, 25, 14, 0.25);
+  color: #89190E;
+}
+
+.glass-badge-gold {
+  background: rgba(239, 201, 136, 0.20);
+  border-color: rgba(239, 201, 136, 0.45);
+  color: #65130D;
+}
+
+.glass-badge-emerald {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.28);
+  color: #065F46;
+}
+
+/* ── Holographic Student ID Card ───────────────────────────── */
+.holographic-glass-card {
+  position: relative;
+  border-radius: 1.25rem;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.85) 0%,
+    rgba(255, 249, 239, 0.75) 45%,
+    rgba(239, 201, 136, 0.3) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 14px 40px -10px rgba(16, 35, 63, 0.12),
+    0 0 25px rgba(239, 201, 136, 0.25),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 1);
+  overflow: hidden;
+  transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.holographic-glass-card::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(
+    from 180deg at 50% 50%,
+    rgba(239, 201, 136, 0.15) 0deg,
+    rgba(137, 25, 14, 0.12) 120deg,
+    rgba(16, 35, 63, 0.10) 240deg,
+    rgba(239, 201, 136, 0.15) 360deg
+  );
+  opacity: 0.6;
+  pointer-events: none;
+  animation: astrolabeRotate 25s linear infinite;
+}
+
+.holographic-glass-card:hover {
+  transform: translateY(-4px) rotateX(2deg) rotateY(-2deg);
+  box-shadow:
+    0 22px 50px -10px rgba(16, 35, 63, 0.16),
+    0 0 35px rgba(239, 201, 136, 0.4),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 1);
+}
+
+/* ── Modern Circular Progress Ring ─────────────────────────── */
+.conic-progress-ring {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 400ms ease;
+}
+
+/* ── Floating Pulse Glow Dot ───────────────────────────────── */
+.pulse-glow-dot {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.pulse-glow-dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.6;
+  animation: pulseBeacon 2s infinite;
+}
+
+

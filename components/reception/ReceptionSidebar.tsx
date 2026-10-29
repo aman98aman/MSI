@@ -74,12 +74,12 @@ export default function ReceptionSidebar({
       {/* Top Section */}
       <div className="space-y-6">
         {/* Terminal Station Badge */}
-        <div className="p-3.5 rounded-2xl bg-[#FFF3DD] border border-[#EFC988] shadow-xs">
+        <div className="p-3.5 rounded-2xl glass-panel border border-[#EFC988]/50 shadow-xs">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-mono uppercase tracking-wider text-[#89190E] font-bold">
               Station Terminal
             </span>
-            <span className="flex items-center space-x-1 text-[10px] text-emerald-700 font-semibold bg-emerald-100 px-1.5 py-0.5 rounded">
+            <span className="flex items-center space-x-1 text-[10px] text-emerald-800 font-bold bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-300">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
               <span>ONLINE</span>
             </span>
@@ -109,10 +109,10 @@ export default function ReceptionSidebar({
                   onSelectTab(item.id);
                   if (onCloseMobile) onCloseMobile();
                 }}
-                className={`w-full flex items-center justify-between p-3 rounded-2xl text-left transition-all group cursor-pointer ${
+                className={`w-full flex items-center justify-between p-3 rounded-2xl text-left transition-all duration-200 group cursor-pointer ${
                   isActive
-                    ? 'bg-[#89190E] text-white shadow-lg shadow-[#89190E]/20'
-                    : 'text-[#10233F] hover:bg-[#FFF9EF] hover:text-[#89190E]'
+                    ? 'glass-btn-maroon text-white shadow-lg'
+                    : 'text-[#10233F] hover:bg-white/80 hover:text-[#89190E] hover:translate-x-0.5'
                 }`}
               >
                 <div className="flex items-center space-x-3">

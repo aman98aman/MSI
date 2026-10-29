@@ -138,6 +138,13 @@ export default function SuperAdminMasterDashboard() {
   const [transactions, setTransactions] = useState<AdminTransaction[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Interactive Modern Widgets State
+  const [activeTimeRange, setActiveTimeRange] = useState<'today' | 'week' | 'month'>('today');
+  const [quickAlertInput, setQuickAlertInput] = useState('');
+  const [broadcastAlert, setBroadcastAlert] = useState<string | null>(null);
+  const [activeTelemetryFilter, setActiveTelemetryFilter] = useState<'all' | 'admissions' | 'fees' | 'security'>('all');
+  const [seatOccupancyTab, setSeatOccupancyTab] = useState<'judiciary' | 'clat' | 'library'>('judiciary');
+
   // Notification Toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const showToast = (msg: string) => {
@@ -2090,7 +2097,7 @@ export default function SuperAdminMasterDashboard() {
 
   // ── Render Authenticated Master Dashboard ──────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#F8F9FD] text-[#071B37] antialiased flex">
+    <div className="min-h-screen glass-canvas-mesh text-[#071B37] antialiased flex relative selection:bg-[#EFC988] selection:text-[#89190E]">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#10233F] text-white px-5 py-3 rounded-2xl shadow-2xl border border-[#EFC988]/50 flex items-center gap-3 text-xs sm:text-sm font-semibold animate-fadeIn">
@@ -2099,8 +2106,8 @@ export default function SuperAdminMasterDashboard() {
         </div>
       )}
 
-      {/* ── Fixed Sidebar (Matching code.html design) ────────────────────────── */}
-      <aside className="fixed left-0 top-0 bottom-0 w-[260px] bg-white z-50 flex flex-col border-r border-[#E8EEFF] shadow-[0_1px_8px_rgba(0,0,0,0.04)] select-none">
+      {/* ── Fixed Sidebar ─────────────────────────────────────────────────────── */}
+      <aside className="fixed left-0 top-0 bottom-0 w-[260px] glass-panel z-50 flex flex-col border-r border-white/80 shadow-[0_10px_35px_rgba(16,35,63,0.06)] select-none backdrop-blur-2xl">
         {/* Brand header */}
         <div className="p-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#89190E] flex items-center justify-center shrink-0 shadow-sm text-white font-serif font-black text-sm tracking-wider">
@@ -2314,8 +2321,8 @@ export default function SuperAdminMasterDashboard() {
 
       {/* ── Main View Container ─────────────────────────────────────────────── */}
       <div className="pl-[260px] flex-1 flex flex-col min-w-0">
-        {/* Fixed Top Header (Matching code.html design) */}
-        <header className="sticky top-0 h-16 bg-white/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-6 border-b border-[#E8EEFF]">
+        {/* Fixed Top Header (Glassmorphic) */}
+        <header className="sticky top-0 h-16 glass-panel shadow-[0_8px_30px_rgba(16,35,63,0.05)] z-40 flex items-center justify-between px-6 border-b border-white/80 backdrop-blur-2xl">
           <div className="flex items-center gap-4 flex-1 max-w-2xl">
             <div className="flex items-center gap-1.5 text-xs text-[#58413D]">
               <span className="hover:text-[#89190E] cursor-pointer">MSI</span>
@@ -2365,167 +2372,269 @@ export default function SuperAdminMasterDashboard() {
         <main className="p-6 sm:p-8 space-y-6">
           {/* TAB 1: EXECUTIVE DASHBOARD */}
           {activeTab === 'dashboard' && (
-            <div className="space-y-6 animate-fadeIn">
-              {/* 1. Welcome & Primary Command Header */}
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-[#E8EEFF] shadow-xs">
-                <div>
-                  <div className="flex items-center gap-2 text-[#89190E] text-[11px] font-bold uppercase tracking-widest mb-1">
-                    <span className="w-2 h-2 rounded-full bg-[#89190E]" />
-                    Administrative Clearance Level 1
+            <div className="space-y-6 animate-fadeIn relative">
+              {/* Vibrant Ambient Glow Lights for Maximum Glassmorphism Depth */}
+              <div className="ambient-glow-container select-none pointer-events-none">
+                <div className="ambient-orb-maroon -top-20 -left-20" />
+                <div className="ambient-orb-gold top-1/4 -right-20" />
+                <div className="ambient-orb-navy top-2/3 left-1/3" />
+                <div className="ambient-orb-maroon -bottom-24 right-1/4" />
+              </div>
+
+              {/* 0. Top Interactive Telemetry HUD Bar */}
+              <div className="glass-panel px-5 py-3 rounded-2xl relative z-10 flex flex-wrap items-center justify-between gap-3 border border-white/90 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <span className="pulse-glow-dot bg-emerald-500" />
+                  <span className="text-xs font-mono font-bold text-[#071B37] tracking-wider uppercase">
+                    SYSTEM STATUS: 100% OPERATIONAL
+                  </span>
+                  <span className="hidden sm:inline-block text-[10px] text-[#58413D] font-mono">
+                    • DISK REPOSITORY SYNCED
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold text-[#58413D] hidden md:inline">Time Range:</span>
+                  <div className="flex items-center gap-1 bg-white/70 p-1 rounded-xl border border-white/80">
+                    <button
+                      onClick={() => setActiveTimeRange('today')}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        activeTimeRange === 'today'
+                          ? 'bg-[#89190E] text-white shadow-xs'
+                          : 'text-[#58413D] hover:text-[#071B37]'
+                      }`}
+                    >
+                      Today
+                    </button>
+                    <button
+                      onClick={() => setActiveTimeRange('week')}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        activeTimeRange === 'week'
+                          ? 'bg-[#89190E] text-white shadow-xs'
+                          : 'text-[#58413D] hover:text-[#071B37]'
+                      }`}
+                    >
+                      7 Days
+                    </button>
+                    <button
+                      onClick={() => setActiveTimeRange('month')}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        activeTimeRange === 'month'
+                          ? 'bg-[#89190E] text-white shadow-xs'
+                          : 'text-[#58413D] hover:text-[#071B37]'
+                      }`}
+                    >
+                      30 Days
+                    </button>
                   </div>
-                  <h1 className="font-serif text-2xl font-bold text-[#071B37]">
+                </div>
+              </div>
+
+              {/* Flash Announcement Live Banner (Interactive Triggered) */}
+              {broadcastAlert && (
+                <div className="glass-panel-maroon p-4 sm:p-5 rounded-2xl relative z-10 flex items-center justify-between gap-4 border border-[#EFC988] shadow-lg animate-slideDown">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-[#EFC988] shrink-0 animate-pulse">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-mono font-bold tracking-widest text-[#EFC988] uppercase">
+                        INSTITUTIONAL BROADCAST TO ALL 4 PORTALS
+                      </div>
+                      <p className="text-xs sm:text-sm font-semibold text-white">
+                        {broadcastAlert}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setBroadcastAlert(null)}
+                    className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white transition-colors cursor-pointer"
+                    title="Dismiss Announcement"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* 1. Welcome & Primary Command Header (Frosted Glass) */}
+              <div className="glass-panel p-6 sm:p-7 rounded-2xl relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5 border border-white/90 shadow-[0_12px_36px_rgba(16,35,63,0.06)]">
+                <div>
+                  <div className="inline-flex items-center gap-2 glass-badge glass-badge-maroon mb-2">
+                    <span className="pulse-glow-dot bg-[#89190E]" />
+                    <span className="uppercase tracking-widest text-[10px]">Super Admin Clearance Level 1</span>
+                  </div>
+                  <h1 className="font-serif text-2xl sm:text-3xl font-extrabold text-[#071B37] tracking-tight">
                     Good Morning, Administrator
                   </h1>
-                  <p className="text-xs text-[#58413D] mt-0.5">
-                    Live operational overview for MSI Group of Institutes • All data synced with permanent storage
+                  <p className="text-xs sm:text-sm text-[#58413D] mt-1 flex items-center gap-2">
+                    <span>Live operational command center • MSI Group of Institutes</span>
+                    <span className="glass-badge glass-badge-emerald text-[9px]">LIVE SYNCED</span>
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex flex-wrap items-center gap-3">
                   <button
                     onClick={() => setShowAddStudentModal(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    className="glass-btn glass-btn-maroon px-4 py-2.5 rounded-xl text-xs shadow-md"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>+ Add Student</span>
+                    <Plus className="w-4 h-4 shrink-0" />
+                    <span>Add Student</span>
                   </button>
                   <button
                     onClick={() => setShowAddLeadModal(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#10233F] hover:bg-[#1a3860] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    className="glass-btn glass-btn-navy px-4 py-2.5 rounded-xl text-xs shadow-md"
                   >
-                    <Send className="w-3.5 h-3.5 text-[#EFC988]" />
-                    <span>+ Generate Lead</span>
+                    <Send className="w-4 h-4 text-[#EFC988] shrink-0" />
+                    <span>Generate Lead</span>
                   </button>
                   <button
                     onClick={() => setShowAddTeacherModal(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-[#F0F3FF] text-[#071B37] border border-[#E8EEFF] text-xs font-bold transition-all cursor-pointer"
+                    className="glass-btn glass-btn-frost px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs hover:border-[#89190E]/40"
                   >
-                    <UserCheck className="w-3.5 h-3.5 text-[#89190E]" />
-                    <span>+ Create Teacher</span>
+                    <UserCheck className="w-4 h-4 text-[#89190E] shrink-0" />
+                    <span>Create Teacher</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const msg = prompt('Enter real-time broadcast alert message for students and teachers:');
+                      if (msg) {
+                        setBroadcastAlert(msg);
+                        showToast('Broadcast published to all portals.');
+                      }
+                    }}
+                    className="glass-btn glass-btn-gold px-3.5 py-2.5 rounded-xl text-xs shadow-xs"
+                    title="Publish Instant Flash Broadcast"
+                  >
+                    <Sparkles className="w-4 h-4 text-[#89190E] shrink-0" />
+                    <span>Broadcast Alert</span>
                   </button>
                 </div>
               </div>
 
-              {/* 2. Rapid Operational Dispatches (8 Action Strip from code.html) */}
-              <section className="bg-white p-5 rounded-2xl border border-[#E8EEFF] shadow-xs">
-                <div className="flex items-center justify-between mb-3 text-xs">
-                  <span className="uppercase tracking-wider font-bold text-[#8C716C] text-[10px]">
-                    Rapid Operational Dispatches
-                  </span>
-                  <span className="text-[#58413D] text-[11px] font-semibold">
-                    8 Authorized Actions
+              {/* 2. Rapid Operational Dispatches (Glass Action Matrix) */}
+              <section className="glass-panel p-5 sm:p-6 rounded-2xl relative z-10 border border-white/90">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-[#89190E]" />
+                    <span className="uppercase tracking-wider font-bold text-[#8C716C] text-[11px]">
+                      Rapid Operational Matrix
+                    </span>
+                  </div>
+                  <span className="glass-badge glass-badge-gold text-[10px]">
+                    8 Instant Shortcuts
                   </span>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
                   <button
                     onClick={() => setShowAddStudentModal(true)}
-                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-[#F0F3FF] hover:bg-[#E8EEFF] transition-all text-center cursor-pointer hover:-translate-y-0.5"
+                    className="group flex flex-col items-center justify-center p-3.5 rounded-xl bg-white/75 hover:bg-white border border-white/95 hover:border-[#EFC988] transition-all duration-300 text-center cursor-pointer shadow-xs hover:shadow-xl hover:-translate-y-1 hover:scale-102"
                   >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#89190E] mb-1.5 shadow-2xs group-hover:bg-[#89190E] group-hover:text-white transition-colors">
-                      <GraduationCap className="w-4 h-4" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#89190E] to-[#e11d48] text-white flex items-center justify-center mb-2 shadow-md shadow-rose-900/25 group-hover:scale-110 transition-transform duration-300">
+                      <GraduationCap className="w-5 h-5" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#071B37]">Add Student</span>
+                    <span className="text-[11px] font-bold text-[#071B37] group-hover:text-[#89190E]">Add Student</span>
                   </button>
 
                   <button
                     onClick={() => setShowAddLeadModal(true)}
-                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-[#F0F3FF] hover:bg-[#E8EEFF] transition-all text-center cursor-pointer hover:-translate-y-0.5"
+                    className="group flex flex-col items-center justify-center p-3.5 rounded-xl bg-white/75 hover:bg-white border border-white/95 hover:border-[#EFC988] transition-all duration-300 text-center cursor-pointer shadow-xs hover:shadow-xl hover:-translate-y-1 hover:scale-102"
                   >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#89190E] mb-1.5 shadow-2xs group-hover:bg-[#89190E] group-hover:text-white transition-colors">
-                      <PhoneCall className="w-4 h-4" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#d97706] to-[#fbbf24] text-white flex items-center justify-center mb-2 shadow-md shadow-amber-900/25 group-hover:scale-110 transition-transform duration-300">
+                      <PhoneCall className="w-5 h-5" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#071B37]">Dispatch Lead</span>
+                    <span className="text-[11px] font-bold text-[#071B37] group-hover:text-[#89190E]">Dispatch Lead</span>
                   </button>
 
                   <button
                     onClick={() => setShowAddTeacherModal(true)}
-                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-[#F0F3FF] hover:bg-[#E8EEFF] transition-all text-center cursor-pointer hover:-translate-y-0.5"
+                    className="group flex flex-col items-center justify-center p-3.5 rounded-xl bg-white/75 hover:bg-white border border-white/95 hover:border-[#EFC988] transition-all duration-300 text-center cursor-pointer shadow-xs hover:shadow-xl hover:-translate-y-1 hover:scale-102"
                   >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#89190E] mb-1.5 shadow-2xs group-hover:bg-[#89190E] group-hover:text-white transition-colors">
-                      <UserCheck className="w-4 h-4" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#2563eb] to-[#60a5fa] text-white flex items-center justify-center mb-2 shadow-md shadow-blue-900/25 group-hover:scale-110 transition-transform duration-300">
+                      <UserCheck className="w-5 h-5" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#071B37]">Create Teacher</span>
+                    <span className="text-[11px] font-bold text-[#071B37] group-hover:text-[#89190E]">Create Teacher</span>
                   </button>
 
                   <button
                     onClick={() => setShowAddGalleryModal(true)}
-                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-[#F0F3FF] hover:bg-[#E8EEFF] transition-all text-center cursor-pointer hover:-translate-y-0.5"
+                    className="group flex flex-col items-center justify-center p-3.5 rounded-xl bg-white/75 hover:bg-white border border-white/95 hover:border-[#EFC988] transition-all duration-300 text-center cursor-pointer shadow-xs hover:shadow-xl hover:-translate-y-1 hover:scale-102"
                   >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#89190E] mb-1.5 shadow-2xs group-hover:bg-[#89190E] group-hover:text-white transition-colors">
-                      <ImageIcon className="w-4 h-4" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#7c3aed] to-[#c084fc] text-white flex items-center justify-center mb-2 shadow-md shadow-purple-900/25 group-hover:scale-110 transition-transform duration-300">
+                      <ImageIcon className="w-5 h-5" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#071B37]">Gallery Media</span>
+                    <span className="text-[11px] font-bold text-[#071B37] group-hover:text-[#89190E]">Gallery Media</span>
                   </button>
 
                   <button
                     onClick={() => setActiveTab('courses')}
-                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-[#F0F3FF] hover:bg-[#E8EEFF] transition-all text-center cursor-pointer hover:-translate-y-0.5"
+                    className="group flex flex-col items-center justify-center p-3.5 rounded-xl bg-white/75 hover:bg-white border border-white/95 hover:border-[#EFC988] transition-all duration-300 text-center cursor-pointer shadow-xs hover:shadow-xl hover:-translate-y-1 hover:scale-102"
                   >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#89190E] mb-1.5 shadow-2xs group-hover:bg-[#89190E] group-hover:text-white transition-colors">
-                      <BookOpen className="w-4 h-4" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#059669] to-[#34d399] text-white flex items-center justify-center mb-2 shadow-md shadow-emerald-900/25 group-hover:scale-110 transition-transform duration-300">
+                      <BookOpen className="w-5 h-5" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#071B37]">Courses & LMS</span>
+                    <span className="text-[11px] font-bold text-[#071B37] group-hover:text-[#89190E]">Courses & LMS</span>
                   </button>
 
                   <Link
                     href="/reception/dashboard"
                     target="_blank"
-                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-[#F0F3FF] hover:bg-[#E8EEFF] transition-all text-center cursor-pointer hover:-translate-y-0.5"
+                    className="group flex flex-col items-center justify-center p-3.5 rounded-xl bg-white/75 hover:bg-white border border-white/95 hover:border-[#EFC988] transition-all duration-300 text-center cursor-pointer shadow-xs hover:shadow-xl hover:-translate-y-1 hover:scale-102"
                   >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#89190E] mb-1.5 shadow-2xs group-hover:bg-[#89190E] group-hover:text-white transition-colors">
-                      <FolderOpen className="w-4 h-4" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0284c7] to-[#38bdf8] text-white flex items-center justify-center mb-2 shadow-md shadow-sky-900/25 group-hover:scale-110 transition-transform duration-300">
+                      <FolderOpen className="w-5 h-5" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#071B37]">Reception Desk</span>
+                    <span className="text-[11px] font-bold text-[#071B37] group-hover:text-[#89190E]">Reception Desk</span>
                   </Link>
 
                   <Link
                     href="/live-stream"
                     target="_blank"
-                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-[#F0F3FF] hover:bg-[#E8EEFF] transition-all text-center cursor-pointer hover:-translate-y-0.5"
+                    className="group flex flex-col items-center justify-center p-3.5 rounded-xl bg-white/75 hover:bg-white border border-white/95 hover:border-[#EFC988] transition-all duration-300 text-center cursor-pointer shadow-xs hover:shadow-xl hover:-translate-y-1 hover:scale-102"
                   >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#89190E] mb-1.5 shadow-2xs group-hover:bg-[#89190E] group-hover:text-white transition-colors">
-                      <Video className="w-4 h-4" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#dc2626] to-[#f87171] text-white flex items-center justify-center mb-2 shadow-md shadow-red-900/25 group-hover:scale-110 transition-transform duration-300 animate-pulse">
+                      <Video className="w-5 h-5" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#071B37]">Live Class</span>
+                    <span className="text-[11px] font-bold text-[#071B37] group-hover:text-[#89190E]">Live Class</span>
                   </Link>
 
                   <button
                     onClick={() => setActiveTab('transactions')}
-                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-[#F0F3FF] hover:bg-[#E8EEFF] transition-all text-center cursor-pointer hover:-translate-y-0.5"
+                    className="group flex flex-col items-center justify-center p-3.5 rounded-xl bg-white/75 hover:bg-white border border-white/95 hover:border-[#EFC988] transition-all duration-300 text-center cursor-pointer shadow-xs hover:shadow-xl hover:-translate-y-1 hover:scale-102"
                   >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#89190E] mb-1.5 shadow-2xs group-hover:bg-[#89190E] group-hover:text-white transition-colors">
-                      <Receipt className="w-4 h-4" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#15803d] to-[#4ade80] text-white flex items-center justify-center mb-2 shadow-md shadow-green-900/25 group-hover:scale-110 transition-transform duration-300">
+                      <Receipt className="w-5 h-5" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#071B37]">Reconcile Fees</span>
+                    <span className="text-[11px] font-bold text-[#071B37] group-hover:text-[#89190E]">Reconcile Fees</span>
                   </button>
                 </div>
               </section>
 
-              {/* 3. Executive Overview: 6 Compact KPI Cards (from code.html) */}
-              <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+              {/* 3. Executive Overview: 6 Frosted Glass KPI Cards */}
+              <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 relative z-10">
                 {/* Students KPI */}
                 <div
                   onClick={() => setActiveTab('students')}
-                  className="bg-white p-5 rounded-2xl border border-[#E8EEFF] shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+                  className="glass-panel glass-panel-hover p-5 rounded-2xl border border-white/90 cursor-pointer flex flex-col justify-between group transition-all relative overflow-hidden"
                 >
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#89190E] to-rose-400" />
+                  <div className="flex items-center justify-between mb-2 mt-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C716C]">
                       Real Students
                     </span>
-                    <div className="w-7 h-7 rounded-lg bg-[#E8EEFF] flex items-center justify-center text-[#89190E] group-hover:bg-[#89190E] group-hover:text-white transition-colors">
-                      <GraduationCap className="w-3.5 h-3.5" />
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#89190E] to-rose-500 text-white flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-xs">
+                      <GraduationCap className="w-4 h-4" />
                     </div>
                   </div>
                   <div>
-                    <div className="font-serif text-3xl font-bold text-[#071B37]">
+                    <div className="font-serif text-3xl font-bold text-[#071B37] group-hover:text-[#89190E] transition-colors">
                       {students.length}
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-bold mt-0.5">
+                    <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-bold mt-0.5">
                       <TrendingUp className="w-3 h-3" />
-                      <span>Verified Disk Accounts</span>
+                      <span>Verified Accounts</span>
                     </div>
                   </div>
-                  <div className="mt-2 text-[10px] text-[#58413D] truncate border-t border-gray-100 pt-1.5">
+                  <div className="mt-2.5 text-[10px] text-[#58413D] truncate border-t border-black/[0.05] pt-1.5">
                     Harshit, Ankit & Registered
                   </div>
                 </div>
@@ -2533,26 +2642,27 @@ export default function SuperAdminMasterDashboard() {
                 {/* Teachers KPI */}
                 <div
                   onClick={() => setActiveTab('teachers')}
-                  className="bg-white p-5 rounded-2xl border border-[#E8EEFF] shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+                  className="glass-panel glass-panel-hover p-5 rounded-2xl border border-white/90 cursor-pointer flex flex-col justify-between group transition-all relative overflow-hidden"
                 >
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-sky-400" />
+                  <div className="flex items-center justify-between mb-2 mt-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C716C]">
                       Faculty
                     </span>
-                    <div className="w-7 h-7 rounded-lg bg-[#E8EEFF] flex items-center justify-center text-[#89190E] group-hover:bg-[#89190E] group-hover:text-white transition-colors">
-                      <UserCheck className="w-3.5 h-3.5" />
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-sky-500 text-white flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-xs">
+                      <UserCheck className="w-4 h-4" />
                     </div>
                   </div>
                   <div>
-                    <div className="font-serif text-3xl font-bold text-[#071B37]">
+                    <div className="font-serif text-3xl font-bold text-[#071B37] group-hover:text-blue-700 transition-colors">
                       {teachers.length}
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] text-blue-600 font-bold mt-0.5">
+                    <div className="flex items-center gap-1 text-[11px] text-blue-700 font-bold mt-0.5">
                       <Check className="w-3 h-3" />
-                      <span>100% Certified Jurists</span>
+                      <span>Certified Jurists</span>
                     </div>
                   </div>
-                  <div className="mt-2 text-[10px] text-[#58413D] truncate border-t border-gray-100 pt-1.5">
+                  <div className="mt-2.5 text-[10px] text-[#58413D] truncate border-t border-black/[0.05] pt-1.5">
                     Judicial Coaching Mentors
                   </div>
                 </div>
@@ -2560,18 +2670,19 @@ export default function SuperAdminMasterDashboard() {
                 {/* Courses KPI */}
                 <div
                   onClick={() => setActiveTab('courses')}
-                  className="bg-white p-5 rounded-2xl border border-[#E8EEFF] shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+                  className="glass-panel glass-panel-hover p-5 rounded-2xl border border-white/90 cursor-pointer flex flex-col justify-between group transition-all relative overflow-hidden"
                 >
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-600 to-teal-400" />
+                  <div className="flex items-center justify-between mb-2 mt-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C716C]">
                       Courses
                     </span>
-                    <div className="w-7 h-7 rounded-lg bg-[#E8EEFF] flex items-center justify-center text-[#89190E] group-hover:bg-[#89190E] group-hover:text-white transition-colors">
-                      <BookOpen className="w-3.5 h-3.5" />
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-xs">
+                      <BookOpen className="w-4 h-4" />
                     </div>
                   </div>
                   <div>
-                    <div className="font-serif text-3xl font-bold text-[#071B37]">
+                    <div className="font-serif text-3xl font-bold text-[#071B37] group-hover:text-emerald-700 transition-colors">
                       {courses.length}
                     </div>
                     <div className="flex items-center gap-1 text-[11px] text-[#89190E] font-bold mt-0.5">
@@ -2579,7 +2690,7 @@ export default function SuperAdminMasterDashboard() {
                       <span>CLAT • Judiciary • NET</span>
                     </div>
                   </div>
-                  <div className="mt-2 text-[10px] text-[#58413D] truncate border-t border-gray-100 pt-1.5">
+                  <div className="mt-2.5 text-[10px] text-[#58413D] truncate border-t border-black/[0.05] pt-1.5">
                     Syllabus published
                   </div>
                 </div>
@@ -2587,26 +2698,27 @@ export default function SuperAdminMasterDashboard() {
                 {/* Leads KPI */}
                 <div
                   onClick={() => setActiveTab('leads')}
-                  className="bg-white p-5 rounded-2xl border border-[#E8EEFF] shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+                  className="glass-panel glass-panel-hover p-5 rounded-2xl border border-white/90 cursor-pointer flex flex-col justify-between group transition-all relative overflow-hidden"
                 >
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-yellow-400" />
+                  <div className="flex items-center justify-between mb-2 mt-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C716C]">
                       CRM Leads
                     </span>
-                    <div className="w-7 h-7 rounded-lg bg-[#E8EEFF] flex items-center justify-center text-[#89190E] group-hover:bg-[#89190E] group-hover:text-white transition-colors">
-                      <PhoneCall className="w-3.5 h-3.5" />
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-500 text-white flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-xs">
+                      <PhoneCall className="w-4 h-4" />
                     </div>
                   </div>
                   <div>
-                    <div className="font-serif text-3xl font-bold text-[#071B37]">
+                    <div className="font-serif text-3xl font-bold text-[#071B37] group-hover:text-amber-700 transition-colors">
                       {leads.length}
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] text-amber-600 font-bold mt-0.5">
+                    <div className="flex items-center gap-1 text-[11px] text-amber-700 font-bold mt-0.5">
                       <Clock className="w-3 h-3" />
                       <span>Two-Way Desk Synced</span>
                     </div>
                   </div>
-                  <div className="mt-2 text-[10px] text-[#58413D] truncate border-t border-gray-100 pt-1.5">
+                  <div className="mt-2.5 text-[10px] text-[#58413D] truncate border-t border-black/[0.05] pt-1.5">
                     Reception Queue Active
                   </div>
                 </div>
@@ -2614,26 +2726,27 @@ export default function SuperAdminMasterDashboard() {
                 {/* Revenue MTD KPI */}
                 <div
                   onClick={() => setActiveTab('transactions')}
-                  className="bg-white p-5 rounded-2xl border border-[#E8EEFF] shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+                  className="glass-panel glass-panel-hover p-5 rounded-2xl border border-white/90 cursor-pointer flex flex-col justify-between group transition-all relative overflow-hidden"
                 >
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#89190E] to-[#EFC988]" />
+                  <div className="flex items-center justify-between mb-2 mt-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C716C]">
                       Revenue MTD
                     </span>
-                    <div className="w-7 h-7 rounded-lg bg-[#E8EEFF] flex items-center justify-center text-[#89190E] group-hover:bg-[#89190E] group-hover:text-white transition-colors">
-                      <Receipt className="w-3.5 h-3.5" />
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#89190E] to-[#EFC988] text-white flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-xs">
+                      <Receipt className="w-4 h-4" />
                     </div>
                   </div>
                   <div>
                     <div className="font-serif text-3xl font-bold text-[#89190E]">
                       ₹4.85L
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-bold mt-0.5">
+                    <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-bold mt-0.5">
                       <CheckCircle2 className="w-3 h-3" />
                       <span>Razorpay Verified</span>
                     </div>
                   </div>
-                  <div className="mt-2 text-[10px] text-[#58413D] truncate border-t border-gray-100 pt-1.5">
+                  <div className="mt-2.5 text-[10px] text-[#58413D] truncate border-t border-black/[0.05] pt-1.5">
                     Admissions Fee Receipts
                   </div>
                 </div>
@@ -2641,27 +2754,231 @@ export default function SuperAdminMasterDashboard() {
                 {/* Gallery Media KPI */}
                 <div
                   onClick={() => setActiveTab('gallery')}
-                  className="bg-white p-5 rounded-2xl border border-[#E8EEFF] shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+                  className="glass-panel glass-panel-hover p-5 rounded-2xl border border-white/90 cursor-pointer flex flex-col justify-between group transition-all relative overflow-hidden"
                 >
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 to-pink-400" />
+                  <div className="flex items-center justify-between mb-2 mt-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C716C]">
                       Website Media
                     </span>
-                    <div className="w-7 h-7 rounded-lg bg-[#E8EEFF] flex items-center justify-center text-[#89190E] group-hover:bg-[#89190E] group-hover:text-white transition-colors">
-                      <ImageIcon className="w-3.5 h-3.5" />
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-pink-500 text-white flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-xs">
+                      <ImageIcon className="w-4 h-4" />
                     </div>
                   </div>
                   <div>
-                    <div className="font-serif text-3xl font-bold text-[#071B37]">
+                    <div className="font-serif text-3xl font-bold text-[#071B37] group-hover:text-purple-700 transition-colors">
                       {galleryItems.length}
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] text-purple-600 font-bold mt-0.5">
+                    <div className="flex items-center gap-1 text-[11px] text-purple-700 font-bold mt-0.5">
                       <Sparkles className="w-3 h-3" />
                       <span>Live on /gallery</span>
                     </div>
                   </div>
-                  <div className="mt-2 text-[10px] text-[#58413D] truncate border-t border-gray-100 pt-1.5">
+                  <div className="mt-2.5 text-[10px] text-[#58413D] truncate border-t border-black/[0.05] pt-1.5">
                     Campus photographs
+                  </div>
+                </div>
+              </section>
+
+              {/* MODERN INTERACTIVE WIDGETS ROW: Dynamic Capacity Radar & Live Telemetry Stream */}
+              <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 relative z-10">
+                {/* Modern Widget 1: Interactive Seat Allocation & Fee Clearance Conic Ring */}
+                <div className="lg:col-span-5 glass-panel p-6 rounded-2xl border border-white/90 flex flex-col justify-between shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#89190E]" />
+                      <h3 className="font-serif font-bold text-sm text-[#071B37]">
+                        Program Intake & Capacity Dial
+                      </h3>
+                    </div>
+                    <span className="glass-badge glass-badge-emerald text-[10px]">
+                      {seatOccupancyTab === 'judiciary' ? '92% BOOKED' : seatOccupancyTab === 'clat' ? '78% BOOKED' : '64% BOOKED'}
+                    </span>
+                  </div>
+
+                  {/* Interactive Tabs for Seat Dial */}
+                  <div className="flex items-center gap-1.5 bg-white/70 p-1 rounded-xl border border-white/80 mb-3">
+                    <button
+                      onClick={() => setSeatOccupancyTab('judiciary')}
+                      className={`flex-1 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        seatOccupancyTab === 'judiciary'
+                          ? 'bg-[#89190E] text-white shadow-xs'
+                          : 'text-[#58413D] hover:text-[#071B37]'
+                      }`}
+                    >
+                      Judiciary (92%)
+                    </button>
+                    <button
+                      onClick={() => setSeatOccupancyTab('clat')}
+                      className={`flex-1 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        seatOccupancyTab === 'clat'
+                          ? 'bg-[#89190E] text-white shadow-xs'
+                          : 'text-[#58413D] hover:text-[#071B37]'
+                      }`}
+                    >
+                      CLAT (78%)
+                    </button>
+                    <button
+                      onClick={() => setSeatOccupancyTab('library')}
+                      className={`flex-1 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        seatOccupancyTab === 'library'
+                          ? 'bg-[#89190E] text-white shadow-xs'
+                          : 'text-[#58413D] hover:text-[#071B37]'
+                      }`}
+                    >
+                      Library (64%)
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-6 py-2">
+                    <div className="space-y-2">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wider font-bold text-[#8C716C]">
+                          Total Collections MTD
+                        </div>
+                        <div className="font-serif text-2xl font-extrabold text-[#89190E]">
+                          ₹4,85,000
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-[#58413D]">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                        <span>Collected: ₹4.85L (82%)</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-[#58413D]">
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                        <span>Pending Installments: ₹1.05L (18%)</span>
+                      </div>
+                    </div>
+
+                    {/* Dynamic Conic Ring based on Tab */}
+                    <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
+                      <div
+                        className="w-full h-full rounded-full shadow-inner transition-all duration-700"
+                        style={{
+                          background: `conic-gradient(#89190E 0deg ${
+                            seatOccupancyTab === 'judiciary' ? '331deg' : seatOccupancyTab === 'clat' ? '280deg' : '230deg'
+                          }, #E8DCCB ${
+                            seatOccupancyTab === 'judiciary' ? '331deg' : seatOccupancyTab === 'clat' ? '280deg' : '230deg'
+                          } 360deg)`,
+                        }}
+                      />
+                      <div className="absolute inset-3 rounded-full bg-white/95 backdrop-blur-md flex flex-col items-center justify-center shadow-xs">
+                        <span className="font-bold text-xs text-[#071B37]">
+                          {seatOccupancyTab === 'judiciary' ? '92%' : seatOccupancyTab === 'clat' ? '78%' : '64%'}
+                        </span>
+                        <span className="text-[8px] font-semibold text-[#8C716C] uppercase">
+                          {seatOccupancyTab === 'judiciary' ? 'Seats' : seatOccupancyTab === 'clat' ? 'Intake' : 'Space'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t border-black/[0.05] flex items-center justify-between">
+                    <span className="text-[11px] text-[#58413D]">
+                      Next Automated Settlement: Today, 6:00 PM
+                    </span>
+                    <button
+                      onClick={() => setActiveTab('transactions')}
+                      className="glass-btn glass-btn-frost text-[10px] px-3 py-1.5 rounded-lg text-[#89190E]"
+                    >
+                      Audit Receipts →
+                    </button>
+                  </div>
+                </div>
+
+                {/* Modern Widget 2: Live Institute Telemetry & Activity Stream (Interactive Filter) */}
+                <div className="lg:col-span-7 glass-panel p-6 rounded-2xl border border-white/90 flex flex-col justify-between shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="pulse-glow-dot bg-emerald-500" />
+                      <h3 className="font-serif font-bold text-sm text-[#071B37]">
+                        Live Institutional Telemetry & Disk Activity
+                      </h3>
+                    </div>
+
+                    {/* Interactive Filter Pills */}
+                    <div className="flex items-center gap-1 bg-white/70 p-1 rounded-xl border border-white/80">
+                      <button
+                        onClick={() => setActiveTelemetryFilter('all')}
+                        className={`px-2 py-0.5 rounded-md text-[9px] font-bold cursor-pointer transition-all ${
+                          activeTelemetryFilter === 'all'
+                            ? 'bg-[#10233F] text-white shadow-2xs'
+                            : 'text-[#58413D] hover:text-[#071B37]'
+                        }`}
+                      >
+                        All
+                      </button>
+                      <button
+                        onClick={() => setActiveTelemetryFilter('admissions')}
+                        className={`px-2 py-0.5 rounded-md text-[9px] font-bold cursor-pointer transition-all ${
+                          activeTelemetryFilter === 'admissions'
+                            ? 'bg-[#89190E] text-white shadow-2xs'
+                            : 'text-[#58413D] hover:text-[#071B37]'
+                        }`}
+                      >
+                        Admissions
+                      </button>
+                      <button
+                        onClick={() => setActiveTelemetryFilter('fees')}
+                        className={`px-2 py-0.5 rounded-md text-[9px] font-bold cursor-pointer transition-all ${
+                          activeTelemetryFilter === 'fees'
+                            ? 'bg-[#059669] text-white shadow-2xs'
+                            : 'text-[#58413D] hover:text-[#071B37]'
+                        }`}
+                      >
+                        Fees
+                      </button>
+                      <button
+                        onClick={() => setActiveTelemetryFilter('security')}
+                        className={`px-2 py-0.5 rounded-md text-[9px] font-bold cursor-pointer transition-all ${
+                          activeTelemetryFilter === 'security'
+                            ? 'bg-[#7c3aed] text-white shadow-2xs'
+                            : 'text-[#58413D] hover:text-[#071B37]'
+                        }`}
+                      >
+                        Security
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    {(activeTelemetryFilter === 'all' || activeTelemetryFilter === 'admissions') && (
+                      <div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-white/60 hover:bg-white border border-white/80 transition-all text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-mono text-[10px] text-[#8C716C] shrink-0">02:30 AM</span>
+                          <span className="font-semibold text-[#071B37] truncate">Permanent Disk Storage Sync</span>
+                          <span className="text-[11px] text-[#58413D] hidden sm:inline">• LMS & Student Repositories</span>
+                        </div>
+                        <span className="glass-badge glass-badge-emerald text-[9px] shrink-0">COMPLETED</span>
+                      </div>
+                    )}
+
+                    {(activeTelemetryFilter === 'all' || activeTelemetryFilter === 'fees') && (
+                      <div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-white/60 hover:bg-white border border-white/80 transition-all text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-mono text-[10px] text-[#8C716C] shrink-0">01:45 AM</span>
+                          <span className="font-semibold text-[#071B37] truncate">Razorpay Webhook Verified</span>
+                          <span className="text-[11px] text-[#58413D] hidden sm:inline">• Admission receipt generated</span>
+                        </div>
+                        <span className="glass-badge glass-badge-gold text-[9px] shrink-0">VERIFIED</span>
+                      </div>
+                    )}
+
+                    {(activeTelemetryFilter === 'all' || activeTelemetryFilter === 'security') && (
+                      <div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-white/60 hover:bg-white border border-white/80 transition-all text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-mono text-[10px] text-[#8C716C] shrink-0">01:10 AM</span>
+                          <span className="font-semibold text-[#071B37] truncate">Faculty Credential Audit</span>
+                          <span className="text-[11px] text-[#58413D] hidden sm:inline">• 100% Mentors Verified</span>
+                        </div>
+                        <span className="glass-badge glass-badge-maroon text-[9px] shrink-0">SECURE</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t border-black/[0.05] flex items-center justify-between text-xs text-[#58413D]">
+                    <span>Security Protocol: TLS 1.3 Encryption Active</span>
+                    <span className="font-semibold text-[#071B37]">All 4 Portals Operational</span>
                   </div>
                 </div>
               </section>

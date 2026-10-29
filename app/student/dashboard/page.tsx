@@ -486,7 +486,7 @@ export default function StudentDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF9EF] flex flex-col selection:bg-[#EFC988] selection:text-[#89190E]">
+    <div className="min-h-screen glass-canvas-mesh flex flex-col relative overflow-hidden selection:bg-[#EFC988] selection:text-[#89190E]">
       {/* 1. Top Navbar Header */}
       <StudentHeader
         student={student}
@@ -497,7 +497,7 @@ export default function StudentDashboardPage() {
       />
 
       {/* 2. Main Portal Shell: Sidebar + Content Area */}
-      <div className="flex-1 flex flex-row min-w-0">
+      <div className="flex-1 flex flex-row min-w-0 relative z-10">
         {/* Sidebar Navigation */}
         <StudentSidebar
           activeTab={activeTab}
@@ -508,7 +508,13 @@ export default function StudentDashboardPage() {
         />
 
         {/* Tab View Content Viewport */}
-        <main className="flex-1 min-w-0 p-3.5 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full overflow-y-auto">
+        <main className="flex-1 min-w-0 p-3.5 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full overflow-y-auto relative">
+          {/* Ambient Glow Orbs for Glassmorphism Refraction */}
+          <div className="ambient-glow-container select-none pointer-events-none">
+            <div className="ambient-orb-gold -top-20 right-1/4" />
+            <div className="ambient-orb-maroon top-1/3 -left-16" />
+            <div className="ambient-orb-navy bottom-20 right-10" />
+          </div>
           {activeTab === 'dashboard' && (
             <StudentDashboardTab
               student={student}

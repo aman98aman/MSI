@@ -61,7 +61,7 @@ export default function ActiveVisitorsTab({
     <div className="space-y-6">
       {/* Top Banner & Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-5 rounded-3xl bg-white border border-[#E8DCCB] shadow-xs">
+        <div className="p-5 rounded-2xl glass-panel glass-panel-hover border border-white/80 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-[#526174]">
               Active In Institute
@@ -79,7 +79,7 @@ export default function ActiveVisitorsTab({
           </span>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white border border-[#E8DCCB] shadow-xs">
+        <div className="p-5 rounded-2xl glass-panel glass-panel-hover border border-white/80 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-[#526174]">
               Average Institute Dwell
@@ -97,7 +97,7 @@ export default function ActiveVisitorsTab({
           </span>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white border border-[#E8DCCB] shadow-xs">
+        <div className="p-5 rounded-2xl glass-panel glass-panel-hover border border-white/80 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-[#526174]">
               Overstay Watch (&gt; 3h)

@@ -135,25 +135,25 @@ export default function TeacherHeader({
         {/* Link to Student Portal */}
         <Link
           href="/student/dashboard"
-          className="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-[#E8DCCB] hover:border-[#10233F] text-xs font-semibold text-[#10233F] bg-white transition-colors"
+          className="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl glass-btn glass-btn-frost text-xs font-semibold text-[#10233F] transition-all shadow-2xs"
           title="Open Student View"
         >
-          <Sparkles className="w-3.5 h-3.5 text-[#EFC988]" />
+          <Sparkles className="w-3.5 h-3.5 text-[#89190E]" />
           <span>Student View</span>
         </Link>
 
         {/* Return to Public Website */}
         <Link
           href="/"
-          className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-[#E8DCCB] hover:border-[#89190E] text-xs font-semibold text-[#526174] hover:text-[#89190E] bg-white transition-colors"
+          className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl glass-btn glass-btn-frost text-xs font-semibold text-[#526174] hover:text-[#89190E] transition-all"
         >
           <Globe className="w-3.5 h-3.5" />
           <span>Website</span>
         </Link>
 
         {/* Teacher Profile Pill */}
-        <div className="flex items-center space-x-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]">
-          <div className="w-8 h-8 rounded-lg bg-[#10233F] text-white font-serif font-bold text-xs flex items-center justify-center flex-shrink-0">
+        <div className="flex items-center space-x-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl glass-panel border border-white/80 shadow-xs">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#10233F] to-[#1c355e] text-[#EFC988] font-serif font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
             {teacher.name.split(' ').map((n) => n[0]).slice(0, 2).join('')}
           </div>
           <div className="hidden sm:block">
@@ -166,7 +166,7 @@ export default function TeacherHeader({
           </div>
           <button
             onClick={onLogout}
-            className="p-1 text-rose-600 hover:text-rose-800 transition-colors ml-1"
+            className="p-1 text-rose-600 hover:text-rose-800 transition-colors ml-1 cursor-pointer"
             title="Sign Out"
           >
             <LogOut className="w-4 h-4" />

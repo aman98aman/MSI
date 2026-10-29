@@ -403,7 +403,7 @@ export default function TeacherDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF9EF] flex flex-col selection:bg-[#EFC988] selection:text-[#89190E]">
+    <div className="min-h-screen glass-canvas-mesh flex flex-col relative overflow-hidden selection:bg-[#EFC988] selection:text-[#89190E]">
       {/* 1. Header Bar with Stream Switcher */}
       <TeacherHeader
         teacher={activeTeacher}
@@ -414,7 +414,7 @@ export default function TeacherDashboardPage() {
       />
 
       {/* 2. Main Portal Shell: Sidebar + Content Viewport */}
-      <div className="flex-1 flex flex-row">
+      <div className="flex-1 flex flex-row relative z-10">
         <TeacherSidebar
           activeTab={activeTab}
           onSelectTab={(tab) => setActiveTab(tab)}
@@ -423,7 +423,13 @@ export default function TeacherDashboardPage() {
           onCloseMobile={() => setMobileSidebarOpen(false)}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full overflow-y-auto relative">
+          {/* Ambient Glow Lights for Glassmorphism Depth */}
+          <div className="ambient-glow-container select-none pointer-events-none">
+            <div className="ambient-orb-gold -top-24 right-1/4" />
+            <div className="ambient-orb-maroon top-1/2 -left-20" />
+            <div className="ambient-orb-navy -bottom-20 right-10" />
+          </div>
           {activeTab === 'dashboard' && (
             <TeacherDashboardTab
               teacher={activeTeacher}

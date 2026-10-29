@@ -243,9 +243,9 @@ export default function StudentHeader({
         <div className="relative">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center space-x-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl border border-[#E8DCCB] hover:border-[#89190E] bg-[#FFF9EF]/80 transition-all text-left group"
+            className="flex items-center space-x-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl glass-panel border border-white/80 transition-all text-left group shadow-xs cursor-pointer"
           >
-            <div className="w-8 h-8 rounded-lg bg-[#89190E] text-white font-serif font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#89190E] to-[#65130D] text-white font-serif font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
               {student.name.split(' ').map((n) => n[0]).join('')}
             </div>
             <div className="hidden sm:block">

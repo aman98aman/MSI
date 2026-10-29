@@ -14,7 +14,7 @@ import {
   Visitor,
   ReceptionStaff,
 } from '@/components/reception/data/receptionMockData';
-import { AlertTriangle, LogOut } from 'lucide-react';
+import { AlertTriangle, LogOut, Sparkles, UserPlus, PhoneCall, ShieldCheck, Clock, CheckCircle2, TrendingUp } from 'lucide-react';
 
 export default function ReceptionDashboardPage() {
   const router = useRouter();
@@ -235,7 +235,7 @@ export default function ReceptionDashboardPage() {
   const todayTotal = visitors.length;
 
   return (
-    <div className="min-h-screen bg-[#FFF9EF] flex flex-col selection:bg-[#EFC988] selection:text-[#89190E]">
+    <div className="min-h-screen glass-canvas-mesh flex flex-col relative overflow-hidden selection:bg-[#EFC988] selection:text-[#89190E]">
       {/* 1. Header with live headcount & official receptionist badge */}
       <ReceptionHeader
         currentStaff={currentStaff}
@@ -259,7 +259,77 @@ export default function ReceptionDashboardPage() {
         />
 
         {/* Dynamic Tab Viewport */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full overflow-y-auto space-y-6 relative">
+          {/* Ambient Glow Lights */}
+          <div className="ambient-glow-container select-none pointer-events-none">
+            <div className="ambient-orb-gold -top-20 -right-20" />
+            <div className="ambient-orb-maroon bottom-10 -left-20" />
+          </div>
+
+          {/* Reception Modern Glass Widgets Bar */}
+          <div className="glass-panel p-5 sm:p-6 rounded-2xl relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 border border-white/80 shadow-[0_10px_30px_rgba(16,35,63,0.05)]">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="pulse-glow-dot bg-emerald-500" />
+                <span className="glass-badge glass-badge-maroon text-[10px]">
+                  STATION CLEARANCE: ACTIVE
+                </span>
+                <span className="glass-badge glass-badge-emerald text-[10px]">
+                  GATE 1 OPEN
+                </span>
+              </div>
+              <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#10233F]">
+                Front-Desk Command & Dispatch
+              </h2>
+              <p className="text-xs text-[#526174]">
+                Logged in as <strong className="text-[#89190E]">{currentStaff.name}</strong> • Station: {currentStaff.location}
+              </p>
+            </div>
+
+            {/* Quick Action Glass Buttons */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setActiveTab('new-visitor')}
+                className={`glass-btn text-xs px-4 py-2.5 rounded-xl shadow-xs transition-all ${
+                  activeTab === 'new-visitor'
+                    ? 'glass-btn-maroon'
+                    : 'glass-btn-frost hover:border-[#89190E]/40'
+                }`}
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>+ Walk-in Registration</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('active-visitors')}
+                className={`glass-btn text-xs px-4 py-2.5 rounded-xl shadow-xs transition-all ${
+                  activeTab === 'active-visitors'
+                    ? 'glass-btn-maroon'
+                    : 'glass-btn-frost hover:border-[#89190E]/40'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Inside ({activeCount})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('leads')}
+                className={`glass-btn text-xs px-4 py-2.5 rounded-xl shadow-xs transition-all ${
+                  activeTab === 'leads'
+                    ? 'glass-btn-maroon'
+                    : 'glass-btn-frost hover:border-[#89190E]/40'
+                }`}
+              >
+                <PhoneCall className="w-3.5 h-3.5 text-[#89190E]" />
+                <span>Telecalling CRM</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="relative z-10">
           {activeTab === 'new-visitor' && (
             <NewVisitorTab
               onRegisterVisitor={handleRegisterVisitor}
@@ -281,6 +351,7 @@ export default function ReceptionDashboardPage() {
           {activeTab === 'leads' && (
             <LeadsRegisterTab currentStaff={currentStaff} />
           )}
+          </div>
         </main>
       </div>
 

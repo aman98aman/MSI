@@ -76,6 +76,9 @@ export default function StudentDashboardTab({
     activeEnrolledCourses.reduce((acc, c) => acc + c.progress, 0) /
       (activeEnrolledCourses.length || 1)
   );
+  const totalAttended = courses.reduce((acc, c) => acc + (c.attendedLectures || 0), 0);
+  const totalClasses = courses.reduce((acc, c) => acc + (c.totalLectures || 0), 0);
+  const attendanceRate = totalClasses > 0 ? Math.round((totalAttended / totalClasses) * 100) : 88;
 
   const availableTest = tests.find((t) => t.status === 'Available');
 
@@ -364,15 +367,16 @@ export default function StudentDashboardTab({
         </div>
       )}
 
-      {/* 1. Welcome & High-Yield Banner */}
-      <div className="relative p-5 sm:p-8 rounded-3xl bg-gradient-to-r from-[#10233F] via-[#162d50] to-[#89190E] text-white overflow-hidden shadow-xl hud-bracket">
+      {/* 1. Welcome & High-Yield Banner (Frosted Glass & Ambient Glow) */}
+      <div className="relative p-5 sm:p-8 rounded-3xl bg-linear-to-r from-[#10233F] via-[#162d50] to-[#89190E] text-white overflow-hidden shadow-2xl hud-bracket border border-white/20">
         <div className="absolute inset-0 blueprint-grid opacity-15 pointer-events-none" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#EFC988]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="ambient-orb-gold top-0 right-0 w-96 h-96 opacity-35 pointer-events-none" />
+        <div className="ambient-orb-maroon -bottom-20 -left-20 opacity-30 pointer-events-none" />
 
-        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-2xl min-w-0">
             <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#EFC988] animate-pulse-beacon flex-shrink-0" />
+              <span className="pulse-glow-dot bg-[#EFC988] flex-shrink-0" />
               <span className="text-[10px] sm:text-[11px] font-mono tracking-wider text-[#EFC988] uppercase font-bold break-words">
                 MSI Group of Institutes • Academic Semester V
               </span>
@@ -380,7 +384,7 @@ export default function StudentDashboardTab({
             <h1 className="font-serif text-2xl sm:text-4xl font-bold text-white mt-2 tracking-tight">
               Welcome back, {student.name.split(' ')[0]}
             </h1>
-            <p className="text-white/80 text-xs sm:text-sm mt-2 leading-relaxed">
+            <p className="text-white/85 text-xs sm:text-sm mt-2 leading-relaxed">
               You have <strong className="text-[#EFC988]">{enrolledUdemyData.length} online video courses</strong> in your active learning portal. Continue where you left off or explore newly assigned judicial masterclasses.
             </p>
 
@@ -388,7 +392,7 @@ export default function StudentDashboardTab({
               {enrolledUdemyData.length > 0 && onOpenUdemyCourse ? (
                 <button
                   onClick={() => onOpenUdemyCourse(enrolledUdemyData[0].course)}
-                  className="w-full sm:w-auto justify-center px-4 sm:px-5 py-2.5 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs sm:text-sm font-bold flex items-center space-x-2 shadow-md shadow-[#89190E]/30 btn-chamfered active:scale-98 transition-all cursor-pointer"
+                  className="w-full sm:w-auto justify-center px-4 sm:px-5 py-2.5 rounded-xl glass-btn glass-btn-maroon text-xs sm:text-sm shadow-lg active:scale-98 cursor-pointer"
                 >
                   <PlayCircle className="w-4 h-4 text-[#EFC988]" />
                   <span>Resume Latest Masterclass</span>
@@ -397,7 +401,7 @@ export default function StudentDashboardTab({
               ) : (
                 <button
                   onClick={() => onNavigateTab('learning')}
-                  className="w-full sm:w-auto justify-center px-4 sm:px-5 py-2.5 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs sm:text-sm font-bold flex items-center space-x-2 shadow-md shadow-[#89190E]/30 btn-chamfered active:scale-98 transition-all cursor-pointer"
+                  className="w-full sm:w-auto justify-center px-4 sm:px-5 py-2.5 rounded-xl glass-btn glass-btn-maroon text-xs sm:text-sm shadow-lg active:scale-98 cursor-pointer"
                 >
                   <BookOpen className="w-4 h-4 text-[#EFC988]" />
                   <span>Resume Learning Hub</span>
@@ -407,7 +411,7 @@ export default function StudentDashboardTab({
 
               <Link
                 href="/courses"
-                className="w-full sm:w-auto justify-center px-4 sm:px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-bold border border-white/30 flex items-center space-x-2 backdrop-blur-xs transition-all cursor-pointer"
+                className="w-full sm:w-auto justify-center px-4 sm:px-5 py-2.5 rounded-xl glass-btn glass-btn-frost text-white hover:text-[#10233F] text-xs sm:text-sm border border-white/30 backdrop-blur-md transition-all cursor-pointer"
               >
                 <PlusCircle className="w-4 h-4 text-[#EFC988]" />
                 <span>Explore More Courses</span>
@@ -416,7 +420,7 @@ export default function StudentDashboardTab({
               <button
                 type="button"
                 onClick={() => onNavigateTab('profile')}
-                className="w-full sm:w-auto justify-center px-4 sm:px-5 py-2.5 rounded-xl bg-[#EFC988] hover:bg-[#ffe2aa] text-[#10233F] text-xs sm:text-sm font-bold flex items-center space-x-2 transition-all shadow-md active:scale-98 cursor-pointer"
+                className="w-full sm:w-auto justify-center px-4 sm:px-5 py-2.5 rounded-xl glass-btn glass-btn-gold text-xs sm:text-sm shadow-md active:scale-98 cursor-pointer"
               >
                 <UserCheck className="w-4 h-4 text-[#89190E]" />
                 <span>Edit Profile</span>
@@ -426,7 +430,7 @@ export default function StudentDashboardTab({
 
           {/* Quick Metrics Capsule */}
           <div className="grid grid-cols-2 md:flex md:flex-col gap-2.5 sm:gap-4 w-full md:w-auto flex-shrink-0">
-            <div className="p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-center min-w-0">
+            <div className="p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center min-w-0 shadow-inner">
               <span className="text-[10px] font-mono tracking-wider uppercase text-white/70 block">
                 Enrolled Courses
               </span>
@@ -436,7 +440,7 @@ export default function StudentDashboardTab({
               <span className="text-[9px] text-emerald-300 font-semibold block truncate">Video Curriculum</span>
             </div>
 
-            <div className="p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-center min-w-0">
+            <div className="p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center min-w-0 shadow-inner">
               <span className="text-[10px] font-mono tracking-wider uppercase text-white/70 block">
                 Batch Rank
               </span>
@@ -451,8 +455,171 @@ export default function StudentDashboardTab({
         </div>
       </div>
 
-      {/* 2. UDEMY ENROLLED MASTERCLASSES SECTION (NEW!) */}
-      <div className="p-5 sm:p-7 rounded-3xl bg-white border border-[#E8DCCB] shadow-xs space-y-4">
+      {/* MODERN STUDENT WIDGETS ROW: Holographic Student Card & Conic Rings */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Modern Widget 1: Holographic Digital Student ID Card */}
+        <div className="lg:col-span-6 holographic-glass-card p-6 flex flex-col justify-between relative overflow-hidden group">
+          <div className="relative z-10 flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#89190E] to-[#10233F] text-white flex items-center justify-center font-serif text-xl font-bold border-2 border-white/90 shadow-md">
+                {student.name ? student.name.charAt(0) : 'S'}
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="pulse-glow-dot bg-emerald-500" />
+                  <span className="text-[9px] font-mono font-bold tracking-widest text-emerald-800 uppercase">
+                    ACTIVE SCHOLAR CREDENTIAL
+                  </span>
+                </div>
+                <h3 className="font-serif text-xl font-bold text-[#10233F] leading-tight">
+                  {student.name}
+                </h3>
+                <span className="text-xs font-semibold text-[#89190E]">
+                  {student.stream} • Batch of 2026
+                </span>
+              </div>
+            </div>
+
+            {/* Official Seal Watermark Visual */}
+            <div className="text-right">
+              <span className="glass-badge glass-badge-gold text-[9px]">
+                MSI CERTIFIED
+              </span>
+              <span className="block font-mono text-[10px] text-[#526174] mt-1 font-bold">
+                {student.id || 'MSI-STU-2026'}
+              </span>
+            </div>
+          </div>
+
+          <div className="relative z-10 grid grid-cols-3 gap-2.5 my-4 p-3 rounded-xl bg-white/60 backdrop-blur-md border border-white/80 text-xs">
+            <div>
+              <span className="text-[9px] uppercase tracking-wider text-[#8C716C] block font-bold">Roll Number</span>
+              <span className="font-mono font-bold text-[#10233F]">{student.rollNo || 'LAW-042'}</span>
+            </div>
+            <div>
+              <span className="text-[9px] uppercase tracking-wider text-[#8C716C] block font-bold">Discipline</span>
+              <span className="font-semibold text-[#10233F] truncate block">{student.stream}</span>
+            </div>
+            <div>
+              <span className="text-[9px] uppercase tracking-wider text-[#8C716C] block font-bold">Library Access</span>
+              <span className="text-emerald-700 font-bold">GRANTED</span>
+            </div>
+          </div>
+
+          <div className="relative z-10 flex items-center justify-between text-xs pt-2 border-t border-black/[0.06]">
+            <span className="font-mono text-[10px] text-[#526174] tracking-widest">
+              ||| | || |||| | ||||| ||| |||
+            </span>
+            <button
+              onClick={() => onNavigateTab('profile')}
+              className="glass-btn glass-btn-frost text-[10px] px-3 py-1.5 rounded-lg text-[#89190E]"
+            >
+              Full Digital ID →
+            </button>
+          </div>
+        </div>
+
+        {/* Modern Widget 2: Academic Progress & Attendance Gauge */}
+        <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Conic Gauge A: Attendance */}
+          <div className="glass-panel p-5 rounded-2xl border border-white/80 flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C716C]">
+                Attendance Health
+              </span>
+              <span className="glass-badge glass-badge-emerald text-[9px]">
+                CLEARED
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 my-2">
+              <div>
+                <div className="font-serif text-2xl font-bold text-[#071B37]">
+                  {attendanceRate}%
+                </div>
+                <span className="text-[11px] text-[#526174]">
+                  Min Required: 75%
+                </span>
+              </div>
+
+              {/* Conic Ring */}
+              <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
+                <div
+                  className="w-full h-full rounded-full shadow-inner"
+                  style={{
+                    background: `conic-gradient(#059669 0deg ${(attendanceRate / 100) * 360}deg, #E8DCCB ${(attendanceRate / 100) * 360}deg 360deg)`,
+                  }}
+                />
+                <div className="absolute inset-2 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-xs">
+                  <span className="font-bold text-[10px] text-[#071B37]">{attendanceRate}%</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => onNavigateTab('attendance')}
+              className="text-[11px] font-bold text-[#89190E] hover:underline text-left pt-2 border-t border-black/[0.05]"
+            >
+              View Detailed Log →
+            </button>
+          </div>
+
+          {/* Conic Gauge B: Course Completion & Test Urgency */}
+          <div className="glass-panel p-5 rounded-2xl border border-white/80 flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C716C]">
+                Syllabus Progress
+              </span>
+              <span className="glass-badge glass-badge-gold text-[9px]">
+                ON TRACK
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 my-2">
+              <div>
+                <div className="font-serif text-2xl font-bold text-[#89190E]">
+                  {avgProgress || 74}%
+                </div>
+                <span className="text-[11px] text-[#526174]">
+                  Syllabus Mastered
+                </span>
+              </div>
+
+              {/* Conic Ring */}
+              <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
+                <div
+                  className="w-full h-full rounded-full shadow-inner"
+                  style={{
+                    background: `conic-gradient(#89190E 0deg ${((avgProgress || 74) / 100) * 360}deg, #E8DCCB ${((avgProgress || 74) / 100) * 360}deg 360deg)`,
+                  }}
+                />
+                <div className="absolute inset-2 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-xs">
+                  <span className="font-bold text-[10px] text-[#071B37]">{avgProgress || 74}%</span>
+                </div>
+              </div>
+            </div>
+
+            {availableTest ? (
+              <button
+                onClick={() => onStartTest(availableTest)}
+                className="glass-btn glass-btn-maroon text-[10px] px-3 py-1.5 rounded-lg w-full"
+              >
+                Start Next Mock Test
+              </button>
+            ) : (
+              <button
+                onClick={() => onNavigateTab('learning')}
+                className="text-[11px] font-bold text-[#89190E] hover:underline text-left pt-2 border-t border-black/[0.05]"
+              >
+                Continue Curriculum →
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 2. UDEMY ENROLLED MASTERCLASSES SECTION (Glass Panel) */}
+      <div className="glass-panel p-5 sm:p-7 rounded-3xl border border-white/80 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-4 border-b border-[#E8DCCB]">
           <div className="flex items-center space-x-2">
             <PlayCircle className="w-5 h-5 text-[#89190E]" />

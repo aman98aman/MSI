@@ -115,15 +115,16 @@ export default function TeacherDashboardTab({
           </Link>
         </div>
       )}
-      {/* 1. Faculty Welcome Banner */}
-      <div className="p-5 sm:p-8 rounded-3xl bg-linear-to-r from-[#10233F] via-[#1c355e] to-[#89190E] text-white shadow-xl hud-bracket relative overflow-hidden">
+      {/* 1. Faculty Welcome Banner (Glassmorphism & Depth) */}
+      <div className="p-5 sm:p-8 rounded-3xl bg-linear-to-r from-[#10233F] via-[#1c355e] to-[#89190E] text-white shadow-2xl hud-bracket relative overflow-hidden border border-white/20">
         <div className="absolute inset-0 blueprint-grid opacity-15 pointer-events-none" />
-        <div className="absolute top-0 right-0 w-80 h-80 bg-[#EFC988]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="ambient-orb-gold top-0 right-0 w-80 h-80 opacity-40 pointer-events-none" />
+        <div className="ambient-orb-maroon -bottom-20 -left-20 opacity-30 pointer-events-none" />
 
-        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-2xl min-w-0">
             <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#EFC988] animate-pulse-beacon flex-shrink-0" />
+              <span className="pulse-glow-dot bg-[#EFC988] flex-shrink-0" />
               <span className="text-[10px] sm:text-xs font-mono tracking-wider text-[#EFC988] uppercase font-bold break-words">
                 {teacher.department} • {teacher.stream} Discipline
               </span>
@@ -131,7 +132,7 @@ export default function TeacherDashboardTab({
             <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-2 tracking-tight">
               Good day, {teacher.name}
             </h1>
-            <p className="text-white/80 text-xs sm:text-sm mt-2 leading-relaxed">
+            <p className="text-white/85 text-xs sm:text-sm mt-2 leading-relaxed">
               You have <strong className="text-[#EFC988]">{courses.length} active courses assigned</strong>, overseeing{' '}
               <strong>{totalStudents} enrolled students</strong>. You have {upcomingClasses.length} lectures scheduled for today.
             </p>
@@ -139,7 +140,7 @@ export default function TeacherDashboardTab({
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-5 w-full sm:w-auto">
               <button
                 onClick={() => onNavigateTab('classes')}
-                className="w-full sm:w-auto justify-center px-4 sm:px-5 py-2.5 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs sm:text-sm font-bold flex items-center space-x-2 shadow-md shadow-[#89190E]/30 btn-chamfered active:scale-98 transition-all"
+                className="w-full sm:w-auto justify-center px-4 sm:px-5 py-2.5 rounded-xl glass-btn glass-btn-maroon text-xs sm:text-sm shadow-lg active:scale-98"
               >
                 <Calendar className="w-4 h-4 text-[#EFC988]" />
                 <span>Manage Today's Classes</span>
@@ -148,17 +149,26 @@ export default function TeacherDashboardTab({
 
               <button
                 onClick={() => onNavigateTab('assessment')}
-                className="w-full sm:w-auto justify-center px-4 sm:px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-bold border border-white/20 flex items-center space-x-2 transition-all"
+                className="w-full sm:w-auto justify-center px-4 sm:px-5 py-2.5 rounded-xl glass-btn glass-btn-frost text-[#10233F] hover:text-white hover:bg-white/20 text-xs sm:text-sm border border-white/30"
               >
-                <Award className="w-4 h-4 text-[#EFC988]" />
+                <Award className="w-4 h-4 text-[#89190E]" />
                 <span>Create Assessment</span>
               </button>
+
+              <Link
+                href="/live-stream"
+                target="_blank"
+                className="w-full sm:w-auto justify-center px-4 sm:px-5 py-2.5 rounded-xl glass-btn glass-btn-gold text-xs sm:text-sm shadow-md"
+              >
+                <Video className="w-4 h-4 text-[#89190E]" />
+                <span>Launch Live Studio →</span>
+              </Link>
             </div>
           </div>
 
           {/* Quick Metrics Tile */}
           <div className="grid grid-cols-2 md:flex md:flex-col gap-2.5 sm:gap-3 w-full md:w-auto flex-shrink-0">
-            <div className="p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-center min-w-0">
+            <div className="p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center min-w-0 shadow-inner">
               <span className="text-[10px] font-mono tracking-wider uppercase text-white/70 block">
                 Total Enrolled
               </span>
@@ -168,7 +178,7 @@ export default function TeacherDashboardTab({
               <span className="text-[9px] text-emerald-300 font-semibold block truncate">{teacher.stream} Students</span>
             </div>
 
-            <div className="p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-center min-w-0">
+            <div className="p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center min-w-0 shadow-inner">
               <span className="text-[10px] font-mono tracking-wider uppercase text-white/70 block">
                 Average Score
               </span>
@@ -181,20 +191,20 @@ export default function TeacherDashboardTab({
         </div>
       </div>
 
-      {/* 2. Top Metric Cards: Assigned Courses, Subjects, Students, Classes */}
+      {/* 2. Top Metric Cards: Frosted Glass */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Assigned Courses */}
         <div
           onClick={() => onNavigateTab('content')}
-          className="p-5 rounded-3xl bg-white border border-[#E8DCCB] hover:border-[#89190E] transition-all cursor-pointer shadow-xs group"
+          className="p-5 rounded-2xl glass-panel glass-panel-hover border border-white/80 cursor-pointer shadow-xs group"
         >
           <div className="flex items-center justify-between">
-            <div className="p-2.5 rounded-2xl bg-[#89190E]/10 text-[#89190E] group-hover:bg-[#89190E] group-hover:text-white transition-colors">
+            <div className="p-2.5 rounded-xl bg-[#89190E]/10 text-[#89190E] group-hover:bg-[#89190E] group-hover:text-white transition-all duration-300 shadow-xs">
               <BookOpen className="w-5 h-5" />
             </div>
             <span className="text-xs font-mono font-bold text-[#89190E]">{courses.length} Active</span>
           </div>
-          <h3 className="font-serif text-base font-bold text-[#10233F] mt-3">
+          <h3 className="font-serif text-base font-bold text-[#10233F] mt-3 group-hover:text-[#89190E] transition-colors">
             Assigned Courses
           </h3>
           <p className="text-xs text-[#526174] mt-0.5">
@@ -205,17 +215,17 @@ export default function TeacherDashboardTab({
         {/* Card 2: Assigned Subjects */}
         <div
           onClick={() => onNavigateTab('content')}
-          className="p-5 rounded-3xl bg-white border border-[#E8DCCB] hover:border-[#10233F] transition-all cursor-pointer shadow-xs group"
+          className="p-5 rounded-2xl glass-panel glass-panel-hover border border-white/80 cursor-pointer shadow-xs group"
         >
           <div className="flex items-center justify-between">
-            <div className="p-2.5 rounded-2xl bg-[#10233F]/10 text-[#10233F] group-hover:bg-[#10233F] group-hover:text-white transition-colors">
+            <div className="p-2.5 rounded-xl bg-[#10233F]/10 text-[#10233F] group-hover:bg-[#10233F] group-hover:text-white transition-all duration-300 shadow-xs">
               <BookOpen className="w-5 h-5" />
             </div>
-            <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+            <span className="text-xs font-mono font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md">
               {teacher.assignedSubjects.length} Subjects
             </span>
           </div>
-          <h3 className="font-serif text-base font-bold text-[#10233F] mt-3">
+          <h3 className="font-serif text-base font-bold text-[#10233F] mt-3 group-hover:text-[#10233F] transition-colors">
             Teaching Papers
           </h3>
           <p className="text-xs text-[#526174] mt-0.5 truncate">
@@ -226,17 +236,17 @@ export default function TeacherDashboardTab({
         {/* Card 3: Enrolled Students */}
         <div
           onClick={() => onNavigateTab('monitoring')}
-          className="p-5 rounded-3xl bg-white border border-[#E8DCCB] hover:border-[#EFC988] transition-all cursor-pointer shadow-xs group"
+          className="p-5 rounded-2xl glass-panel glass-panel-hover border border-white/80 cursor-pointer shadow-xs group"
         >
           <div className="flex items-center justify-between">
-            <div className="p-2.5 rounded-2xl bg-[#FFF3DD] text-[#89190E] group-hover:bg-[#EFC988] transition-colors">
+            <div className="p-2.5 rounded-xl bg-[#FFF3DD] text-[#89190E] group-hover:bg-[#EFC988] transition-all duration-300 shadow-xs">
               <Users className="w-5 h-5" />
             </div>
             <span className="text-xs font-mono font-bold text-emerald-700">
               {totalStudents} Total
             </span>
           </div>
-          <h3 className="font-serif text-base font-bold text-[#10233F] mt-3">
+          <h3 className="font-serif text-base font-bold text-[#10233F] mt-3 group-hover:text-[#89190E] transition-colors">
             Enrolled Students
           </h3>
           <p className="text-xs text-[#526174] mt-0.5">
@@ -247,22 +257,127 @@ export default function TeacherDashboardTab({
         {/* Card 4: Upcoming Classes */}
         <div
           onClick={() => onNavigateTab('classes')}
-          className="p-5 rounded-3xl bg-white border border-[#E8DCCB] hover:border-[#89190E] transition-all cursor-pointer shadow-xs group"
+          className="p-5 rounded-2xl glass-panel glass-panel-hover border border-white/80 cursor-pointer shadow-xs group"
         >
           <div className="flex items-center justify-between">
-            <div className="p-2.5 rounded-2xl bg-amber-50 text-amber-800 group-hover:bg-amber-100 transition-colors">
+            <div className="p-2.5 rounded-xl bg-amber-50 text-amber-800 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300 shadow-xs">
               <Calendar className="w-5 h-5" />
             </div>
             <span className="text-xs font-mono font-bold text-[#89190E]">
               {upcomingClasses.length} Scheduled Today
             </span>
           </div>
-          <h3 className="font-serif text-base font-bold text-[#10233F] mt-3">
+          <h3 className="font-serif text-base font-bold text-[#10233F] mt-3 group-hover:text-[#89190E] transition-colors">
             Upcoming Classes
           </h3>
           <p className="text-xs text-[#526174] mt-0.5">
             Next: {upcomingClasses[0]?.time || 'Completed'}
           </p>
+        </div>
+      </div>
+
+      {/* MODERN TEACHER WIDGETS: Live Class Radar & Answer Script Grading Ring */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Widget 1: Next Live Lecture Spotlight Card */}
+        <div className="lg:col-span-7 glass-panel p-6 rounded-2xl border border-white/80 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="pulse-glow-dot bg-rose-500" />
+              <h3 className="font-serif font-bold text-sm text-[#071B37]">
+                Next Scheduled Judicial Masterclass
+              </h3>
+            </div>
+            <span className="glass-badge glass-badge-maroon text-[10px]">
+              ROOM 204 • HALL B
+            </span>
+          </div>
+
+          <div className="py-2 space-y-2">
+            <div className="flex items-center gap-2 text-xs font-mono text-[#89190E] font-bold">
+              <Clock className="w-3.5 h-3.5" />
+              <span>{upcomingClasses[0]?.time || '11:00 AM - 12:30 PM'} • Starts in 45 mins</span>
+            </div>
+            <h4 className="font-serif text-lg font-bold text-[#10233F]">
+              {upcomingClasses[0]?.subject || 'Constitutional Law: Fundamental Rights & Judicial Review'}
+            </h4>
+            <p className="text-xs text-[#526174]">
+              Target Cohort: <strong>{teacher.stream} Final Year Scholars</strong> • Interactive whiteboard & live polls configured.
+            </p>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-black/[0.05] flex flex-wrap items-center justify-between gap-3">
+            <span className="text-xs text-[#526174]">
+              34 Students waiting in lobby
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onNavigateTab('classes')}
+                className="glass-btn glass-btn-frost text-xs px-3.5 py-1.5 rounded-xl"
+              >
+                View Syllabus
+              </button>
+              <Link
+                href="/live-stream"
+                target="_blank"
+                className="glass-btn glass-btn-maroon text-xs px-4 py-2 rounded-xl shadow-md"
+              >
+                <Video className="w-3.5 h-3.5" />
+                <span>Launch Studio Now</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Widget 2: Answer Script Grading Conic Progress Ring */}
+        <div className="lg:col-span-5 glass-panel p-6 rounded-2xl border border-white/80 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Award className="w-4 h-4 text-[#89190E]" />
+              <h3 className="font-serif font-bold text-sm text-[#071B37]">
+                Judicial Script Evaluation
+              </h3>
+            </div>
+            <span className="glass-badge glass-badge-emerald text-[10px]">
+              TERM MOCK 03
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-6 py-2">
+            <div className="space-y-1.5">
+              <div className="text-xs text-[#526174]">Evaluated Scripts:</div>
+              <div className="font-serif text-2xl font-bold text-[#071B37]">
+                28 / 34 Submitted
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-emerald-700 font-semibold">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>6 Scripts remaining for today</span>
+              </div>
+            </div>
+
+            {/* Conic Ring */}
+            <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
+              <div
+                className="w-full h-full rounded-full shadow-inner"
+                style={{
+                  background: `conic-gradient(#89190E 0deg 296deg, #E8DCCB 296deg 360deg)`,
+                }}
+              />
+              <div className="absolute inset-2.5 rounded-full bg-white/95 backdrop-blur-md flex flex-col items-center justify-center shadow-xs">
+                <span className="font-bold text-xs text-[#071B37]">82%</span>
+                <span className="text-[8px] font-semibold text-[#8C716C] uppercase">Graded</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 pt-3 border-t border-black/[0.05] flex items-center justify-between">
+            <span className="text-[11px] text-[#526174]">Avg Batch Score: 78.4%</span>
+            <button
+              onClick={() => onNavigateTab('assessment')}
+              className="glass-btn glass-btn-frost text-[10px] px-3 py-1.5 rounded-lg text-[#89190E]"
+            >
+              Grade Remaining →
+            </button>
+          </div>
         </div>
       </div>
 

@@ -1,0 +1,133 @@
+import { MongoClient, Db } from 'mongodb';
+import dns from 'dns';
+
+// Fix for Windows / ISP DNS resolvers failing to resolve MongoDB SRV records (_mongodb._tcp)
+// Only apply on Windows to prevent interference with AWS Lambda / Vercel container DNS
+if (typeof process !== 'undefined' && process.platform === 'win32') {
+  try {
+    dns.setServers(['8.8.8.8', '1.1.1.1']);
+  } catch (_) {}
+}
+
+// Direct 3-node replica set URI that bypasses DNS SRV lookups entirely.
+// Can be set via MONGODB_DIRECT_URI or falls back to MONGODB_URI.
+export const DIRECT_REPLICA_SET_URI =
+  (process.env.MONGODB_DIRECT_URI || '').trim() ||
+  (process.env.MONGODB_URI || '').trim();
+
+let client: MongoClient | null = null;
+let clientPromise: Promise<MongoClient> | null = null;
+
+declare global {
+  // eslint-disable-next-line no-var
+  var _mongoClientPromise: Promise<MongoClient> | undefined;
+}
+
+/**
+ * Sanitizes MongoDB URI in case passwords contain special characters like '@' or placeholder '<>' brackets.
+ * If no URI is configured in environment variables (e.g. when deployed to Vercel without env vars set),
+ * returns the reliable direct replica set cluster URI as default fallback.
+ */
+export function getSanitizedMongoUri(): string {
+  const raw = (process.env.MONGODB_URI || '').trim();
+
+  // If no environment variable is set on Vercel, use the direct replica set fallback URI
+  if (!raw || !raw.startsWith('mongodb')) {
+    return DIRECT_REPLICA_SET_URI;
+  }
+
+  try {
+    const match = raw.match(/^(mongodb(?:\+srv)?:\/\/)([^:]+):(.+)@([^@]+)$/);
+    if (match) {
+      const prefix = match[1];
+      const username = match[2];
+      let password = match[3];
+      const hostAndParams = match[4];
+
+      if (password.startsWith('<') && password.endsWith('>')) {
+        password = password.slice(1, -1);
+      }
+
+      let decodedPassword = password;
+      try {
+        decodedPassword = decodeURIComponent(password);
+      } catch (_) {}
+      const encodedPassword = encodeURIComponent(decodedPassword);
+
+      let cleanHostAndParams = hostAndParams;
+      const dbName = process.env.MONGODB_DB_NAME || 'msi_db';
+      if (!cleanHostAndParams.includes('/') || cleanHostAndParams.endsWith('/')) {
+        cleanHostAndParams =
+          cleanHostAndParams.replace(/\/$/, '') + `/${dbName}?retryWrites=true&w=majority`;
+      }
+
+      return `${prefix}${username}:${encodedPassword}@${cleanHostAndParams}`;
+    }
+  } catch (_) {}
+
+  return raw;
+}
+
+export function isMongoConfigured(): boolean {
+  return Boolean(process.env.MONGODB_URI || process.env.MONGODB_DIRECT_URI);
+}
+
+async function connectClient(uri: string): Promise<MongoClient> {
+  const options = {
+    serverSelectionTimeoutMS: 5000,
+    connectTimeoutMS: 7000,
+  };
+
+  try {
+    const c = new MongoClient(uri, options);
+    return await c.connect();
+  } catch (err: any) {
+    // If SRV lookup failed (e.g. querySrv ECONNREFUSED), automatically fallback to the direct replica set nodes URI
+    if (uri !== DIRECT_REPLICA_SET_URI) {
+      console.warn('[MongoDB] Primary connection failed, connecting via direct replica set URI...', err?.message || err);
+      try {
+        const fallbackClient = new MongoClient(DIRECT_REPLICA_SET_URI, options);
+        return await fallbackClient.connect();
+      } catch (fallbackErr: any) {
+        console.error('[MongoDB] Direct fallback error:', fallbackErr?.message || fallbackErr);
+        throw fallbackErr;
+      }
+    }
+    throw err;
+  }
+}
+
+export async function getMongoClient(): Promise<MongoClient | null> {
+  const uri = getSanitizedMongoUri();
+  if (!uri) {
+    return null;
+  }
+
+  // Use global variable across both development and serverless production (Vercel)
+  // so warm serverless lambda invocations reuse existing TCP connections.
+  if (!global._mongoClientPromise) {
+    global._mongoClientPromise = connectClient(uri).catch((err) => {
+      console.error('[MongoDB] Connection attempt failed:', err?.message || err);
+      global._mongoClientPromise = undefined;
+      throw err;
+    });
+  }
+
+  clientPromise = global._mongoClientPromise;
+
+  try {
+    const connectedClient = await clientPromise;
+    return connectedClient;
+  } catch (err: any) {
+    console.error('[MongoDB] Connection error:', err?.message || err);
+    global._mongoClientPromise = undefined;
+    clientPromise = null;
+    return null;
+  }
+}
+
+export async function getDb(dbName = 'msi_db'): Promise<Db | null> {
+  const client = await getMongoClient();
+  if (!client) return null;
+  return client.db(process.env.MONGODB_DB_NAME || dbName);
+}

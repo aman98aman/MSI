@@ -1,1 +1,76 @@
-[]
+[
+  {
+    "id": "#TXN-78112",
+    "orderId": "order_msi_41016804",
+    "studentName": "SUKHMAN D/O GURPREET SINGH CLAT",
+    "studentPhone": "9463113195",
+    "courseId": "course-default",
+    "courseTitle": "CLAT (LLB)",
+    "amount": 20000,
+    "paymentMethod": "ONLINE / UPI",
+    "status": "SUCCESS",
+    "timestamp": "09 Nov 2026, 09:46 pm",
+    "razorpayPaymentId": "pay_manual_41016811",
+    "razorpaySignature": "sig_r7e6g5tvaq",
+    "receiptNumber": "INV-MSI-2026-7882",
+    "invoiceData": {
+      "gstin": "03AEQPE9376K2ZY",
+      "pan": "AEQPE9376K",
+      "instituteName": "MSI GROUP OF INSTITUTE",
+      "instituteAddress": "MONGA CITY CENTRE, KHARAR LANDRAN ROAD, SEC-115, MOHALI, PUNJAB, 140301",
+      "contact": "7508420013,",
+      "invoiceNo": "INV-MSI-2026-7882",
+      "invoiceDate": "09/11/2026",
+      "placeOfSupply": "03-PUNJAB",
+      "modeOfSupply": "ONLINE / UPI",
+      "soldToName": "SUKHMAN D/O GURPREET SINGH CLAT",
+      "addressLine1": "#3007 GTB NAGAR",
+      "addressLine2": "Khrar , PUNJAB- 140301",
+      "buyerGst": "",
+      "buyerPhone": "9463113195",
+      "grMarka": "",
+      "poNo": "",
+      "poDate": "",
+      "remarks": "",
+      "items": [
+        {
+          "id": "1",
+          "description": "CLAT (LLB)",
+          "hsn": "999293",
+          "qty": "1PCS",
+          "mrp": "0.00",
+          "ntRate": "20000.00",
+          "txRate": "16949.15",
+          "disc": "",
+          "gstRate": "18%",
+          "amount": "16949.15"
+        }
+      ],
+      "totalTaxable": "16949.15",
+      "totalPcs": "1",
+      "totalAmount": "16949.15",
+      "taxGstRate": "18",
+      "taxTaxable": "16949.15",
+      "taxSgst": "1525.42",
+      "taxCgst": "1525.42",
+      "taxIgst": "0",
+      "taxCess": "0",
+      "tcs": "0.00",
+      "labour": "0.00",
+      "freight": "0.00",
+      "rndOff": "0.00",
+      "discount": "0.00",
+      "inWords": "RS- TWENTY THOUSAND ONLY",
+      "netAmount": "20000.00",
+      "terms": [
+        "ALL DISPUTES ARE SUBJECT TO CHANDIGARH JURISDICTION ONLY",
+        "GOODS ONCE SOLD ARE NOT RETURNABLE .",
+        "OUR RESPONSIBILTY CEASES THE MOMENT GOODS LEAVES OUR PREMISES.",
+        "18% P.A. INTEREST WILL BE CHARGED IF BILL IS NOT PAID WITHIN 15 DAYS/DUE DATE."
+      ],
+      "bankName": "AXIS BANK",
+      "bankAccount": "925020020559054",
+      "bankIfsc": "UTIB00004866"
+    }
+  }
+]

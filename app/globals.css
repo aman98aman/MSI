@@ -633,6 +633,100 @@ img, video {
   animation: goldenAuraPulse 3s ease-in-out infinite;
 }
 
+/* ── Law Gavel Strike Animation ────────────────────────────── */
+@keyframes gavelStrikeMotion {
+  0%, 100% {
+    transform: rotate(-26deg);
+  }
+  18% {
+    transform: rotate(0deg);
+  }
+  22% {
+    transform: rotate(-5deg);
+  }
+  28% {
+    transform: rotate(0deg);
+  }
+  62% {
+    transform: rotate(0deg);
+  }
+  82% {
+    transform: rotate(-26deg);
+  }
+}
+
+@keyframes gavelRippleWave {
+  0%, 17% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  18% {
+    transform: scale(0.3);
+    opacity: 0.95;
+  }
+  48% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* ── Symmetrical Horizontal Diagonal Outward Line Reveal ────── */
+@keyframes horizontalLineReveal {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0.9;
+  }
+}
+
+/* ── Subtle Golden Stardust Floating Particle ───────────────── */
+@keyframes goldDustFloat {
+  0% {
+    transform: translateY(0px) translateX(0px);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(-20px) translateX(8px);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateY(-40px) translateX(0px);
+    opacity: 0;
+  }
+}
+
+.animate-gavel-strike {
+  transform-origin: 22% 78%;
+  animation: gavelStrikeMotion 1.8s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
+
+.animate-gavel-ripple {
+  transform-origin: center;
+  animation: gavelRippleWave 1.8s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-gavel-strike,
+  .animate-gavel-ripple,
+  .animate-logo-float,
+  .animate-sheen-sweep,
+  .animate-astrolabe,
+  .animate-astrolabe-reverse,
+  .animate-aura-pulse {
+    animation: none !important;
+  }
+}
+
 /* ========================================================================== */
 /* MSI LMS Premium Glassmorphism Design System (Apple / Linear / Fintech)      */
 /* ========================================================================== */

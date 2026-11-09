@@ -119,6 +119,7 @@ export interface GSTInvoiceData {
 export interface FeeReceiptModalProps {
   transaction?: any;
   student?: Partial<StudentProfile> | any;
+  prefillStudent?: any;
   availableStudents?: Array<any>;
   allowEdit?: boolean;
   isCreateMode?: boolean;
@@ -129,12 +130,14 @@ export interface FeeReceiptModalProps {
 export default function FeeReceiptModal({
   transaction,
   student,
+  prefillStudent,
   availableStudents,
   allowEdit = false,
   isCreateMode = false,
   onClose,
   onSave,
 }: FeeReceiptModalProps) {
+  const activeStudent = prefillStudent || student;
   if (!transaction && !isCreateMode) return null;
 
   // Format Date DD/MM/YYYY
@@ -167,15 +170,15 @@ export default function FeeReceiptModal({
 
     // Build Buyer Full Line
     let buyer = '';
-    if (student?.name) {
-      buyer = student.name.toUpperCase();
-      if (student.guardianName || student.profile?.guardianName) {
-        const g = student.guardianName || student.profile?.guardianName;
-        const relation = (student.gender || student.profile?.gender) === 'Female' ? 'D/O' : 'S/O';
+    if (activeStudent?.name) {
+      buyer = activeStudent.name.toUpperCase();
+      if (activeStudent.guardianName || activeStudent.profile?.guardianName) {
+        const g = activeStudent.guardianName || activeStudent.profile?.guardianName;
+        const relation = (activeStudent.gender || activeStudent.profile?.gender) === 'Female' ? 'D/O' : 'S/O';
         buyer += ` ${relation} ${g.toUpperCase()}`;
       }
-      if (student.batch || student.courseTitle || student.stream) {
-        buyer += ` ${student.batch || student.courseTitle || student.stream}`;
+      if (activeStudent.batch || activeStudent.courseTitle || activeStudent.stream) {
+        buyer += ` ${activeStudent.batch || activeStudent.courseTitle || activeStudent.stream}`;
       }
     } else if (transaction?.studentName) {
       buyer = transaction.studentName.toUpperCase();
@@ -189,9 +192,9 @@ export default function FeeReceiptModal({
     const itemDesc =
       transaction?.courseTitle ||
       transaction?.remarks ||
-      student?.courseTitle ||
-      student?.stream ||
-      student?.batch ||
+      activeStudent?.courseTitle ||
+      activeStudent?.stream ||
+      activeStudent?.batch ||
       'CLAT (LLB)';
 
     return {
@@ -205,10 +208,10 @@ export default function FeeReceiptModal({
       placeOfSupply: '03-PUNJAB',
       modeOfSupply: transaction?.mode || transaction?.paymentMethod || 'ONLINE / UPI',
       soldToName: buyer,
-      addressLine1: student?.address || student?.profile?.address || '#3007 GTB NAGAR',
+      addressLine1: activeStudent?.address || activeStudent?.profile?.address || '#3007 GTB NAGAR',
       addressLine2: 'Khrar , PUNJAB- 140301',
       buyerGst: '',
-      buyerPhone: student?.phone || transaction?.studentPhone || '9463113195',
+      buyerPhone: activeStudent?.phone || transaction?.studentPhone || '9463113195',
       grMarka: '',
       poNo: transaction?.orderId || transaction?.razorpayOrderId || '',
       poDate: '',
@@ -265,7 +268,7 @@ export default function FeeReceiptModal({
 
   useEffect(() => {
     setInvoice(calculateDefaults());
-  }, [transaction, student]);
+  }, [transaction, student, prefillStudent]);
 
   const handleSaveInvoice = async () => {
     setIsSaving(true);

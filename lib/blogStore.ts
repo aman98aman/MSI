@@ -222,7 +222,8 @@ export async function getBlogsAsync(includeUnpublished = false): Promise<Gazette
   if (isMongoConfigured()) {
     try {
       const db = await getDb();
-      const mongoDocs = await db.collection('blogs').find({}).toArray();
+      if (db) {
+        const mongoDocs = await db.collection('blogs').find({}).toArray();
 
       if (mongoDocs && mongoDocs.length > 0) {
         const mapped: GazetteArticle[] = mongoDocs.map((doc: any) => ({
@@ -259,7 +260,8 @@ export async function getBlogsAsync(includeUnpublished = false): Promise<Gazette
         writeBlogsToDisk(filtered);
         return includeUnpublished ? filtered : filtered.filter((b) => b.isPublished !== false);
       }
-    } catch (err) {
+    }
+  } catch (err) {
       console.warn('[BlogStore] Mongo read failed, falling back to disk:', err);
     }
   }
@@ -311,7 +313,9 @@ export async function addBlogAsync(
   if (isMongoConfigured()) {
     try {
       const db = await getDb();
-      await db.collection('blogs').insertOne(newArticle);
+      if (db) {
+        await db.collection('blogs').insertOne(newArticle);
+      }
     } catch (err) {
       console.warn('[BlogStore] Mongo insert failed:', err);
     }
@@ -343,10 +347,12 @@ export async function updateBlogAsync(
   if (isMongoConfigured()) {
     try {
       const db = await getDb();
-      await db.collection('blogs').updateOne(
-        { $or: [{ id: current.id }, { slug: current.slug }] },
-        { $set: updated }
-      );
+      if (db) {
+        await db.collection('blogs').updateOne(
+          { $or: [{ id: current.id }, { slug: current.slug }] },
+          { $set: updated }
+        );
+      }
     } catch (err) {
       console.warn('[BlogStore] Mongo update failed:', err);
     }
@@ -368,13 +374,15 @@ export async function deleteBlogAsync(identifier: number | string): Promise<bool
   if (isMongoConfigured()) {
     try {
       const db = await getDb();
-      await db.collection('blogs').deleteMany({
-        $or: [
-          { id: identifier },
-          { id: typeof identifier === 'string' ? Number(identifier) || identifier : identifier },
-          { slug: clean },
-        ],
-      });
+      if (db) {
+        await db.collection('blogs').deleteMany({
+          $or: [
+            { id: identifier },
+            { id: typeof identifier === 'string' ? Number(identifier) || identifier : identifier },
+            { slug: clean },
+          ],
+        });
+      }
     } catch (err) {
       console.warn('[BlogStore] Mongo delete failed:', err);
     }

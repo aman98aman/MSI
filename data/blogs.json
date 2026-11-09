@@ -1,5 +1,28 @@
 [
   {
+    "id": 1794238456788,
+    "slug": "bxvxv-xv-cv-nvc-xvcxvxv-x-c-v-xv-cv-cvvvvvvvvvvvvvvvvvvvvvvvvvv",
+    "title": "bxvxv xv cv nvc xvcxvxv x c v xv  cv   cvvvvvvvvvvvvvvvvvvvvvvvvvv",
+    "category": "clat",
+    "categoryLabel": "CLAT & NLUs",
+    "date": "November 2026",
+    "readTime": "5 min read",
+    "excerpt": "cccccccccccccccccccccccccccccccccccccccccccccc",
+    "author": "Harshit Singh",
+    "authorRole": "Legal Academic Panel",
+    "avatar": "/images/avatars/avatar-1.webp",
+    "accentColor": "#89190E",
+    "initialClaps": 50,
+    "keyTakeaways": [],
+    "statutesCited": [],
+    "fullSummary": "ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "content": "ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "coverImage": "",
+    "isPublished": true,
+    "createdAt": "2026-11-09T15:34:16.789Z",
+    "updatedAt": "2026-11-09T15:34:16.789Z"
+  },
+  {
     "id": 1794238079170,
     "slug": "deep",
     "title": "DEEP",
@@ -21,62 +44,6 @@
     "isPublished": true,
     "createdAt": "2026-11-09T15:27:59.186Z",
     "updatedAt": "2026-11-09T15:27:59.186Z"
-  },
-  {
-    "id": 1,
-    "slug": "cracking-pcs-judicial-services-strategy",
-    "title": "Cracking PCS (Judicial Services): Strategy, Judgment Writing & High Court Precedents",
-    "category": "judiciary",
-    "categoryLabel": "Judicial Services",
-    "date": "September 2026",
-    "readTime": "6 min read",
-    "excerpt": "A systematic roadmap for mastering Civil Procedure, Criminal Law, BNSS 2023, and scoring high in Mains judgment writing.",
-    "author": "Adv. Rajesh Kumar",
-    "authorRole": "Head — Judiciary & PCS J Division",
-    "avatar": "/images/avatars/avatar-3.webp",
-    "accentColor": "#89190E",
-    "badge": "Trending #1 in Punjab PCS-J",
-    "initialClaps": 248,
-    "keyTakeaways": [
-      "Master procedural transitions under the newly enacted Bharatiya Nagarik Suraksha Sanhita (BNSS 2023).",
-      "Judicial framing of issues in Civil cases & framing of charges in Criminal trials with exact statutory citation.",
-      "Three-tier evaluation framework for appraisal of witness testimony and electronic evidence (BSA Sec 63)."
-    ],
-    "statutesCited": [
-      "BNSS 2023 § 173",
-      "CPC 1908 Order XIV",
-      "BSA 2023 § 63",
-      "Constitution Art. 235"
-    ],
-    "fullSummary": "Success in State Judicial Services examinations demands far more than verbatim memorization of bare acts. In this comprehensive dispatch, Adv. Rajesh Kumar breaks down the analytical doctrine needed to clear the Punjab and Haryana High Court Judicial Mains examinations.",
-    "isPublished": true
-  },
-  {
-    "id": 2,
-    "slug": "national-moot-court-victory-msi-law-delegation",
-    "title": "National Moot Court Victory: MSI Law Delegation Triumphs on Constitutional Rights",
-    "category": "jurisprudence",
-    "categoryLabel": "Legal Jurisprudence",
-    "date": "August 2026",
-    "readTime": "6 min read",
-    "excerpt": "An inside look at our integrated law students formulating appellate arguments before a simulated 5-judge Supreme Court bench.",
-    "author": "Dr. Ekta Gahlawat",
-    "authorRole": "Faculty – Legal Studies, MSI",
-    "avatar": "/images/avatars/avatar-2.webp",
-    "accentColor": "#10233F",
-    "badge": "National Champions 2026",
-    "initialClaps": 312,
-    "keyTakeaways": [
-      "Framing appellate questions of law concerning data privacy vs. statutory surveillance doctrines.",
-      "Adherence to Harvard Bluebook & Indian Law Institute (ILI) citation protocols in winning memorials."
-    ],
-    "statutesCited": [
-      "Constitution Art. 21",
-      "Constitution Art. 32",
-      "DPDP Act 2023 § 4"
-    ],
-    "fullSummary": "The MSI Group of Institutes Law delegation recently clinched top honours at the 14th National Constitutional Law Moot Court Competition.",
-    "isPublished": true
   },
   {
     "id": 3,

@@ -119,7 +119,8 @@ export async function getMarketingUsersAsync(): Promise<MarketingUserRecord[]> {
   if (isMongoConfigured()) {
     try {
       const db = await getDb();
-      const mongoDocs = await db.collection('marketing_users').find({}).toArray();
+      if (db) {
+        const mongoDocs = await db.collection('marketing_users').find({}).toArray();
 
       if (mongoDocs && mongoDocs.length > 0) {
         const mapped: MarketingUserRecord[] = mongoDocs.map((doc: any) => ({
@@ -143,7 +144,8 @@ export async function getMarketingUsersAsync(): Promise<MarketingUserRecord[]> {
         writeMarketingUsersToDisk(activeMongo);
         return activeMongo;
       }
-    } catch (err) {
+    }
+  } catch (err) {
       console.warn('[MarketingStore] Mongo read failed, falling back to disk:', err);
     }
   }
@@ -174,11 +176,13 @@ export async function addMarketingUserAsync(
   if (isMongoConfigured()) {
     try {
       const db = await getDb();
-      await db.collection('marketing_users').updateOne(
-        { phone: cleanPhone },
-        { $set: newRecord },
-        { upsert: true }
-      );
+      if (db) {
+        await db.collection('marketing_users').updateOne(
+          { phone: cleanPhone },
+          { $set: newRecord },
+          { upsert: true }
+        );
+      }
     } catch (err) {
       console.warn('[MarketingStore] Mongo insert failed:', err);
     }
@@ -209,10 +213,12 @@ export async function updateMarketingUserAsync(
   if (isMongoConfigured()) {
     try {
       const db = await getDb();
-      await db.collection('marketing_users').updateOne(
-        { $or: [{ id }, { phone: current.phone }] },
-        { $set: updated }
-      );
+      if (db) {
+        await db.collection('marketing_users').updateOne(
+          { $or: [{ id }, { phone: current.phone }] },
+          { $set: updated }
+        );
+      }
     } catch (err) {
       console.warn('[MarketingStore] Mongo update failed:', err);
     }
@@ -239,14 +245,16 @@ export async function deleteMarketingUserAsync(identifier: string): Promise<bool
   if (isMongoConfigured()) {
     try {
       const db = await getDb();
-      await db.collection('marketing_users').deleteMany({
-        $or: [
-          { id: identifier },
-          { id: clean },
-          { phone: cleanPhone },
-          { phone: identifier },
-        ],
-      });
+      if (db) {
+        await db.collection('marketing_users').deleteMany({
+          $or: [
+            { id: identifier },
+            { id: clean },
+            { phone: cleanPhone },
+            { phone: identifier },
+          ],
+        });
+      }
     } catch (err) {
       console.warn('[MarketingStore] Mongo delete failed:', err);
     }

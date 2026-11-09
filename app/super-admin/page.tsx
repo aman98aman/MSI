@@ -429,7 +429,27 @@ export default function SuperAdminMasterDashboard() {
   // 11. Transaction Receipts State
   const [selectedTxnForReceipt, setSelectedTxnForReceipt] = useState<AdminTransaction | null>(null);
 
-  // â”€â”€ Authentication Check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // 12. Manual Invoice & Bulk Deletion States
+  const [showCreateManualInvoiceModal, setShowCreateManualInvoiceModal] = useState<boolean>(false);
+  const [manualInvoiceSelectedStudent, setManualInvoiceSelectedStudent] = useState<any>(null);
+
+  // Bulk Student Deletion
+  const [selectedStudentPhones, setSelectedStudentPhones] = useState<string[]>([]);
+  const [showBulkDeleteStudentsModal, setShowBulkDeleteStudentsModal] = useState<boolean>(false);
+  const [isBulkDeletingStudents, setIsBulkDeletingStudents] = useState<boolean>(false);
+
+  // Bulk Lead Deletion & Single Lead Delete
+  const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
+  const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
+  const [showBulkDeleteLeadsModal, setShowBulkDeleteLeadsModal] = useState<boolean>(false);
+  const [isBulkDeletingLeads, setIsBulkDeletingLeads] = useState<boolean>(false);
+
+  // Bulk Receptionist Deletion
+  const [selectedReceptionistIds, setSelectedReceptionistIds] = useState<string[]>([]);
+  const [showBulkDeleteReceptionistsModal, setShowBulkDeleteReceptionistsModal] = useState<boolean>(false);
+  const [isBulkDeletingReceptionists, setIsBulkDeletingReceptionists] = useState<boolean>(false);
+
+  // ── Authentication Check ──────────────────────────────────────────────────
   useEffect(() => {
     const isLoggedIn =
       localStorage.getItem('msi_superadmin_logged_in') === 'true' ||
@@ -2487,7 +2507,301 @@ export default function SuperAdminMasterDashboard() {
     );
   }, [leads, searchQuery]);
 
-  // â”€â”€ Render Gatekeeper if Unauthenticated â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 2a. Bulk Student Deletion Handlers ─────────────────────────────────────
+  const isAllFilteredStudentsSelected =
+    filteredStudents.length > 0 &&
+    filteredStudents.every((stu) => selectedStudentPhones.includes(stu.phone || stu.id));
+
+  const toggleSelectAllStudents = () => {
+    if (isAllFilteredStudentsSelected) {
+      setSelectedStudentPhones([]);
+    } else {
+      setSelectedStudentPhones(filteredStudents.map((stu) => stu.phone || stu.id));
+    }
+  };
+
+  const toggleSelectStudent = (idOrPhone: string) => {
+    setSelectedStudentPhones((prev) =>
+      prev.includes(idOrPhone) ? prev.filter((p) => p !== idOrPhone) : [...prev, idOrPhone]
+    );
+  };
+
+  const handleBulkDeleteStudents = async () => {
+    if (selectedStudentPhones.length === 0) return;
+    const countToDelete = selectedStudentPhones.length;
+    setIsBulkDeletingStudents(true);
+
+    const items = students
+      .filter((s) => selectedStudentPhones.includes(s.phone) || selectedStudentPhones.includes(s.id))
+      .map((s) => ({
+        phone: (s.phone || '').replace(/\D/g, '').slice(-10),
+        id: s.id,
+        name: s.name,
+      }));
+
+    // Optimistic UI update
+    setStudents((prev) =>
+      prev.filter(
+        (s) =>
+          !selectedStudentPhones.includes(s.phone) &&
+          !selectedStudentPhones.includes(s.id) &&
+          !selectedStudentPhones.includes((s.phone || '').replace(/\D/g, '').slice(-10))
+      )
+    );
+
+    try {
+      const res = await fetch('/api/admin/students', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items, phones: selectedStudentPhones }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`${countToDelete} student accounts permanently removed from system.`);
+        if (data.students && Array.isArray(data.students)) {
+          setStudents(data.students);
+        }
+        setSelectedStudentPhones([]);
+        setShowBulkDeleteStudentsModal(false);
+        fetchStudents();
+      } else {
+        showToast(data.message || 'Error executing bulk student deletion.');
+        fetchStudents();
+      }
+    } catch (err) {
+      showToast('Network error while performing bulk student deletion.');
+      fetchStudents();
+    } finally {
+      setIsBulkDeletingStudents(false);
+    }
+  };
+
+  // ── 2b. Leads Selection & Deletion Handlers ────────────────────────────────
+  const isAllFilteredLeadsSelected =
+    filteredLeads.length > 0 &&
+    filteredLeads.every((ld) => selectedLeadIds.includes(ld.id));
+
+  const toggleSelectAllLeads = () => {
+    if (isAllFilteredLeadsSelected) {
+      setSelectedLeadIds([]);
+    } else {
+      setSelectedLeadIds(filteredLeads.map((ld) => ld.id));
+    }
+  };
+
+  const toggleSelectLead = (id: string) => {
+    setSelectedLeadIds((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    );
+  };
+
+  const handleDeleteLead = async (lead: Lead) => {
+    try {
+      const res = await fetch(`/api/admin/leads?id=${encodeURIComponent(lead.id)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Lead ${lead.name} removed from queue.`);
+        setLeads((prev) => prev.filter((l) => l.id !== lead.id));
+        setLeadToDelete(null);
+      } else {
+        showToast(data.message || 'Failed to delete lead.');
+      }
+    } catch (err) {
+      showToast('Network error while deleting lead.');
+    }
+  };
+
+  const handleBulkDeleteLeads = async () => {
+    if (selectedLeadIds.length === 0) return;
+    const countToDelete = selectedLeadIds.length;
+    setIsBulkDeletingLeads(true);
+
+    // Optimistic UI update
+    setLeads((prev) => prev.filter((l) => !selectedLeadIds.includes(l.id)));
+
+    try {
+      const res = await fetch('/api/admin/leads', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedLeadIds }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`${countToDelete} leads removed successfully.`);
+        if (data.leads && Array.isArray(data.leads)) {
+          setLeads(data.leads);
+        }
+      } else {
+        showToast(data.message || 'Failed to delete leads.');
+      }
+      setSelectedLeadIds([]);
+      setShowBulkDeleteLeadsModal(false);
+      fetchLeads();
+    } catch (err) {
+      showToast('Network error while deleting leads.');
+      fetchLeads();
+    } finally {
+      setIsBulkDeletingLeads(false);
+    }
+  };
+
+  // ── 2c. Receptionist Selection & Bulk Deletion Handlers ─────────────────────
+  const allReceptionistItems = useMemo(() => {
+    return [
+      ...(seniorDeskRecord ? [seniorDeskRecord] : []),
+      ...visibleReceptionists,
+    ];
+  }, [seniorDeskRecord, visibleReceptionists]);
+
+  const isAllReceptionistsSelected =
+    allReceptionistItems.length > 0 &&
+    allReceptionistItems.every((r) => selectedReceptionistIds.includes(r.id));
+
+  const toggleSelectAllReceptionists = () => {
+    if (isAllReceptionistsSelected) {
+      setSelectedReceptionistIds([]);
+    } else {
+      setSelectedReceptionistIds(allReceptionistItems.map((r) => r.id));
+    }
+  };
+
+  const toggleSelectReceptionist = (id: string) => {
+    setSelectedReceptionistIds((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDeleteReceptionists = async () => {
+    if (selectedReceptionistIds.length === 0) return;
+    const countToDelete = selectedReceptionistIds.length;
+    setIsBulkDeletingReceptionists(true);
+
+    // Optimistic UI update
+    setReceptionists((prev) => prev.filter((r) => !selectedReceptionistIds.includes(r.id)));
+
+    try {
+      const res = await fetch('/api/admin/receptionists', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedReceptionistIds }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`${countToDelete} receptionist accounts removed from system.`);
+        if (data.receptionists && Array.isArray(data.receptionists)) {
+          setReceptionists(data.receptionists);
+        }
+      } else {
+        showToast(data.message || 'Failed to delete receptionists.');
+      }
+      setSelectedReceptionistIds([]);
+      setShowBulkDeleteReceptionistsModal(false);
+      fetchReceptionists();
+    } catch (err) {
+      showToast('Network error while deleting receptionists.');
+      fetchReceptionists();
+    } finally {
+      setIsBulkDeletingReceptionists(false);
+    }
+  };
+
+  // ── 2d. Manual Invoice Creation & Editing Handlers ─────────────────────────
+  const handleSaveManualInvoice = async (invoiceData: any) => {
+    try {
+      const rawAmt = Number(invoiceData.netAmount) || 0;
+      const cleanPhone = (invoiceData.buyerPhone || '').replace(/\D/g, '').slice(-10);
+
+      // 1. If matching registered student exists, update their ledger
+      const matchedStudent = students.find(
+        (s) =>
+          (s.phone && (s.phone.replace(/\D/g, '').slice(-10) === cleanPhone)) ||
+          s.name.toLowerCase() === invoiceData.soldToName.toLowerCase()
+      );
+
+      if (matchedStudent && rawAmt > 0) {
+        const curTotal = matchedStudent.totalFee ?? rawAmt;
+        const curPaid = (matchedStudent.paidFee ?? 0) + rawAmt;
+        const curDue = Math.max(0, curTotal - curPaid);
+        await fetch('/api/admin/students', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: cleanPhone,
+            updates: {
+              totalFee: curTotal,
+              paidFee: curPaid,
+              dueFee: curDue,
+            },
+          }),
+        });
+      }
+
+      // 2. Save transaction to ledger
+      const res = await fetch('/api/admin/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          receiptNumber: invoiceData.invoiceNo,
+          studentName: invoiceData.soldToName,
+          studentPhone: invoiceData.buyerPhone,
+          amount: rawAmt,
+          courseTitle: invoiceData.items?.[0]?.description || 'Manual Institutional Invoice',
+          type: 'admission_fee',
+          paymentMethod: invoiceData.modeOfSupply || 'CASH / BANK TRANSFER',
+          status: 'SUCCESS',
+          remarks: invoiceData.remarks || `Manual Invoice #${invoiceData.invoiceNo}`,
+          invoiceData,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Official Tax Invoice #${invoiceData.invoiceNo} saved & recorded in ledger!`);
+        setShowCreateManualInvoiceModal(false);
+        setManualInvoiceSelectedStudent(null);
+        fetchTransactions();
+        fetchStudents();
+      } else {
+        showToast(data.message || 'Error recording invoice in ledger');
+      }
+    } catch (err) {
+      showToast('Network error while saving invoice');
+    }
+  };
+
+  const handleUpdateTransactionInvoice = async (txn: AdminTransaction, savedInvoice: any) => {
+    try {
+      const res = await fetch('/api/admin/transactions', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: txn.id,
+          receiptNumber: txn.receiptNumber || (txn as any).receiptNo,
+          updates: {
+            invoiceData: savedInvoice,
+            amount: Number(savedInvoice.netAmount) || txn.amount,
+            studentName: savedInvoice.soldToName || txn.studentName,
+            studentPhone: savedInvoice.buyerPhone || txn.studentPhone,
+            remarks: savedInvoice.remarks || (txn as any).remarks,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Invoice for ${txn.studentName} updated successfully!`);
+        setSelectedTxnForReceipt(null);
+        fetchTransactions();
+      } else {
+        showToast(data.message || 'Failed to update transaction');
+      }
+    } catch (err) {
+      showToast('Network error while updating transaction invoice');
+    }
+  };
+
+  // ── Render Gatekeeper if Unauthenticated ──────────────────────────────────
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#FFF9EF] flex flex-col justify-between selection:bg-[#EFC988] selection:text-[#89190E] relative overflow-hidden">
@@ -3533,6 +3847,17 @@ export default function SuperAdminMasterDashboard() {
 
                 <div className="flex items-center gap-3">
                   <button
+                    type="button"
+                    onClick={() => {
+                      setManualInvoiceSelectedStudent(null);
+                      setShowCreateManualInvoiceModal(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>+ Create Manual Invoice</span>
+                  </button>
+                  <button
                     onClick={() => setShowAddStudentModal(true)}
                     className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
                   >
@@ -3548,6 +3873,15 @@ export default function SuperAdminMasterDashboard() {
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="bg-[#F0F3FF] uppercase font-bold text-[10px] text-[#8C716C] tracking-wider border-b border-[#E8EEFF]">
+                        <th className="py-3.5 px-3 w-10 text-center">
+                          <input
+                            type="checkbox"
+                            aria-label="Select all students"
+                            checked={isAllFilteredStudentsSelected}
+                            onChange={toggleSelectAllStudents}
+                            className="w-4 h-4 rounded text-[#89190E] focus:ring-[#89190E] cursor-pointer"
+                          />
+                        </th>
                         <th className="py-3.5 px-4">Student Name</th>
                         <th className="py-3.5 px-4">Mobile Number</th>
                         <th className="py-3.5 px-4">Enrolled Stream / Batch</th>
@@ -3561,13 +3895,22 @@ export default function SuperAdminMasterDashboard() {
                     <tbody className="divide-y divide-[#E8EEFF]">
                       {filteredStudents.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="text-center py-12 text-gray-500 font-sans">
+                          <td colSpan={9} className="text-center py-12 text-gray-500 font-sans">
                             No registered students found. Click "+ Add New Student" to enroll the first student.
                           </td>
                         </tr>
                       ) : (
                         filteredStudents.map((stu) => (
                           <tr key={stu.id || stu.phone} className="hover:bg-[#F0F3FF]/50 transition-colors">
+                            <td className="py-3.5 px-3 text-center">
+                              <input
+                                type="checkbox"
+                                aria-label={`Select student ${stu.name}`}
+                                checked={selectedStudentPhones.includes(stu.phone)}
+                                onChange={() => toggleSelectStudent(stu.phone)}
+                                className="w-4 h-4 rounded text-[#89190E] focus:ring-[#89190E] cursor-pointer"
+                              />
+                            </td>
                             <td className="py-3.5 px-4">
                               <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-full bg-[#89190E]/10 text-[#89190E] flex items-center justify-center font-bold text-xs shrink-0">
@@ -3639,6 +3982,17 @@ export default function SuperAdminMasterDashboard() {
                                 <button
                                   type="button"
                                   onClick={() => {
+                                    setManualInvoiceSelectedStudent(stu);
+                                    setShowCreateManualInvoiceModal(true);
+                                  }}
+                                  className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 transition-colors cursor-pointer"
+                                  title="Create / Print Official Manual Invoice for this Student"
+                                >
+                                  <FileText className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
                                     setStudentForCollectFee(stu);
                                     setCollectFeeAmount(String(stu.dueFee && stu.dueFee > 0 ? stu.dueFee : (stu.totalFee || 5000)));
                                   }}
@@ -3687,6 +4041,34 @@ export default function SuperAdminMasterDashboard() {
                   </table>
                 </div>
               </div>
+
+              {/* Floating Bulk Action Bar for Selected Students */}
+              {selectedStudentPhones.length > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#071B37] text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/10 animate-bounce-short">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="w-6 h-6 rounded-full bg-[#89190E] text-white font-bold flex items-center justify-center text-[11px]">
+                      {selectedStudentPhones.length}
+                    </span>
+                    <span>student{selectedStudentPhones.length > 1 ? 's' : ''} selected</span>
+                  </div>
+                  <div className="h-4 w-px bg-white/20" />
+                  <button
+                    type="button"
+                    onClick={() => setShowBulkDeleteStudentsModal(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Selected ({selectedStudentPhones.length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedStudentPhones([])}
+                    className="text-xs text-gray-300 hover:text-white cursor-pointer"
+                  >
+                    Deselect All
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -3755,6 +4137,15 @@ export default function SuperAdminMasterDashboard() {
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="bg-[#F0F3FF] uppercase font-bold text-[10px] text-[#8C716C] tracking-wider border-b border-[#E8EEFF]">
+                        <th className="py-3.5 px-3 w-10 text-center">
+                          <input
+                            type="checkbox"
+                            aria-label="Select all leads"
+                            checked={isAllFilteredLeadsSelected}
+                            onChange={toggleSelectAllLeads}
+                            className="w-4 h-4 rounded text-[#89190E] focus:ring-[#89190E] cursor-pointer"
+                          />
+                        </th>
                         <th className="py-3.5 px-4">Lead Name</th>
                         <th className="py-3.5 px-4">Contact Mobile</th>
                         <th className="py-3.5 px-4">Target Course</th>
@@ -3762,12 +4153,13 @@ export default function SuperAdminMasterDashboard() {
                         <th className="py-3.5 px-4">Status</th>
                         <th className="py-3.5 px-4">Assigned Telecaller</th>
                         <th className="py-3.5 px-4">Latest Counselor Remark</th>
+                        <th className="py-3.5 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E8EEFF]">
                       {filteredLeads.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="text-center py-12 text-gray-500">
+                          <td colSpan={9} className="text-center py-12 text-gray-500">
                             No leads found in reception queue.
                           </td>
                         </tr>
@@ -3784,6 +4176,15 @@ export default function SuperAdminMasterDashboard() {
 
                           return (
                             <tr key={ld.id} className={`transition-colors ${rowClass}`}>
+                              <td className="py-3.5 px-3 text-center">
+                                <input
+                                  type="checkbox"
+                                  aria-label={`Select lead ${ld.name}`}
+                                  checked={selectedLeadIds.includes(ld.id)}
+                                  onChange={() => toggleSelectLead(ld.id)}
+                                  className="w-4 h-4 rounded text-[#89190E] focus:ring-[#89190E] cursor-pointer"
+                                />
+                              </td>
                               <td className="py-3.5 px-4">
                                 <span className="font-bold text-[#071B37] block">{ld.name}</span>
                                 <span className="text-[10px] text-gray-500">{ld.source}</span>
@@ -3835,12 +4236,22 @@ export default function SuperAdminMasterDashboard() {
                                   </div>
                                 </div>
                               </td>
-                            <td className="py-3.5 px-4 text-gray-700 font-medium">
-                              {ld.agent}
-                            </td>
-                            <td className="py-3.5 px-4 text-gray-500 max-w-xs truncate">
-                              {ld.latestRemark}
-                            </td>
+                              <td className="py-3.5 px-4 text-gray-700 font-medium">
+                                {ld.agent}
+                              </td>
+                              <td className="py-3.5 px-4 text-gray-500 max-w-xs truncate">
+                                {ld.latestRemark}
+                              </td>
+                              <td className="py-3.5 px-4 text-right">
+                                <button
+                                  type="button"
+                                  onClick={() => setLeadToDelete(ld)}
+                                  className="p-1.5 rounded-lg bg-red-50 hover:bg-red-600 hover:text-white text-red-600 transition-colors cursor-pointer"
+                                  title="Delete Lead"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
                             </tr>
                           );
                         })
@@ -3849,6 +4260,34 @@ export default function SuperAdminMasterDashboard() {
                   </table>
                 </div>
               </div>
+
+              {/* Floating Bulk Action Bar for Selected Leads */}
+              {selectedLeadIds.length > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#071B37] text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/10 animate-bounce-short">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="w-6 h-6 rounded-full bg-[#89190E] text-white font-bold flex items-center justify-center text-[11px]">
+                      {selectedLeadIds.length}
+                    </span>
+                    <span>lead{selectedLeadIds.length > 1 ? 's' : ''} selected</span>
+                  </div>
+                  <div className="h-4 w-px bg-white/20" />
+                  <button
+                    type="button"
+                    onClick={() => setShowBulkDeleteLeadsModal(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Selected ({selectedLeadIds.length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedLeadIds([])}
+                    className="text-xs text-gray-300 hover:text-white cursor-pointer"
+                  >
+                    Deselect All
+                  </button>
+                </div>
+              )}
 
               {/* Receptionist Staff Accounts Card (User Audio Request) */}
               <div className="bg-white rounded-2xl border border-[#E8EEFF] shadow-xs overflow-hidden">
@@ -3890,6 +4329,15 @@ export default function SuperAdminMasterDashboard() {
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="bg-[#F0F3FF] uppercase font-bold text-[10px] text-[#8C716C] tracking-wider border-b border-[#E8EEFF]">
+                        <th className="py-3 px-3 w-10 text-center">
+                          <input
+                            type="checkbox"
+                            aria-label="Select all receptionists"
+                            checked={isAllReceptionistsSelected}
+                            onChange={toggleSelectAllReceptionists}
+                            className="w-4 h-4 rounded text-[#89190E] focus:ring-[#89190E] cursor-pointer"
+                          />
+                        </th>
                         <th className="py-3 px-4">Staff Member</th>
                         <th className="py-3 px-4">Login Mobile</th>
                         <th className="py-3 px-4">Login Password</th>
@@ -3902,6 +4350,15 @@ export default function SuperAdminMasterDashboard() {
                       {/* Senior Receptionist / Permanent Desk Row */}
                       {seniorDeskRecord && (
                         <tr className="hover:bg-[#F0F3FF]/40 transition-colors bg-[#FFFDF9]">
+                          <td className="py-3 px-3 text-center">
+                            <input
+                              type="checkbox"
+                              aria-label={`Select receptionist ${seniorDeskRecord.name}`}
+                              checked={selectedReceptionistIds.includes(seniorDeskRecord.id)}
+                              onChange={() => toggleSelectReceptionist(seniorDeskRecord.id)}
+                              className="w-4 h-4 rounded text-[#89190E] focus:ring-[#89190E] cursor-pointer"
+                            />
+                          </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2.5">
                               <div className="w-7 h-7 rounded-full bg-[#89190E] text-white flex items-center justify-center font-bold text-[11px] shrink-0">
@@ -3966,6 +4423,15 @@ export default function SuperAdminMasterDashboard() {
                       {/* Dynamic Receptionists */}
                       {visibleReceptionists.map((rec) => (
                         <tr key={rec.id} className="hover:bg-[#F0F3FF]/40 transition-colors">
+                          <td className="py-3 px-3 text-center">
+                            <input
+                              type="checkbox"
+                              aria-label={`Select receptionist ${rec.name}`}
+                              checked={selectedReceptionistIds.includes(rec.id)}
+                              onChange={() => toggleSelectReceptionist(rec.id)}
+                              className="w-4 h-4 rounded text-[#89190E] focus:ring-[#89190E] cursor-pointer"
+                            />
+                          </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2.5">
                               <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-[11px] shrink-0">
@@ -4030,6 +4496,34 @@ export default function SuperAdminMasterDashboard() {
                   </table>
                 </div>
               </div>
+
+              {/* Floating Bulk Action Bar for Selected Receptionists */}
+              {selectedReceptionistIds.length > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#071B37] text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/10 animate-bounce-short">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="w-6 h-6 rounded-full bg-[#89190E] text-white font-bold flex items-center justify-center text-[11px]">
+                      {selectedReceptionistIds.length}
+                    </span>
+                    <span>staff member{selectedReceptionistIds.length > 1 ? 's' : ''} selected</span>
+                  </div>
+                  <div className="h-4 w-px bg-white/20" />
+                  <button
+                    type="button"
+                    onClick={() => setShowBulkDeleteReceptionistsModal(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Selected ({selectedReceptionistIds.length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedReceptionistIds([])}
+                    className="text-xs text-gray-300 hover:text-white cursor-pointer"
+                  >
+                    Deselect All
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -4457,6 +4951,18 @@ export default function SuperAdminMasterDashboard() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setManualInvoiceSelectedStudent(null);
+                      setShowCreateManualInvoiceModal(true);
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>+ Create Manual Invoice</span>
+                  </button>
+
                   {students.length > 0 && (
                     <button
                       type="button"
@@ -4615,9 +5121,11 @@ export default function SuperAdminMasterDashboard() {
                               <button
                                 type="button"
                                 onClick={() => setSelectedTxnForReceipt(txn)}
-                                className="px-2.5 py-1 rounded-lg border border-[#D5E1ED] text-[11px] font-bold text-[#071B37] hover:bg-gray-100 cursor-pointer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#D5E1ED] text-xs font-bold text-[#071B37] hover:bg-[#F0F3FF] hover:border-[#89190E] transition-colors cursor-pointer"
+                                title="View & Edit Official Tax Invoice / Receipt"
                               >
-                                Receipt
+                                <FileText className="w-3.5 h-3.5 text-[#89190E]" />
+                                <span>Receipt / Invoice</span>
                               </button>
                             </td>
                           </tr>
@@ -4754,8 +5262,24 @@ export default function SuperAdminMasterDashboard() {
               {selectedTxnForReceipt && (
                 <FeeReceiptModal
                   transaction={selectedTxnForReceipt}
-                  allowEdit={false}
+                  allowEdit={true}
+                  onSave={(savedInvoice) => handleUpdateTransactionInvoice(selectedTxnForReceipt, savedInvoice)}
                   onClose={() => setSelectedTxnForReceipt(null)}
+                />
+              )}
+
+              {/* Create Manual Invoice Modal */}
+              {showCreateManualInvoiceModal && (
+                <FeeReceiptModal
+                  isCreateMode={true}
+                  allowEdit={true}
+                  prefillStudent={manualInvoiceSelectedStudent}
+                  availableStudents={students}
+                  onSave={handleSaveManualInvoice}
+                  onClose={() => {
+                    setShowCreateManualInvoiceModal(false);
+                    setManualInvoiceSelectedStudent(null);
+                  }}
                 />
               )}
             </div>
@@ -5372,6 +5896,51 @@ export default function SuperAdminMasterDashboard() {
         </div>
       )}
 
+      {/* Bulk Delete Students Confirmation Modal */}
+      {showBulkDeleteStudentsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-red-200 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <h3 className="font-serif text-lg font-bold text-[#10233F] mb-1">
+              Delete {selectedStudentPhones.length} Selected Students?
+            </h3>
+            <p className="text-xs text-gray-500 mb-5 leading-relaxed">
+              Are you sure you want to permanently delete all <strong>{selectedStudentPhones.length}</strong> selected student accounts? Their portal access, fee records, and credentials will be removed from disk immediately.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowBulkDeleteStudentsModal(false)}
+                disabled={isBulkDeletingStudents}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDeleteStudents}
+                disabled={isBulkDeletingStudents}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isBulkDeletingStudents ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Deleting ({selectedStudentPhones.length})...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete All {selectedStudentPhones.length}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 3b. Student Credentials Success Dialog */}
       {createdStudentCredentials && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
@@ -5577,6 +6146,130 @@ export default function SuperAdminMasterDashboard() {
                   <>
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Confirm Delete</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Single Lead Confirmation Modal */}
+      {leadToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-red-200 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <h3 className="font-serif text-lg font-bold text-[#10233F] mb-1">
+              Delete Lead Record?
+            </h3>
+            <p className="text-xs text-gray-500 mb-5 leading-relaxed">
+              Are you sure you want to permanently delete lead <strong>{leadToDelete.name}</strong> ({leadToDelete.mobile})? This lead will be removed from the telecalling desk immediately.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setLeadToDelete(null)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteLead(leadToDelete)}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Confirm Delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Leads Confirmation Modal */}
+      {showBulkDeleteLeadsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-red-200 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <h3 className="font-serif text-lg font-bold text-[#10233F] mb-1">
+              Delete {selectedLeadIds.length} Selected Leads?
+            </h3>
+            <p className="text-xs text-gray-500 mb-5 leading-relaxed">
+              Are you sure you want to permanently delete <strong>{selectedLeadIds.length}</strong> selected inquiry leads? They will be removed from both super-admin and reception telecalling registers.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowBulkDeleteLeadsModal(false)}
+                disabled={isBulkDeletingLeads}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDeleteLeads}
+                disabled={isBulkDeletingLeads}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isBulkDeletingLeads ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Deleting ({selectedLeadIds.length})...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete All {selectedLeadIds.length}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Receptionists Confirmation Modal */}
+      {showBulkDeleteReceptionistsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-red-200 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <h3 className="font-serif text-lg font-bold text-[#10233F] mb-1">
+              Delete {selectedReceptionistIds.length} Front Desk Staff?
+            </h3>
+            <p className="text-xs text-gray-500 mb-5 leading-relaxed">
+              Are you sure you want to permanently delete <strong>{selectedReceptionistIds.length}</strong> selected receptionist accounts? They will immediately lose access to the reception portal.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowBulkDeleteReceptionistsModal(false)}
+                disabled={isBulkDeletingReceptionists}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDeleteReceptionists}
+                disabled={isBulkDeletingReceptionists}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isBulkDeletingReceptionists ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Deleting ({selectedReceptionistIds.length})...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete All {selectedReceptionistIds.length}</span>
                   </>
                 )}
               </button>

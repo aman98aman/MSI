@@ -59,7 +59,7 @@ export async function GET() {
       const assignedLeads = leads.filter((l) => {
         if (!l.agent) return false;
         const agClean = l.agent.toLowerCase().trim();
-        const assignedTo = (l.assignedTo || '').toLowerCase().trim();
+        const assignedTo = ((l as any).assignedTo || '').toLowerCase().trim();
         return (
           agClean.includes(recNameClean) ||
           recNameClean.includes(agClean) ||

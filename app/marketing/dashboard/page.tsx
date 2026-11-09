@@ -970,9 +970,9 @@ export default function MarketingDashboardPage() {
                                   <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold">
                                     {lead.agent}
                                   </span>
-                                  {lead.assignedAt && (
+                                  {(lead as any).assignedAt && (
                                     <div className="text-[9px] text-slate-400 mt-0.5">
-                                      Assigned {new Date(lead.assignedAt).toLocaleDateString()}
+                                      Assigned {new Date((lead as any).assignedAt).toLocaleDateString()}
                                     </div>
                                   )}
                                 </div>

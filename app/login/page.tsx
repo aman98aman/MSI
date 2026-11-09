@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import ThemeToggle from '@/components/glass/ThemeToggle';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -432,14 +433,14 @@ export default function UnifiedLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF9EF] flex flex-col justify-between selection:bg-[#EFC988] selection:text-[#89190E] relative overflow-hidden">
+    <div className="min-h-screen dashboard-bg flex flex-col justify-between selection:bg-indigo-500/20 selection:text-indigo-600 relative overflow-hidden text-slate-900 dark:text-white">
       {/* Blueprint ambient backdrop */}
       <div className="absolute inset-0 blueprint-grid opacity-20 pointer-events-none" />
       <div className="absolute -top-32 -right-32 w-96 h-96 bg-[#89190E]/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-[#10233F]/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header Bar */}
-      <header className="relative z-10 w-full px-6 py-4 flex items-center justify-between border-b border-[#E8DCCB]/80 bg-white/70 backdrop-blur-md">
+      <header className="relative z-10 w-full px-6 py-4 flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 glass-nav">
         <Link href="/" className="flex items-center space-x-3 group">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#89190E] to-[#10233F] p-0.5 shadow-md group-hover:scale-105 transition-transform">
             <div className="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
@@ -447,7 +448,7 @@ export default function UnifiedLoginPage() {
             </div>
           </div>
           <div>
-            <span className="font-serif font-bold text-base text-[#10233F] tracking-tight block">
+            <span className="font-serif font-bold text-base text-slate-900 dark:text-white tracking-tight block">
               MSI Group of Institutes
             </span>
             <span className="text-[10px] uppercase font-mono tracking-widest text-[#89190E] font-bold block">
@@ -459,19 +460,20 @@ export default function UnifiedLoginPage() {
         <div className="flex items-center space-x-3 text-xs">
           <Link
             href="/"
-            className="text-[#526174] hover:text-[#89190E] font-semibold transition-colors hidden sm:inline-block"
+            className="text-slate-500 dark:text-slate-400 hover:text-[#89190E] font-semibold transition-colors hidden sm:inline-block"
           >
             ← Back to Main Website
           </Link>
-          <span className="px-2.5 py-1 rounded-full bg-[#10233F]/5 text-[#10233F] font-mono font-bold text-[11px] border border-[#10233F]/10">
+          <span className="px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-mono font-bold text-[11px] border border-indigo-500/20">
             SSL 256-Bit Encrypted
           </span>
+          <ThemeToggle />
         </div>
       </header>
 
       {/* Main Login Card Container */}
       <main className="relative z-10 flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-        <div className="w-full max-w-xl bg-white rounded-3xl border-2 border-[#E8DCCB] shadow-2xl p-6 sm:p-10 relative overflow-hidden">
+        <div className="w-full max-w-xl glass-card-elevated rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-2xl p-6 sm:p-10 relative overflow-hidden text-slate-900 dark:text-white">
           {/* Top Decorative Strip */}
           <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#89190E] via-[#EFC988] to-[#10233F]" />
 
@@ -481,16 +483,16 @@ export default function UnifiedLoginPage() {
               <ShieldCheck className="w-3.5 h-3.5" />
               <span>Unified Institutional Authentication</span>
             </div>
-            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#10233F] tracking-tight">
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
               Sign In to MSI Portal
             </h1>
-            <p className="text-xs sm:text-sm text-[#526174] mt-1.5 max-w-md mx-auto">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1.5 max-w-md mx-auto">
               Single gateway for Faculty Members, Enrolled Scholars, and Master Administration.
             </p>
           </div>
 
           {/* Top Switcher: Password Login vs Student Registration vs OTP Access */}
-          <div className="grid grid-cols-3 p-1 rounded-2xl bg-[#FFF9EF] border border-[#E8DCCB] mb-6 gap-1">
+          <div className="grid grid-cols-3 p-1 rounded-2xl glass-card border border-slate-200 dark:border-white/10 mb-6 gap-1">
             <button
               type="button"
               onClick={() => {
@@ -500,8 +502,8 @@ export default function UnifiedLoginPage() {
               }}
               className={`py-2 px-2 sm:px-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
                 activeTab === 'password'
-                  ? 'bg-[#10233F] text-white shadow-md'
-                  : 'text-[#526174] hover:text-[#10233F]'
+                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white'
               }`}
             >
               <KeyRound className="w-3.5 h-3.5 shrink-0" />
@@ -517,8 +519,8 @@ export default function UnifiedLoginPage() {
               }}
               className={`py-2 px-2 sm:px-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
                 activeTab === 'register'
-                  ? 'bg-[#89190E] text-white shadow-md'
-                  : 'text-[#526174] hover:text-[#89190E]'
+                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-[#89190E]'
               }`}
             >
               <UserPlus className="w-3.5 h-3.5 shrink-0 text-[#EFC988]" />
@@ -535,8 +537,8 @@ export default function UnifiedLoginPage() {
               }}
               className={`py-2 px-2 sm:px-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
                 activeTab === 'otp'
-                  ? 'bg-[#10233F] text-white shadow-md'
-                  : 'text-[#526174] hover:text-[#10233F]'
+                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white'
               }`}
             >
               <Smartphone className="w-3.5 h-3.5 shrink-0" />
@@ -565,7 +567,7 @@ export default function UnifiedLoginPage() {
           {activeTab === 'password' && (
             <form onSubmit={handlePasswordLogin} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#10233F] mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1.5 uppercase tracking-wider">
                   Mobile Number or Official Email
                 </label>
                 <div className="relative">
@@ -574,18 +576,18 @@ export default function UnifiedLoginPage() {
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     placeholder="e.g. 9792303434 or official email"
-                    className="w-full h-11 px-4 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-[#10233F] text-xs font-medium placeholder:text-[#526174]/50 focus:border-[#89190E] focus:outline-none focus:bg-white transition-all"
+                    className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-slate-900 dark:text-white text-xs font-medium placeholder:text-slate-500 dark:text-slate-400/50 focus:border-indigo-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 transition-all"
                     required
                   />
                 </div>
-                <p className="text-[10px] text-[#526174] mt-1">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
                   Students: enter your 10-digit registered number. Faculty: use your registered phone or Gmail.
                 </p>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold text-[#10233F] uppercase tracking-wider">
+                  <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                     Password
                   </label>
                   <button
@@ -605,13 +607,13 @@ export default function UnifiedLoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your account password"
-                    className="w-full h-11 px-4 pr-11 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-[#10233F] text-xs font-medium placeholder:text-[#526174]/50 focus:border-[#89190E] focus:outline-none focus:bg-white transition-all"
+                    className="w-full h-11 px-4 pr-11 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-slate-900 dark:text-white text-xs font-medium placeholder:text-slate-500 dark:text-slate-400/50 focus:border-indigo-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 transition-all"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#526174] hover:text-[#10233F] cursor-pointer"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -633,8 +635,8 @@ export default function UnifiedLoginPage() {
                 )}
               </button>
 
-              <div className="pt-4 border-t border-[#E8DCCB]/60 text-center">
-                <p className="text-xs text-[#526174]">
+              <div className="pt-4 border-t border-slate-200 dark:border-white/10/60 text-center">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   New student?{' '}
                   <button
                     type="button"
@@ -651,8 +653,8 @@ export default function UnifiedLoginPage() {
               </div>
 
               {/* Faculty Provisioning Note */}
-              <div className="mt-4 p-3 rounded-xl bg-[#10233F]/5 border border-[#10233F]/10 text-[11px] text-[#526174] leading-relaxed">
-                <span className="font-bold text-[#10233F] block mb-0.5">Note for Faculty Members:</span>
+              <div className="mt-4 p-3 rounded-xl bg-[#10233F]/5 border border-[#10233F]/10 text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                <span className="font-bold text-slate-900 dark:text-white block mb-0.5">Note for Faculty Members:</span>
                 Faculty profiles are provisioned directly by the Super Admin Directorate. Enter your assigned mobile number or Gmail ID and password to access the Faculty Dashboard.
               </div>
             </form>
@@ -664,7 +666,7 @@ export default function UnifiedLoginPage() {
           {activeTab === 'register' && (
             <form onSubmit={handleDirectStudentRegister} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#10233F] mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1.5 uppercase tracking-wider">
                   Student Full Name *
                 </label>
                 <input
@@ -672,17 +674,17 @@ export default function UnifiedLoginPage() {
                   value={regName}
                   onChange={(e) => setRegName(e.target.value)}
                   placeholder="e.g. Harshit Verma"
-                  className="w-full h-11 px-4 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-[#10233F] text-xs font-medium placeholder:text-[#526174]/50 focus:border-[#89190E] focus:outline-none focus:bg-white transition-all"
+                  className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-slate-900 dark:text-white text-xs font-medium placeholder:text-slate-500 dark:text-slate-400/50 focus:border-indigo-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 transition-all"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#10233F] mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1.5 uppercase tracking-wider">
                   Mobile Number (10 Digits) *
                 </label>
                 <div className="relative flex items-center">
-                  <span className="absolute left-3.5 text-xs font-bold text-[#526174]">
+                  <span className="absolute left-3.5 text-xs font-bold text-slate-500 dark:text-slate-400">
                     +91
                   </span>
                   <input
@@ -691,20 +693,20 @@ export default function UnifiedLoginPage() {
                     onChange={(e) => setRegPhone(cleanPhoneInput(e.target.value))}
                     placeholder="98765 43210"
                     maxLength={10}
-                    className="w-full h-11 pl-13 pr-4 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-[#10233F] text-xs font-medium placeholder:text-[#526174]/50 focus:border-[#89190E] focus:outline-none focus:bg-white transition-all font-mono"
+                    className="w-full h-11 pl-13 pr-4 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-slate-900 dark:text-white text-xs font-medium placeholder:text-slate-500 dark:text-slate-400/50 focus:border-indigo-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 transition-all font-mono"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#10233F] mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1.5 uppercase tracking-wider">
                   Target Programme / Course Stream *
                 </label>
                 <select
                   value={regStream}
                   onChange={(e) => setRegStream(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-[#10233F] text-xs font-medium focus:border-[#89190E] focus:outline-none focus:bg-white transition-all"
+                  className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-slate-900 dark:text-white text-xs font-medium focus:border-indigo-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 transition-all"
                 >
                   <option value="PCS-J Punjab Judicial Services">PCS-J Punjab Judicial Services</option>
                   <option value="CLAT UG Foundation Batch">CLAT UG Foundation & Target Batch</option>
@@ -715,7 +717,7 @@ export default function UnifiedLoginPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#10233F] mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1.5 uppercase tracking-wider">
                   Email Address (Optional)
                 </label>
                 <input
@@ -723,13 +725,13 @@ export default function UnifiedLoginPage() {
                   value={regEmail}
                   onChange={(e) => setRegEmail(e.target.value)}
                   placeholder="e.g. scholar@gmail.com"
-                  className="w-full h-11 px-4 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-[#10233F] text-xs font-medium placeholder:text-[#526174]/50 focus:border-[#89190E] focus:outline-none focus:bg-white transition-all"
+                  className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-slate-900 dark:text-white text-xs font-medium placeholder:text-slate-500 dark:text-slate-400/50 focus:border-indigo-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 transition-all"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#10233F] mb-1.5 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1.5 uppercase tracking-wider">
                     Password *
                   </label>
                   <div className="relative">
@@ -738,13 +740,13 @@ export default function UnifiedLoginPage() {
                       value={regPassword}
                       onChange={(e) => setRegPassword(e.target.value)}
                       placeholder="Min 4 characters"
-                      className="w-full h-11 px-3.5 pr-10 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-[#10233F] text-xs font-medium focus:border-[#89190E] focus:outline-none focus:bg-white transition-all"
+                      className="w-full h-11 px-3.5 pr-10 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-slate-900 dark:text-white text-xs font-medium focus:border-indigo-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 transition-all"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowRegPassword(!showRegPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#526174] hover:text-[#10233F] cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white cursor-pointer"
                     >
                       {showRegPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     </button>
@@ -752,7 +754,7 @@ export default function UnifiedLoginPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#10233F] mb-1.5 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1.5 uppercase tracking-wider">
                     Confirm Password *
                   </label>
                   <div className="relative">
@@ -761,13 +763,13 @@ export default function UnifiedLoginPage() {
                       value={regConfirmPassword}
                       onChange={(e) => setRegConfirmPassword(e.target.value)}
                       placeholder="Re-type password"
-                      className="w-full h-11 px-3.5 pr-10 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-[#10233F] text-xs font-medium focus:border-[#89190E] focus:outline-none focus:bg-white transition-all"
+                      className="w-full h-11 px-3.5 pr-10 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-slate-900 dark:text-white text-xs font-medium focus:border-indigo-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 transition-all"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#526174] hover:text-[#10233F] cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white cursor-pointer"
                     >
                       {showRegConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     </button>
@@ -791,8 +793,8 @@ export default function UnifiedLoginPage() {
                 )}
               </button>
 
-              <div className="pt-3 border-t border-[#E8DCCB]/60 text-center">
-                <p className="text-xs text-[#526174]">
+              <div className="pt-3 border-t border-slate-200 dark:border-white/10/60 text-center">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Already have an account?{' '}
                   <button
                     type="button"
@@ -819,11 +821,11 @@ export default function UnifiedLoginPage() {
               {otpStep === 'request' && (
                 <form onSubmit={handleRequestOtp} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-[#10233F] mb-1.5 uppercase tracking-wider">
+                    <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1.5 uppercase tracking-wider">
                       Student Mobile Number (10 Digits)
                     </label>
                     <div className="relative flex items-center">
-                      <span className="absolute left-3.5 text-xs font-bold text-[#526174]">
+                      <span className="absolute left-3.5 text-xs font-bold text-slate-500 dark:text-slate-400">
                         +91
                       </span>
                       <input
@@ -832,14 +834,14 @@ export default function UnifiedLoginPage() {
                         onChange={(e) => setOtpPhone(cleanPhoneInput(e.target.value))}
                         placeholder="98765 43210"
                         maxLength={10}
-                        className="w-full h-11 pl-13 pr-4 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-[#10233F] text-xs font-medium placeholder:text-[#526174]/50 focus:border-[#89190E] focus:outline-none focus:bg-white transition-all font-mono"
+                        className="w-full h-11 pl-13 pr-4 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-slate-900 dark:text-white text-xs font-medium placeholder:text-slate-500 dark:text-slate-400/50 focus:border-indigo-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 transition-all font-mono"
                         required
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#10233F] mb-1.5 uppercase tracking-wider">
+                    <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1.5 uppercase tracking-wider">
                       Full Name (Optional for existing students)
                     </label>
                     <input
@@ -847,18 +849,18 @@ export default function UnifiedLoginPage() {
                       value={studentFullName}
                       onChange={(e) => setStudentFullName(e.target.value)}
                       placeholder="e.g. Meera Sen"
-                      className="w-full h-11 px-4 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-[#10233F] text-xs font-medium placeholder:text-[#526174]/50 focus:border-[#89190E] focus:outline-none focus:bg-white transition-all"
+                      className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-slate-900 dark:text-white text-xs font-medium placeholder:text-slate-500 dark:text-slate-400/50 focus:border-indigo-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#10233F] mb-1.5 uppercase tracking-wider">
+                    <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1.5 uppercase tracking-wider">
                       Target Programme / Course Stream
                     </label>
                     <select
                       value={selectedBatch}
                       onChange={(e) => setSelectedBatch(e.target.value)}
-                      className="w-full h-11 px-3 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-[#10233F] text-xs font-medium focus:border-[#89190E] focus:outline-none focus:bg-white transition-all"
+                      className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-slate-900 dark:text-white text-xs font-medium focus:border-indigo-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 transition-all"
                     >
                       <option value="PCS-J Punjab Judicial Services">PCS-J Punjab Judicial Services</option>
                       <option value="CLAT UG Foundation Batch">CLAT UG Foundation & Target Batch</option>
@@ -888,10 +890,10 @@ export default function UnifiedLoginPage() {
               {otpStep === 'verify' && (
                 <form onSubmit={handleVerifyOtp} className="space-y-5">
                   <div className="text-center">
-                    <p className="text-xs text-[#526174]">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Enter the 6-digit verification code sent to:
                     </p>
-                    <p className="font-mono font-bold text-sm text-[#10233F] mt-0.5">
+                    <p className="font-mono font-bold text-sm text-slate-900 dark:text-white mt-0.5">
                       +91 {otpPhone.slice(0, 5)} {otpPhone.slice(5)}
                     </p>
                   </div>
@@ -902,7 +904,7 @@ export default function UnifiedLoginPage() {
                       <span className="text-[10px] uppercase font-mono font-bold text-[#89190E] block">
                         Development Preview OTP Code:
                       </span>
-                      <span className="font-mono text-xl font-black text-[#10233F] tracking-widest block mt-0.5">
+                      <span className="font-mono text-xl font-black text-slate-900 dark:text-white tracking-widest block mt-0.5">
                         {devOtpBadge}
                       </span>
                       <button
@@ -932,12 +934,12 @@ export default function UnifiedLoginPage() {
                         value={digit}
                         onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
                         onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                        className="w-11 h-13 sm:w-12 sm:h-14 text-center font-mono text-xl font-bold rounded-xl border-2 border-[#E8DCCB] focus:border-[#89190E] focus:outline-none bg-[#FFF9EF]/40 focus:bg-white text-[#10233F] transition-all"
+                        className="w-11 h-13 sm:w-12 sm:h-14 text-center font-mono text-xl font-bold rounded-xl border-2 border-slate-200 dark:border-white/10 focus:border-indigo-500 focus:outline-none glass-input focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white transition-all"
                       />
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between text-xs text-[#526174]">
+                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                     <button
                       type="button"
                       onClick={() => setOtpStep('request')}
@@ -987,7 +989,7 @@ export default function UnifiedLoginPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#10233F] mb-1.5 uppercase tracking-wider">
+                    <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1.5 uppercase tracking-wider">
                       Create New Password
                     </label>
                     <div className="relative">
@@ -996,13 +998,13 @@ export default function UnifiedLoginPage() {
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="Choose a password (min 4 characters)"
-                        className="w-full h-11 px-4 pr-11 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-[#10233F] text-xs font-medium placeholder:text-[#526174]/50 focus:border-[#89190E] focus:outline-none focus:bg-white transition-all"
+                        className="w-full h-11 px-4 pr-11 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-slate-900 dark:text-white text-xs font-medium placeholder:text-slate-500 dark:text-slate-400/50 focus:border-indigo-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 transition-all"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#526174] hover:text-[#10233F] cursor-pointer"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white cursor-pointer"
                       >
                         {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -1010,7 +1012,7 @@ export default function UnifiedLoginPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#10233F] mb-1.5 uppercase tracking-wider">
+                    <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1.5 uppercase tracking-wider">
                       Confirm Password
                     </label>
                     <div className="relative">
@@ -1019,13 +1021,13 @@ export default function UnifiedLoginPage() {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Re-enter chosen password"
-                        className="w-full h-11 px-4 pr-11 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-[#10233F] text-xs font-medium placeholder:text-[#526174]/50 focus:border-[#89190E] focus:outline-none focus:bg-white transition-all"
+                        className="w-full h-11 px-4 pr-11 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-slate-900 dark:text-white text-xs font-medium placeholder:text-slate-500 dark:text-slate-400/50 focus:border-indigo-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 transition-all"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#526174] hover:text-[#10233F] cursor-pointer"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white cursor-pointer"
                       >
                         {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -1054,7 +1056,7 @@ export default function UnifiedLoginPage() {
       </main>
 
       {/* Footer Branding */}
-      <footer className="relative z-10 w-full py-4 text-center text-xs text-[#526174] border-t border-[#E8DCCB]/80 bg-white/50 backdrop-blur-xs">
+      <footer className="relative z-10 w-full py-4 text-center text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200/80 dark:border-white/10 glass-card">
         <p>© {new Date().getFullYear()} MSI Group of Institutes. All Rights Reserved. ISO 9001:2015 Accredited Law Academy.</p>
       </footer>
     </div>

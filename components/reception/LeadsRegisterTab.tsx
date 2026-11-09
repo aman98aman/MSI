@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
@@ -608,28 +608,28 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
       {/* 2. Screen Header Area */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#526174]">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
             <span>Telecalling &amp; Leads</span>
             <span>/</span>
-            <span className="text-[#89190E] font-bold">Lead Register</span>
+            <span className="text-indigo-600 dark:text-indigo-400 font-bold">Lead Register</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#10233F] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
             Lead Register
           </h1>
-          <p className="text-xs sm:text-sm text-[#526174]">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             Manage enquiries, call prospects, record remarks and schedule follow-ups in one place.
           </p>
         </div>
         <div className="flex items-center gap-2.5 self-start md:self-auto flex-wrap">
           {/* View Mode Toggle: Table Register vs Columns / Pipeline Kanban */}
-          <div className="inline-flex rounded-xl bg-white border border-[#E5E9F0] p-1 shadow-2xs">
+          <div className="inline-flex rounded-xl glass-card p-1 shadow-sm">
             <button
               type="button"
               onClick={() => setViewMode('table')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-[#10233F] text-white shadow-xs'
-                  : 'text-[#526174] hover:text-[#10233F] hover:bg-slate-100'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -640,8 +640,8 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
               onClick={() => setViewMode('columns')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 viewMode === 'columns'
-                  ? 'bg-[#89190E] text-white shadow-xs'
-                  : 'text-[#526174] hover:text-[#10233F] hover:bg-slate-100'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Columns className="w-3.5 h-3.5" />
@@ -653,9 +653,9 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
             <button
               type="button"
               onClick={() => setLayoutCompact(!layoutCompact)}
-              className="flex items-center gap-1.5 rounded-xl bg-white border border-[#E5E9F0] px-3.5 py-2 text-xs font-semibold text-[#10233F] shadow-xs hover:bg-[#F8F9FA] transition-colors"
+              className="flex items-center gap-1.5 rounded-xl glass-card px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-sm hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
             >
-              <SlidersHorizontal className="w-4 h-4 text-[#765a24]" />
+              <SlidersHorizontal className="w-4 h-4 text-indigo-500" />
               <span>{layoutCompact ? 'Compact View' : 'Standard View'}</span>
             </button>
           )}
@@ -663,7 +663,7 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
           <button
             type="button"
             onClick={() => setShowAddLeadModal(true)}
-            className="flex items-center gap-1.5 rounded-xl bg-[#89190E] hover:bg-[#660100] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#fed795]"
+            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 px-4 py-2 text-xs font-bold text-white shadow-md transition-all cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
             <span>+ Add Lead</span>
@@ -681,19 +681,19 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
             setSourceFilter('All Sources');
             setCourseFilter('All Courses');
           }}
-          className={`group flex flex-col items-start rounded-2xl bg-white p-3.5 text-left shadow-xs border transition-all hover:border-[#89190E]/40 hover:shadow-sm ${
-            activeTabFilter === 'all' ? 'border-[#89190E] ring-1 ring-[#89190E]' : 'border-[#E5E9F0]'
+          className={`group flex flex-col items-start rounded-2xl glass-card p-3.5 text-left shadow-sm transition-all hover:border-indigo-500/40 hover:scale-[1.01] cursor-pointer ${
+            activeTabFilter === 'all' ? 'border-indigo-600 ring-2 ring-indigo-600/30' : ''
           }`}
         >
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[#526174] group-hover:text-[#89190E]">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
             Total Leads
           </span>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-serif text-[#10233F]">{metrics.total}</span>
-            <span className="text-[11px] text-[#765a24] font-bold">Active Pool</span>
+            <span className="text-2xl font-bold font-mono text-slate-900 dark:text-white">{metrics.total}</span>
+            <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-bold">Active Pool</span>
           </div>
-          <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-            <div className="h-full w-full bg-[#765a24]"></div>
+          <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+            <div className="h-full w-full bg-indigo-500"></div>
           </div>
         </button>
 
@@ -701,23 +701,23 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
         <button
           type="button"
           onClick={() => setActiveTabFilter('new')}
-          className={`group flex flex-col items-start rounded-2xl bg-white p-3.5 text-left shadow-xs border transition-all hover:border-slate-400 hover:shadow-sm ${
-            activeTabFilter === 'new' ? 'border-slate-600 ring-1 ring-slate-600' : 'border-[#E5E9F0]'
+          className={`group flex flex-col items-start rounded-2xl glass-card p-3.5 text-left shadow-sm transition-all hover:border-blue-400 hover:scale-[1.01] cursor-pointer ${
+            activeTabFilter === 'new' ? 'border-blue-500 ring-2 ring-blue-500/30' : ''
           }`}
         >
           <div className="flex w-full items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#526174] group-hover:text-slate-800">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-blue-500">
               New / Uncalled
             </span>
-            <span className="h-2 w-2 rounded-full bg-slate-400" />
+            <span className="h-2 w-2 rounded-full bg-blue-500" />
           </div>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-serif text-slate-800">{metrics.newCount}</span>
-            <span className="text-[11px] text-slate-500 font-medium">Unassigned ({metrics.unassignedCount})</span>
+            <span className="text-2xl font-bold font-mono text-blue-600 dark:text-blue-400">{metrics.newCount}</span>
+            <span className="text-[11px] text-slate-400 font-medium">Unassigned ({metrics.unassignedCount})</span>
           </div>
-          <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+          <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
             <div
-              className="h-full bg-slate-500 rounded-full"
+              className="h-full bg-blue-500 rounded-full"
               style={{ width: `${Math.min(100, (metrics.newCount / (metrics.total || 1)) * 100)}%` }}
             ></div>
           </div>
@@ -727,23 +727,23 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
         <button
           type="button"
           onClick={() => setActiveTabFilter('followup')}
-          className={`group flex flex-col items-start rounded-2xl bg-white p-3.5 text-left shadow-xs border transition-all hover:border-amber-400 hover:shadow-sm ${
-            activeTabFilter === 'followup' ? 'border-amber-500 ring-1 ring-amber-500 bg-amber-50/20' : 'border-[#E5E9F0]'
+          className={`group flex flex-col items-start rounded-2xl glass-card p-3.5 text-left shadow-sm transition-all hover:border-amber-400 hover:scale-[1.01] cursor-pointer ${
+            activeTabFilter === 'followup' ? 'border-amber-500 ring-2 ring-amber-500/30 bg-amber-500/10' : ''
           }`}
         >
           <div className="flex w-full items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#526174] group-hover:text-amber-800">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-amber-500">
               Follow-up
             </span>
             <span className="h-2 w-2 rounded-full bg-amber-500" />
           </div>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-serif text-amber-900">{metrics.followupCount}</span>
-            <span className="text-[11px] text-amber-700 font-medium">In Pipeline</span>
+            <span className="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">{metrics.followupCount}</span>
+            <span className="text-[11px] text-amber-500 font-medium">In Pipeline</span>
           </div>
-          <div className="mt-2 h-1.5 w-full rounded-full bg-amber-100 overflow-hidden">
+          <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
             <div
-              className="h-full bg-amber-600 rounded-full"
+              className="h-full bg-amber-500 rounded-full"
               style={{ width: `${Math.min(100, (metrics.followupCount / (metrics.total || 1)) * 100)}%` }}
             ></div>
           </div>
@@ -753,23 +753,23 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
         <button
           type="button"
           onClick={() => setActiveTabFilter('converted')}
-          className={`group flex flex-col items-start rounded-2xl bg-white p-3.5 text-left shadow-xs border transition-all hover:border-emerald-400 hover:shadow-sm ${
-            activeTabFilter === 'converted' ? 'border-emerald-500 ring-1 ring-emerald-500 bg-emerald-50/20' : 'border-[#E5E9F0]'
+          className={`group flex flex-col items-start rounded-2xl glass-card p-3.5 text-left shadow-sm transition-all hover:border-emerald-400 hover:scale-[1.01] cursor-pointer ${
+            activeTabFilter === 'converted' ? 'border-emerald-500 ring-2 ring-emerald-500/30 bg-emerald-500/10' : ''
           }`}
         >
           <div className="flex w-full items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#526174] group-hover:text-emerald-800">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-emerald-500">
               Converted
             </span>
-            <span className="h-2 w-2 rounded-full bg-emerald-600" />
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
           </div>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-serif text-emerald-900">{metrics.convertedCount}</span>
-            <span className="text-[11px] text-emerald-700 font-medium">Admitted</span>
+            <span className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">{metrics.convertedCount}</span>
+            <span className="text-[11px] text-emerald-500 font-medium">Admitted</span>
           </div>
-          <div className="mt-2 h-1.5 w-full rounded-full bg-emerald-100 overflow-hidden">
+          <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
             <div
-              className="h-full bg-emerald-600 rounded-full"
+              className="h-full bg-emerald-500 rounded-full"
               style={{ width: `${Math.min(100, (metrics.convertedCount / (metrics.total || 1)) * 100)}%` }}
             ></div>
           </div>
@@ -779,23 +779,23 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
         <button
           type="button"
           onClick={() => setActiveTabFilter('dead')}
-          className={`group flex flex-col items-start rounded-2xl bg-white p-3.5 text-left shadow-xs border transition-all hover:border-rose-400 hover:shadow-sm ${
-            activeTabFilter === 'dead' ? 'border-rose-500 ring-1 ring-rose-500 bg-rose-50/20' : 'border-[#E5E9F0]'
+          className={`group flex flex-col items-start rounded-2xl glass-card p-3.5 text-left shadow-sm transition-all hover:border-rose-400 hover:scale-[1.01] cursor-pointer ${
+            activeTabFilter === 'dead' ? 'border-rose-500 ring-2 ring-rose-500/30 bg-rose-500/10' : ''
           }`}
         >
           <div className="flex w-full items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#526174] group-hover:text-rose-800">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-rose-500">
               Dead / Inactive
             </span>
             <span className="h-2 w-2 rounded-full bg-rose-500" />
           </div>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-serif text-rose-900">{metrics.deadCount}</span>
-            <span className="text-[11px] text-rose-700 font-medium">Closed</span>
+            <span className="text-2xl font-bold font-mono text-rose-600 dark:text-rose-400">{metrics.deadCount}</span>
+            <span className="text-[11px] text-rose-500 font-medium">Closed</span>
           </div>
-          <div className="mt-2 h-1.5 w-full rounded-full bg-rose-100 overflow-hidden">
+          <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
             <div
-              className="h-full bg-rose-600 rounded-full"
+              className="h-full bg-rose-500 rounded-full"
               style={{ width: `${Math.min(100, (metrics.deadCount / (metrics.total || 1)) * 100)}%` }}
             ></div>
           </div>
@@ -805,21 +805,21 @@ export default function LeadsRegisterTab({ currentStaff }: LeadsRegisterTabProps
         <button
           type="button"
           onClick={() => setActiveTabFilter('due-today')}
-          className={`group flex flex-col items-start rounded-2xl p-3.5 text-left shadow-xs border transition-all ${
+          className={`group flex flex-col items-start rounded-2xl p-3.5 text-left shadow-sm border transition-all cursor-pointer hover:scale-[1.01] ${
             activeTabFilter === 'due-today' || activeTabFilter === 'overdue'
-              ? 'bg-[#FFDAD6] border-[#BA1A1A] ring-1 ring-[#BA1A1A]'
-              : 'bg-[#FFDAD6]/60 border-[#FFB4A8] hover:bg-[#FFDAD6]'
+              ? 'bg-rose-500/20 border-rose-500 ring-2 ring-rose-500/40 text-rose-600 dark:text-rose-400'
+              : 'glass-card border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10'
           }`}
         >
           <div className="flex w-full items-center justify-between">
-            <span className="text-[11px] font-bold uppercase text-[#BA1A1A]">Action Required</span>
-            <AlertCircle className="w-3.5 h-3.5 text-[#BA1A1A] animate-pulse" />
+            <span className="text-[11px] font-bold uppercase text-rose-600 dark:text-rose-400">Action Required</span>
+            <AlertCircle className="w-3.5 h-3.5 text-rose-500 animate-pulse" />
           </div>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-serif text-[#93000A]">{metrics.dueTodayCount} Due</span>
-            <span className="text-[11px] font-bold text-[#BA1A1A]">{metrics.overdueCount} Overdue</span>
+            <span className="text-2xl font-bold font-mono text-rose-600 dark:text-rose-400">{metrics.dueTodayCount} Due</span>
+            <span className="text-[11px] font-bold text-rose-500">{metrics.overdueCount} Overdue</span>
           </div>
-          <div className="mt-2 flex items-center gap-1 text-[11px] font-medium text-[#93000A]">
+          <div className="mt-2 flex items-center gap-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
             <span>Requires call action</span>
           </div>
         </button>

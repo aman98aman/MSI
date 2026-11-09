@@ -4,6 +4,7 @@ import "./globals.css";
 import FloatingActionDock from "@/components/ui/FloatingActionDock";
 import CustomCursor from "@/components/ui/CustomCursor";
 import SplashScreen from "@/components/ui/SplashScreen";
+import { ThemeProvider } from "@/components/glass/ThemeProvider";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -112,11 +113,13 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
-      <body className="min-h-screen flex flex-col font-sans bg-[#FFF9EF] text-[#10233F] antialiased selection:bg-[#EFC988] selection:text-[#89190E]">
-        <SplashScreen />
-        <CustomCursor />
-        {children}
-        <FloatingActionDock />
+      <body className="min-h-screen flex flex-col font-sans bg-[#FFF9EF] dark:bg-[#0B1020] text-[#10233F] dark:text-[#F8FAFC] antialiased selection:bg-[#EFC988] selection:text-[#89190E]">
+        <ThemeProvider>
+          <SplashScreen />
+          <CustomCursor />
+          {children}
+          <FloatingActionDock />
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -20,6 +20,7 @@ import {
   Users,
 } from 'lucide-react';
 import { StudentProfile } from './data/studentMockData';
+import GlassCard from '../glass/GlassCard';
 
 interface StudentProfileTabProps {
   student: StudentProfile;
@@ -55,15 +56,15 @@ export default function StudentProfileTab({
 
   return (
     <div className="space-y-6">
-      {/* Top Banner with HUD brackets */}
-      <div className="relative p-6 sm:p-8 rounded-3xl bg-linear-to-r from-[#10233F] to-[#1c355e] text-white overflow-hidden shadow-lg hud-bracket">
+      {/* Top Banner with ambient gradient */}
+      <div className="relative p-6 sm:p-8 rounded-3xl bg-linear-to-r from-[#0E1A2E] via-[#162D50] to-[#6A1610] text-white overflow-hidden shadow-xl border border-white/10">
         <div className="absolute top-0 right-0 w-80 h-80 bg-[#EFC988]/10 rounded-full blur-3xl pointer-events-none" />
         
-        <div className="relative flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
+        <div className="relative flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6 z-10">
           {/* Avatar and Basic Header */}
           <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-5 text-center sm:text-left">
             <div className="relative group">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#FFF3DD] border-2 border-[#EFC988] flex items-center justify-center font-serif text-3xl font-bold text-[#89190E] shadow-xl overflow-hidden relative">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#FFF3DD] dark:bg-white/10 border-2 border-[#EFC988] flex items-center justify-center font-serif text-3xl font-bold text-[#89190E] dark:text-[#EFC988] shadow-xl overflow-hidden relative">
                 {student.avatarUrl ? (
                   <Image
                     src={student.avatarUrl}
@@ -79,7 +80,7 @@ export default function StudentProfileTab({
               <button
                 type="button"
                 onClick={() => alert('Photo update dialog: You may upload a passport-format photo for official Bar Council identity cards.')}
-                className="absolute -bottom-1 -right-1 p-2 rounded-xl bg-[#89190E] text-white hover:bg-[#65130D] shadow-md transition-transform group-hover:scale-110"
+                className="absolute -bottom-1 -right-1 p-2 rounded-xl bg-linear-to-r from-[#89190E] to-[#B22222] text-white hover:opacity-90 shadow-md transition-transform group-hover:scale-110 cursor-pointer"
                 title="Change Photo"
               >
                 <Camera className="w-3.5 h-3.5 text-[#EFC988]" />
@@ -88,7 +89,7 @@ export default function StudentProfileTab({
 
             <div>
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                <span className="px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-[#EFC988] text-[#10233F]">
+                <span className="px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-[#EFC988] text-gray-950">
                   {student.enrollmentNo}
                 </span>
                 <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-white/10 text-white/90 border border-white/20">
@@ -114,7 +115,7 @@ export default function StudentProfileTab({
             {!isEditing ? (
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-5 py-2.5 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs sm:text-sm font-bold flex items-center space-x-2 transition-all shadow-md active:scale-98"
+                className="px-5 py-2.5 rounded-xl bg-linear-to-r from-[#89190E] to-[#B22222] hover:opacity-95 text-white text-xs sm:text-sm font-bold flex items-center space-x-2 transition-all shadow-md active:scale-98 cursor-pointer"
               >
                 <Edit3 className="w-4 h-4 text-[#EFC988]" />
                 <span>Edit Profile</span>
@@ -125,7 +126,7 @@ export default function StudentProfileTab({
                   setFormState(student);
                   setIsEditing(false);
                 }}
-                className="px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-semibold"
+                className="px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-semibold cursor-pointer"
               >
                 Cancel Edit
               </button>
@@ -144,10 +145,10 @@ export default function StudentProfileTab({
       {/* Main Profile Fields Form / Cards */}
       <form onSubmit={handleSave} className="space-y-6">
         {/* Section 1: Personal Credentials & Demographics */}
-        <div className="p-6 sm:p-7 rounded-3xl bg-white border border-[#E8DCCB] shadow-xs">
-          <div className="flex items-center space-x-2 pb-4 border-b border-[#E8DCCB]">
-            <User className="w-5 h-5 text-[#89190E]" />
-            <h3 className="font-serif text-lg font-bold text-[#10233F]">
+        <GlassCard variant="elevated" className="p-6 sm:p-7">
+          <div className="flex items-center space-x-2 pb-4 border-b border-gray-200/50 dark:border-white/10">
+            <User className="w-5 h-5 text-[#89190E] dark:text-[#EFC988]" />
+            <h3 className="font-serif text-lg font-bold text-gray-900 dark:text-white">
               Personal Demographics & Identity
             </h3>
           </div>
@@ -262,10 +263,10 @@ export default function StudentProfileTab({
               <p className="text-sm font-medium text-[#10233F]">{student.admissionDate}</p>
             </div>
           </div>
-        </div>
+        </GlassCard>
 
         {/* Section 2: Contact & Guardian Details */}
-        <div className="p-6 sm:p-7 rounded-3xl bg-white border border-[#E8DCCB] shadow-xs">
+        <GlassCard variant="elevated" className="p-6 sm:p-7">
           <div className="flex items-center space-x-2 pb-4 border-b border-[#E8DCCB]">
             <Phone className="w-5 h-5 text-[#89190E]" />
             <h3 className="font-serif text-lg font-bold text-[#10233F]">
@@ -346,11 +347,11 @@ export default function StudentProfileTab({
               )}
             </div>
           </div>
-        </div>
+        </GlassCard>
 
         {/* Section 3: Academic Credentials & Course Entitlement Validity */}
-        <div className="p-6 sm:p-7 rounded-3xl bg-white border border-[#E8DCCB] shadow-xs">
-          <div className="flex items-center space-x-2 pb-4 border-b border-[#E8DCCB]">
+        <GlassCard variant="elevated" className="p-6 sm:p-7">
+          <div className="flex items-center space-x-2 pb-4 border-b border-gray-200/50 dark:border-white/10">
             <Award className="w-5 h-5 text-[#89190E]" />
             <h3 className="font-serif text-lg font-bold text-[#10233F]">
               Academic Credentials & Enrolled Course Programme
@@ -432,34 +433,34 @@ export default function StudentProfileTab({
             </div>
 
             {/* Institutional Credentials: Read-Only Badges */}
-            <div className="p-4 rounded-2xl bg-[#FFF9EF] border border-[#E8DCCB]">
-              <span className="text-[10px] uppercase font-bold text-[#526174] tracking-wider block">
+            <div className="p-4 rounded-2xl bg-white/60 dark:bg-white/5 border border-gray-200/60 dark:border-white/10">
+              <span className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider block">
                 Enrollment ID
               </span>
-              <span className="font-mono text-sm font-bold text-[#89190E] mt-1 block">
+              <span className="font-mono text-sm font-bold text-[#89190E] dark:text-[#EFC988] mt-1 block">
                 {student.enrollmentNo}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#FFF9EF] border border-[#E8DCCB]">
-              <span className="text-[10px] uppercase font-bold text-[#526174] tracking-wider block">
+            <div className="p-4 rounded-2xl bg-white/60 dark:bg-white/5 border border-gray-200/60 dark:border-white/10">
+              <span className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider block">
                 Official Roll Number
               </span>
-              <span className="font-mono text-sm font-bold text-[#10233F] mt-1 block">
+              <span className="font-mono text-sm font-bold text-gray-900 dark:text-white mt-1 block">
                 {student.rollNo}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200">
-              <span className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider block">
+            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+              <span className="text-[10px] uppercase font-bold text-emerald-800 dark:text-emerald-300 tracking-wider block">
                 Course Validity Date
               </span>
-              <span className="font-mono text-sm font-bold text-emerald-900 mt-1 block">
+              <span className="font-mono text-sm font-bold text-emerald-700 dark:text-emerald-300 mt-1 block">
                 {student.validUntil}
               </span>
             </div>
           </div>
-        </div>
+        </GlassCard>
 
         {/* Save Changes Floating Action Bar */}
         {isEditing && (

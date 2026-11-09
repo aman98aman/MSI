@@ -95,6 +95,7 @@ import { AdminTransaction } from '../api/admin/transactions/route';
 import * as XLSX from 'xlsx';
 import ExcelLeadManagerModal from '@/components/super-admin/ExcelLeadManagerModal';
 import FeeReceiptModal from '@/components/student/FeeReceiptModal';
+import ThemeToggle from '@/components/glass/ThemeToggle';
 
 
 type AdminTab =
@@ -2322,14 +2323,13 @@ export default function SuperAdminMasterDashboard() {
     );
   }, [leads, searchQuery]);
 
-  // â”€â”€ Render Gatekeeper if Unauthenticated â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Render Gatekeeper if Unauthenticated ────────────────────────────
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#FFF9EF] flex flex-col justify-between selection:bg-[#EFC988] selection:text-[#89190E] relative overflow-hidden">
-        {/* Decorative architectural background */}
-        <div className="absolute inset-0 blueprint-grid opacity-25 pointer-events-none" />
-        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-[#89190E]/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-[#EFC988]/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="min-h-screen dashboard-bg flex flex-col justify-between relative overflow-hidden text-slate-900 dark:text-white">
+        {/* Decorative ambient gradients */}
+        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-violet-500/10 dark:bg-violet-500/20 rounded-full blur-3xl pointer-events-none" />
 
         <header className="relative z-10 px-6 sm:px-12 py-6 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3 group">
@@ -2344,44 +2344,47 @@ export default function SuperAdminMasterDashboard() {
               />
             </div>
             <div>
-              <span className="font-serif text-lg sm:text-xl font-bold tracking-tight text-[#10233F] block leading-none">
+              <span className="font-bold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white block leading-none">
                 MSI GROUP
               </span>
-              <span className="text-[10px] tracking-[0.2em] uppercase font-semibold text-[#89190E]">
+              <span className="text-[10px] tracking-[0.2em] uppercase font-semibold text-indigo-600 dark:text-indigo-400">
                 Super Admin Terminal
               </span>
             </div>
           </Link>
-          <Link
-            href="/student/login"
-            className="text-xs font-semibold text-[#89190E] hover:underline flex items-center gap-1"
-          >
-            <span>Student & Reception Login</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Link
+              href="/student/login"
+              className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+            >
+              <span>Student &amp; Reception</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </header>
 
         <main className="relative z-10 flex-1 flex items-center justify-center px-4 py-8">
-          <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-3xl border border-[#E8DCCB] shadow-[0_20px_50px_rgba(16,35,63,0.1)] p-8 sm:p-10 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#89190E] via-[#EFC988] to-[#10233F]" />
+          <div className="w-full max-w-md glass-card-elevated rounded-3xl p-8 sm:p-10 relative overflow-hidden shadow-2xl border border-white/20 dark:border-white/10">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-blue-500" />
 
             <div className="text-center mb-6">
-              <div className="w-14 h-14 rounded-2xl bg-[#FFF3DD] text-[#89190E] border border-[#EFC988]/60 flex items-center justify-center mx-auto mb-3 shadow-xs">
+              <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center justify-center mx-auto mb-3 shadow-sm">
                 <ShieldCheck className="w-7 h-7 stroke-[2.2]" />
               </div>
-              <span className="text-[11px] font-mono uppercase tracking-widest text-[#89190E] font-bold block mb-1">
+              <span className="text-[11px] font-mono uppercase tracking-widest text-indigo-600 dark:text-indigo-400 font-bold block mb-1">
                 Clearance Level 1
               </span>
-              <h1 className="font-serif text-2xl font-bold text-[#10233F]">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                 Super Admin Master Portal
               </h1>
-              <p className="text-xs text-[#526174] mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Enter authorized credentials for full institutional governance
               </p>
             </div>
 
             {authError && (
-              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-center gap-2">
+              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs font-medium flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{authError}</span>
               </div>
@@ -2389,35 +2392,35 @@ export default function SuperAdminMasterDashboard() {
 
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                   Authorized Mobile Number
                 </label>
                 <div className="relative">
-                  <Phone className="w-4 h-4 text-[#526174] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     required
                     value={authPhone}
                     onChange={(e) => setAuthPhone(e.target.value)}
                     placeholder="9792303434"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs sm:text-sm text-[#10233F] focus:outline-none focus:border-[#89190E] font-mono font-bold"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-mono font-bold transition-all"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                   Master Password
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-[#526174] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="password"
                     required
                     value={authPassword}
                     onChange={(e) => setAuthPassword(e.target.value)}
                     placeholder="MSI@superadmin"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs sm:text-sm text-[#10233F] focus:outline-none focus:border-[#89190E] font-mono font-bold"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-mono font-bold transition-all"
                   />
                 </div>
               </div>
@@ -2425,7 +2428,7 @@ export default function SuperAdminMasterDashboard() {
               <button
                 type="submit"
                 disabled={isAuthLoading}
-                className="w-full mt-2 py-3 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {isAuthLoading ? (
                   <>
@@ -2441,7 +2444,7 @@ export default function SuperAdminMasterDashboard() {
               </button>
             </form>
 
-            <div className="mt-6 pt-4 border-t border-[#E8DCCB]/60 text-center text-[11px] text-[#526174]">
+            <div className="mt-6 pt-4 border-t border-slate-200 dark:border-white/10 text-center text-[11px] text-slate-500 dark:text-slate-400">
               Protected by SHA-256 session encryption • MSI Institutional Server
             </div>
           </div>
@@ -2450,50 +2453,50 @@ export default function SuperAdminMasterDashboard() {
     );
   }
 
-  // â”€â”€ Render Authenticated Master Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Render Authenticated Master Dashboard ────────────────────────────
   return (
-    <div className="min-h-screen bg-[#F8F9FD] text-[#071B37] antialiased flex">
+    <div className="min-h-screen dashboard-bg text-slate-900 dark:text-white antialiased flex">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#10233F] text-white px-5 py-3 rounded-2xl shadow-2xl border border-[#EFC988]/50 flex items-center gap-3 text-xs sm:text-sm font-semibold animate-fadeIn">
-          <Sparkles className="w-4 h-4 text-[#EFC988] shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 glass-card-elevated text-slate-900 dark:text-white px-5 py-3 rounded-2xl shadow-2xl border border-indigo-500/30 flex items-center gap-3 text-xs sm:text-sm font-semibold animate-fadeIn">
+          <Sparkles className="w-4 h-4 text-indigo-500 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* â”€â”€ Fixed Sidebar (Matching code.html design) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <aside className="fixed left-0 top-0 bottom-0 w-[260px] bg-white z-50 flex flex-col border-r border-[#E8EEFF] shadow-[0_1px_8px_rgba(0,0,0,0.04)] select-none">
+      {/* ── Fixed Sidebar ──────────────────────────────────────────────── */}
+      <aside className="fixed left-0 top-0 bottom-0 w-[260px] glass-sidebar z-50 flex flex-col select-none border-r border-slate-200/80 dark:border-white/10">
         {/* Brand header */}
         <div className="p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#89190E] flex items-center justify-center shrink-0 shadow-sm text-white font-serif font-black text-sm tracking-wider">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center shrink-0 shadow-md text-white font-black text-sm tracking-wider">
             MSI
           </div>
           <div className="min-w-0 flex-1">
-            <div className="font-serif font-bold text-sm text-[#89190E] tracking-tight truncate leading-tight">
+            <div className="font-bold text-sm text-slate-900 dark:text-white tracking-tight truncate leading-tight">
               MSI GROUP
             </div>
-            <div className="text-[11px] text-[#58413D] uppercase font-semibold tracking-wider">
+            <div className="text-[10px] text-indigo-600 dark:text-indigo-400 uppercase font-semibold tracking-wider">
               Admin Portal
             </div>
           </div>
-          <div className="w-2.5 h-2.5 rounded-full bg-[#EFC988] shrink-0 animate-pulse" />
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
         </div>
 
-        <div className="h-px bg-[#E8EEFF] mx-4 mb-2" />
+        <div className="h-px bg-slate-200 dark:bg-white/10 mx-4 mb-2" />
 
         {/* Sidebar Nav Items */}
         <div className="flex-1 overflow-y-auto px-3 space-y-4 py-2 text-xs font-semibold">
           {/* Overview */}
           <div className="space-y-1">
-            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#8C716C] font-bold">
+            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-slate-400 font-bold">
               Overview
             </div>
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-left cursor-pointer ${
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all text-left cursor-pointer ${
                 activeTab === 'dashboard'
-                  ? 'bg-[#E8EEFF] text-[#89190E] font-bold shadow-xs'
-                  : 'text-[#58413D] hover:bg-[#F0F3FF] hover:text-[#071B37]'
+                  ? 'bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold border-l-2 border-indigo-600 dark:border-indigo-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <LayoutDashboard className="w-4 h-4 shrink-0" />
@@ -2503,38 +2506,38 @@ export default function SuperAdminMasterDashboard() {
 
           {/* User Management */}
           <div className="space-y-1">
-            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#8C716C] font-bold">
+            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-slate-400 font-bold">
               User Management
             </div>
             <button
               onClick={() => setActiveTab('students')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors text-left cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all text-left cursor-pointer ${
                 activeTab === 'students'
-                  ? 'bg-[#E8EEFF] text-[#89190E] font-bold shadow-xs'
-                  : 'text-[#58413D] hover:bg-[#F0F3FF] hover:text-[#071B37]'
+                  ? 'bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold border-l-2 border-indigo-600 dark:border-indigo-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <GraduationCap className="w-4 h-4 shrink-0" />
                 <span className="truncate">Registered Students</span>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#89190E]/10 text-[#89190E] text-[10px] font-bold">
+              <span className="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 text-[10px] font-bold">
                 {students.length}
               </span>
             </button>
             <button
               onClick={() => setActiveTab('teachers')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors text-left cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all text-left cursor-pointer ${
                 activeTab === 'teachers'
-                  ? 'bg-[#E8EEFF] text-[#89190E] font-bold shadow-xs'
-                  : 'text-[#58413D] hover:bg-[#F0F3FF] hover:text-[#071B37]'
+                  ? 'bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold border-l-2 border-indigo-600 dark:border-indigo-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <UserCheck className="w-4 h-4 shrink-0" />
-                <span className="truncate">Teachers & Faculty</span>
+                <span className="truncate">Teachers &amp; Faculty</span>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#10233F]/10 text-[#10233F] text-[10px] font-bold">
+              <span className="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-300 text-[10px] font-bold">
                 {teachers.length}
               </span>
             </button>
@@ -2542,56 +2545,56 @@ export default function SuperAdminMasterDashboard() {
 
           {/* Lead CRM & Reception */}
           <div className="space-y-1">
-            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#8C716C] font-bold">
-              Reception & Intake
+            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+              Reception &amp; Intake
             </div>
             <button
               onClick={() => setActiveTab('leads')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors text-left cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all text-left cursor-pointer ${
                 activeTab === 'leads'
-                  ? 'bg-[#E8EEFF] text-[#89190E] font-bold shadow-xs'
-                  : 'text-[#58413D] hover:bg-[#F0F3FF] hover:text-[#071B37]'
+                  ? 'bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold border-l-2 border-indigo-600 dark:border-indigo-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <PhoneCall className="w-4 h-4 shrink-0" />
                 <span className="truncate">Lead CRM Register</span>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+              <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 text-[10px] font-bold">
                 {leads.length}
               </span>
             </button>
             <Link
               href="/reception/dashboard"
               target="_blank"
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[#58413D] hover:bg-[#F0F3FF] hover:text-[#071B37] transition-colors text-left cursor-pointer"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors text-left cursor-pointer"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <FolderOpen className="w-4 h-4 shrink-0 text-[#89190E]" />
+                <FolderOpen className="w-4 h-4 shrink-0 text-indigo-500" />
                 <span className="truncate">Live Reception Desk</span>
               </div>
-              <ArrowUpRight className="w-3.5 h-3.5 text-gray-400" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400" />
             </Link>
           </div>
 
           {/* Academic Management */}
           <div className="space-y-1">
-            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#8C716C] font-bold">
+            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-slate-400 font-bold">
               Academic Management
             </div>
             <button
               onClick={() => setActiveTab('courses')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors text-left cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all text-left cursor-pointer ${
                 activeTab === 'courses'
-                  ? 'bg-[#E8EEFF] text-[#89190E] font-bold shadow-xs'
-                  : 'text-[#58413D] hover:bg-[#F0F3FF] hover:text-[#071B37]'
+                  ? 'bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold border-l-2 border-indigo-600 dark:border-indigo-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <BookOpen className="w-4 h-4 shrink-0" />
-                <span className="truncate">Courses & LMS</span>
+                <span className="truncate">Courses &amp; LMS</span>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold">
+              <span className="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-300 text-[10px] font-bold">
                 {courses.length}
               </span>
             </button>
@@ -2599,32 +2602,32 @@ export default function SuperAdminMasterDashboard() {
 
           {/* Content & Website Portal */}
           <div className="space-y-1">
-            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#8C716C] font-bold">
+            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-slate-400 font-bold">
               Website CMS
             </div>
             <button
               onClick={() => setActiveTab('gallery')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors text-left cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all text-left cursor-pointer ${
                 activeTab === 'gallery'
-                  ? 'bg-[#E8EEFF] text-[#89190E] font-bold shadow-xs'
-                  : 'text-[#58413D] hover:bg-[#F0F3FF] hover:text-[#071B37]'
+                  ? 'bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold border-l-2 border-indigo-600 dark:border-indigo-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <ImageIcon className="w-4 h-4 shrink-0" />
                 <span className="truncate">Website Gallery Sync</span>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-bold">
+              <span className="px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-300 text-[10px] font-bold">
                 {galleryItems.length}
               </span>
             </button>
             <Link
               href="/gallery"
               target="_blank"
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[#58413D] hover:bg-[#F0F3FF] hover:text-[#071B37] transition-colors text-left cursor-pointer"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors text-left cursor-pointer"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <ArrowUpRight className="w-4 h-4 shrink-0 text-[#89190E]" />
+                <ArrowUpRight className="w-4 h-4 shrink-0 text-indigo-500" />
                 <span className="truncate">Open Public /gallery</span>
               </div>
             </Link>
@@ -2632,40 +2635,40 @@ export default function SuperAdminMasterDashboard() {
 
           {/* Finance & Transactions */}
           <div className="space-y-1">
-            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#8C716C] font-bold">
+            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-slate-400 font-bold">
               Finance
             </div>
             <button
               onClick={() => setActiveTab('transactions')}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-left cursor-pointer ${
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all text-left cursor-pointer ${
                 activeTab === 'transactions'
-                  ? 'bg-[#E8EEFF] text-[#89190E] font-bold shadow-xs'
-                  : 'text-[#58413D] hover:bg-[#F0F3FF] hover:text-[#071B37]'
+                  ? 'bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold border-l-2 border-indigo-600 dark:border-indigo-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Receipt className="w-4 h-4 shrink-0" />
-              <span className="truncate">Transactions & Receipts</span>
+              <span className="truncate">Transactions &amp; Receipts</span>
             </button>
           </div>
         </div>
 
         {/* Sidebar Footer User Card */}
-        <div className="p-3 bg-[#F0F3FF]/70 border-t border-[#E8EEFF]">
+        <div className="p-3 bg-slate-50 dark:bg-white/5 border-t border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-[#89190E] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
               AD
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-bold text-[#071B37] truncate">
+              <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
                 MSI Administrator
               </div>
-              <div className="text-[10px] text-[#89190E] font-bold uppercase truncate">
+              <div className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase truncate">
                 Super Admin
               </div>
             </div>
             <button
               onClick={handleLogout}
-              className="p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-white transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
               title="Logout from Super Admin"
             >
               <LogOut className="w-4 h-4" />
@@ -2674,48 +2677,50 @@ export default function SuperAdminMasterDashboard() {
         </div>
       </aside>
 
-      {/* â”€â”€ Main View Container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Main View Container ────────────────────────────────────────── */}
       <div className="pl-[260px] flex-1 flex flex-col min-w-0">
-        {/* Fixed Top Header (Matching code.html design) */}
-        <header className="sticky top-0 h-16 bg-white/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-6 border-b border-[#E8EEFF]">
+        {/* Fixed Top Header */}
+        <header className="sticky top-0 h-16 glass-nav z-40 flex items-center justify-between px-6 border-b border-slate-200/80 dark:border-white/10">
           <div className="flex items-center gap-4 flex-1 max-w-2xl">
-            <div className="flex items-center gap-1.5 text-xs text-[#58413D]">
-              <span className="hover:text-[#89190E] cursor-pointer">MSI</span>
-              <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-              <span className="text-[#071B37] font-bold capitalize">{activeTab}</span>
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+              <span className="hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer">MSI</span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-slate-900 dark:text-white font-bold capitalize">{activeTab}</span>
             </div>
 
             <div className="relative flex-1 max-w-md hidden md:block">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search real students, leads, faculty, courses..."
-                className="w-full pl-9 pr-4 py-1.5 rounded-lg bg-[#F0F3FF] text-xs text-[#071B37] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#89190E]/30"
+                className="w-full pl-9 pr-4 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
               />
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden xl:flex items-center gap-1.5 text-xs text-[#58413D] font-mono">
-              <Calendar className="w-3.5 h-3.5 text-[#EFC988]" />
+            <div className="hidden xl:flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono">
+              <Calendar className="w-3.5 h-3.5 text-indigo-500" />
               <span>{currentDateTime}</span>
             </div>
+
+            <ThemeToggle />
 
             <button
               onClick={refreshAllData}
               disabled={isRefreshing}
-              className="p-2 rounded-lg text-gray-600 hover:bg-[#F0F3FF] hover:text-[#071B37] transition-all cursor-pointer"
+              className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
               title="Refresh all data directly from disk"
             >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-[#89190E]' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-indigo-500' : ''}`} />
             </button>
 
-            <div className="h-5 w-px bg-gray-200" />
+            <div className="h-5 w-px bg-slate-200 dark:bg-white/10" />
 
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold border border-emerald-500/20">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span>Production Server Synced</span>
               </span>
@@ -2729,16 +2734,16 @@ export default function SuperAdminMasterDashboard() {
           {activeTab === 'dashboard' && (
             <div className="space-y-6 animate-fadeIn">
               {/* 1. Welcome & Primary Command Header */}
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-[#E8EEFF] shadow-xs">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 glass-card p-6 rounded-3xl shadow-sm border border-slate-200/80 dark:border-white/10">
                 <div>
-                  <div className="flex items-center gap-2 text-[#89190E] text-[11px] font-bold uppercase tracking-widest mb-1">
-                    <span className="w-2 h-2 rounded-full bg-[#89190E]" />
+                  <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold uppercase tracking-widest mb-1">
+                    <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
                     Administrative Clearance Level 1
                   </div>
-                  <h1 className="font-serif text-2xl font-bold text-[#071B37]">
+                  <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                     Good Morning, Administrator
                   </h1>
-                  <p className="text-xs text-[#58413D] mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Live operational overview for MSI Group of Institutes • All data synced with permanent storage
                   </p>
                 </div>
@@ -2746,148 +2751,148 @@ export default function SuperAdminMasterDashboard() {
                 <div className="flex flex-wrap items-center gap-2.5">
                   <button
                     onClick={() => setShowAddStudentModal(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-bold transition-all shadow-md cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>+ Add Student</span>
                   </button>
                   <button
                     onClick={() => setShowAddLeadModal(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#10233F] hover:bg-[#1a3860] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-white/10 hover:bg-slate-800 dark:hover:bg-white/20 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
                   >
-                    <Send className="w-3.5 h-3.5 text-[#EFC988]" />
+                    <Send className="w-3.5 h-3.5 text-indigo-400" />
                     <span>+ Generate Lead</span>
                   </button>
                   <button
                     onClick={() => setShowAddTeacherModal(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-[#F0F3FF] text-[#071B37] border border-[#E8EEFF] text-xs font-bold transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl glass-card hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
                   >
-                    <UserCheck className="w-3.5 h-3.5 text-[#89190E]" />
+                    <UserCheck className="w-3.5 h-3.5 text-indigo-500" />
                     <span>+ Create Teacher</span>
                   </button>
                 </div>
               </div>
 
-              {/* 2. Rapid Operational Dispatches (8 Action Strip from code.html) */}
-              <section className="bg-white p-5 rounded-2xl border border-[#E8EEFF] shadow-xs">
+              {/* 2. Rapid Operational Dispatches (8 Action Strip) */}
+              <section className="glass-card p-5 rounded-3xl shadow-sm border border-slate-200/80 dark:border-white/10">
                 <div className="flex items-center justify-between mb-3 text-xs">
-                  <span className="uppercase tracking-wider font-bold text-[#8C716C] text-[10px]">
+                  <span className="uppercase tracking-wider font-bold text-slate-400 text-[10px]">
                     Rapid Operational Dispatches
                   </span>
-                  <span className="text-[#58413D] text-[11px] font-semibold">
+                  <span className="text-slate-500 dark:text-slate-400 text-[11px] font-semibold">
                     8 Authorized Actions
                   </span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
                   <button
                     onClick={() => setShowAddStudentModal(true)}
-                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-[#F0F3FF] hover:bg-[#E8EEFF] transition-all text-center cursor-pointer hover:-translate-y-0.5"
+                    className="group flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-100/70 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-all text-center cursor-pointer hover:-translate-y-0.5"
                   >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#89190E] mb-1.5 shadow-2xs group-hover:bg-[#89190E] group-hover:text-white transition-colors">
+                    <div className="w-9 h-9 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-1.5 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                       <GraduationCap className="w-4 h-4" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#071B37]">Add Student</span>
+                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Add Student</span>
                   </button>
 
                   <button
                     onClick={() => setShowAddLeadModal(true)}
-                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-[#F0F3FF] hover:bg-[#E8EEFF] transition-all text-center cursor-pointer hover:-translate-y-0.5"
+                    className="group flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-100/70 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-all text-center cursor-pointer hover:-translate-y-0.5"
                   >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#89190E] mb-1.5 shadow-2xs group-hover:bg-[#89190E] group-hover:text-white transition-colors">
+                    <div className="w-9 h-9 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-1.5 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                       <PhoneCall className="w-4 h-4" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#071B37]">Dispatch Lead</span>
+                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Dispatch Lead</span>
                   </button>
 
                   <button
                     onClick={() => setShowAddTeacherModal(true)}
-                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-[#F0F3FF] hover:bg-[#E8EEFF] transition-all text-center cursor-pointer hover:-translate-y-0.5"
+                    className="group flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-100/70 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-all text-center cursor-pointer hover:-translate-y-0.5"
                   >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#89190E] mb-1.5 shadow-2xs group-hover:bg-[#89190E] group-hover:text-white transition-colors">
+                    <div className="w-9 h-9 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-1.5 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                       <UserCheck className="w-4 h-4" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#071B37]">Create Teacher</span>
+                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Create Teacher</span>
                   </button>
 
                   <button
                     onClick={() => setShowAddGalleryModal(true)}
-                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-[#F0F3FF] hover:bg-[#E8EEFF] transition-all text-center cursor-pointer hover:-translate-y-0.5"
+                    className="group flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-100/70 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-all text-center cursor-pointer hover:-translate-y-0.5"
                   >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#89190E] mb-1.5 shadow-2xs group-hover:bg-[#89190E] group-hover:text-white transition-colors">
+                    <div className="w-9 h-9 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-1.5 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                       <ImageIcon className="w-4 h-4" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#071B37]">Gallery Media</span>
+                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Gallery Media</span>
                   </button>
 
                   <button
                     onClick={() => setActiveTab('courses')}
-                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-[#F0F3FF] hover:bg-[#E8EEFF] transition-all text-center cursor-pointer hover:-translate-y-0.5"
+                    className="group flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-100/70 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-all text-center cursor-pointer hover:-translate-y-0.5"
                   >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#89190E] mb-1.5 shadow-2xs group-hover:bg-[#89190E] group-hover:text-white transition-colors">
+                    <div className="w-9 h-9 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-1.5 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                       <BookOpen className="w-4 h-4" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#071B37]">Courses & LMS</span>
+                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Courses &amp; LMS</span>
                   </button>
 
                   <Link
                     href="/reception/dashboard"
                     target="_blank"
-                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-[#F0F3FF] hover:bg-[#E8EEFF] transition-all text-center cursor-pointer hover:-translate-y-0.5"
+                    className="group flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-100/70 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-all text-center cursor-pointer hover:-translate-y-0.5"
                   >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#89190E] mb-1.5 shadow-2xs group-hover:bg-[#89190E] group-hover:text-white transition-colors">
+                    <div className="w-9 h-9 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-1.5 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                       <FolderOpen className="w-4 h-4" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#071B37]">Reception Desk</span>
+                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Reception Desk</span>
                   </Link>
 
                   <Link
                     href="/live-stream"
                     target="_blank"
-                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-[#F0F3FF] hover:bg-[#E8EEFF] transition-all text-center cursor-pointer hover:-translate-y-0.5"
+                    className="group flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-100/70 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-all text-center cursor-pointer hover:-translate-y-0.5"
                   >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#89190E] mb-1.5 shadow-2xs group-hover:bg-[#89190E] group-hover:text-white transition-colors">
+                    <div className="w-9 h-9 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-1.5 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                       <Video className="w-4 h-4" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#071B37]">Live Class</span>
+                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Live Class</span>
                   </Link>
 
                   <button
                     onClick={() => setActiveTab('transactions')}
-                    className="group flex flex-col items-center justify-center p-3 rounded-xl bg-[#F0F3FF] hover:bg-[#E8EEFF] transition-all text-center cursor-pointer hover:-translate-y-0.5"
+                    className="group flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-100/70 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-all text-center cursor-pointer hover:-translate-y-0.5"
                   >
-                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#89190E] mb-1.5 shadow-2xs group-hover:bg-[#89190E] group-hover:text-white transition-colors">
+                    <div className="w-9 h-9 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-1.5 shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                       <Receipt className="w-4 h-4" />
                     </div>
-                    <span className="text-[11px] font-bold text-[#071B37]">Reconcile Fees</span>
+                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Reconcile Fees</span>
                   </button>
                 </div>
               </section>
 
-              {/* 3. Executive Overview: 6 Compact KPI Cards (from code.html) */}
+              {/* 3. Executive Overview: 6 Compact KPI Cards */}
               <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
                 {/* Students KPI */}
                 <div
                   onClick={() => setActiveTab('students')}
-                  className="bg-white p-5 rounded-2xl border border-[#E8EEFF] shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+                  className="glass-card p-5 rounded-2xl shadow-sm hover:scale-[1.01] hover:border-indigo-500/40 transition-all cursor-pointer flex flex-col justify-between group"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C716C]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       Real Students
                     </span>
-                    <div className="w-7 h-7 rounded-lg bg-[#E8EEFF] flex items-center justify-center text-[#89190E] group-hover:bg-[#89190E] group-hover:text-white transition-colors">
+                    <div className="w-7 h-7 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                       <GraduationCap className="w-3.5 h-3.5" />
                     </div>
                   </div>
                   <div>
-                    <div className="font-serif text-3xl font-bold text-[#071B37]">
+                    <div className="font-mono text-3xl font-bold text-slate-900 dark:text-white">
                       {students.length}
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-bold mt-0.5">
+                    <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">
                       <TrendingUp className="w-3 h-3" />
                       <span>Verified Disk Accounts</span>
                     </div>
                   </div>
-                  <div className="mt-2 text-[10px] text-[#58413D] truncate border-t border-gray-100 pt-1.5">
+                  <div className="mt-2 text-[10px] text-slate-500 dark:text-slate-400 truncate border-t border-slate-200 dark:border-white/10 pt-1.5">
                     {students.length > 0 ? `${students.length} Verified Student Account${students.length > 1 ? "s" : ""}` : "No Students Enrolled"}
                   </div>
                 </div>
@@ -2895,26 +2900,26 @@ export default function SuperAdminMasterDashboard() {
                 {/* Teachers KPI */}
                 <div
                   onClick={() => setActiveTab('teachers')}
-                  className="bg-white p-5 rounded-2xl border border-[#E8EEFF] shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+                  className="glass-card p-5 rounded-2xl shadow-sm hover:scale-[1.01] hover:border-indigo-500/40 transition-all cursor-pointer flex flex-col justify-between group"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C716C]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       Faculty
                     </span>
-                    <div className="w-7 h-7 rounded-lg bg-[#E8EEFF] flex items-center justify-center text-[#89190E] group-hover:bg-[#89190E] group-hover:text-white transition-colors">
+                    <div className="w-7 h-7 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                       <UserCheck className="w-3.5 h-3.5" />
                     </div>
                   </div>
                   <div>
-                    <div className="font-serif text-3xl font-bold text-[#071B37]">
+                    <div className="font-mono text-3xl font-bold text-slate-900 dark:text-white">
                       {teachers.length}
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] text-blue-600 font-bold mt-0.5">
+                    <div className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 font-bold mt-0.5">
                       <Check className="w-3 h-3" />
                       <span>100% Certified Jurists</span>
                     </div>
                   </div>
-                  <div className="mt-2 text-[10px] text-[#58413D] truncate border-t border-gray-100 pt-1.5">
+                  <div className="mt-2 text-[10px] text-slate-500 dark:text-slate-400 truncate border-t border-slate-200 dark:border-white/10 pt-1.5">
                     Judicial Coaching Mentors
                   </div>
                 </div>
@@ -2922,26 +2927,26 @@ export default function SuperAdminMasterDashboard() {
                 {/* Courses KPI */}
                 <div
                   onClick={() => setActiveTab('courses')}
-                  className="bg-white p-5 rounded-2xl border border-[#E8EEFF] shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+                  className="glass-card p-5 rounded-2xl shadow-sm hover:scale-[1.01] hover:border-indigo-500/40 transition-all cursor-pointer flex flex-col justify-between group"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C716C]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       Courses
                     </span>
-                    <div className="w-7 h-7 rounded-lg bg-[#E8EEFF] flex items-center justify-center text-[#89190E] group-hover:bg-[#89190E] group-hover:text-white transition-colors">
+                    <div className="w-7 h-7 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                       <BookOpen className="w-3.5 h-3.5" />
                     </div>
                   </div>
                   <div>
-                    <div className="font-serif text-3xl font-bold text-[#071B37]">
+                    <div className="font-mono text-3xl font-bold text-slate-900 dark:text-white">
                       {courses.length}
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] text-[#89190E] font-bold mt-0.5">
+                    <div className="flex items-center gap-1 text-[11px] text-indigo-600 dark:text-indigo-400 font-bold mt-0.5">
                       <Sparkles className="w-3 h-3" />
                       <span>CLAT • Judiciary • NET</span>
                     </div>
                   </div>
-                  <div className="mt-2 text-[10px] text-[#58413D] truncate border-t border-gray-100 pt-1.5">
+                  <div className="mt-2 text-[10px] text-slate-500 dark:text-slate-400 truncate border-t border-slate-200 dark:border-white/10 pt-1.5">
                     Syllabus published
                   </div>
                 </div>
@@ -2949,26 +2954,26 @@ export default function SuperAdminMasterDashboard() {
                 {/* Leads KPI */}
                 <div
                   onClick={() => setActiveTab('leads')}
-                  className="bg-white p-5 rounded-2xl border border-[#E8EEFF] shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+                  className="glass-card p-5 rounded-2xl shadow-sm hover:scale-[1.01] hover:border-indigo-500/40 transition-all cursor-pointer flex flex-col justify-between group"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C716C]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       CRM Leads
                     </span>
-                    <div className="w-7 h-7 rounded-lg bg-[#E8EEFF] flex items-center justify-center text-[#89190E] group-hover:bg-[#89190E] group-hover:text-white transition-colors">
+                    <div className="w-7 h-7 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:bg-amber-600 group-hover:text-white transition-colors">
                       <PhoneCall className="w-3.5 h-3.5" />
                     </div>
                   </div>
                   <div>
-                    <div className="font-serif text-3xl font-bold text-[#071B37]">
+                    <div className="font-mono text-3xl font-bold text-slate-900 dark:text-white">
                       {leads.length}
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] text-amber-600 font-bold mt-0.5">
+                    <div className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 font-bold mt-0.5">
                       <Clock className="w-3 h-3" />
                       <span>Two-Way Desk Synced</span>
                     </div>
                   </div>
-                  <div className="mt-2 text-[10px] text-[#58413D] truncate border-t border-gray-100 pt-1.5">
+                  <div className="mt-2 text-[10px] text-slate-500 dark:text-slate-400 truncate border-t border-slate-200 dark:border-white/10 pt-1.5">
                     Reception Queue Active
                   </div>
                 </div>
@@ -2976,26 +2981,26 @@ export default function SuperAdminMasterDashboard() {
                 {/* Revenue MTD KPI */}
                 <div
                   onClick={() => setActiveTab('transactions')}
-                  className="bg-white p-5 rounded-2xl border border-[#E8EEFF] shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+                  className="glass-card p-5 rounded-2xl shadow-sm hover:scale-[1.01] hover:border-indigo-500/40 transition-all cursor-pointer flex flex-col justify-between group"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C716C]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       Revenue MTD
                     </span>
-                    <div className="w-7 h-7 rounded-lg bg-[#E8EEFF] flex items-center justify-center text-[#89190E] group-hover:bg-[#89190E] group-hover:text-white transition-colors">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                       <Receipt className="w-3.5 h-3.5" />
                     </div>
                   </div>
                   <div>
-                    <div className="font-serif text-3xl font-bold text-[#89190E]">
+                    <div className="font-mono text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                       {totalRevenue > 0 ? `₹${(totalRevenue / 100000).toFixed(2)}L` : "₹0"}
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-bold mt-0.5">
+                    <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">
                       <CheckCircle2 className="w-3 h-3" />
-                      <span>Audited & Verified</span>
+                      <span>Audited &amp; Verified</span>
                     </div>
                   </div>
-                  <div className="mt-2 text-[10px] text-[#58413D] truncate border-t border-gray-100 pt-1.5">
+                  <div className="mt-2 text-[10px] text-slate-500 dark:text-slate-400 truncate border-t border-slate-200 dark:border-white/10 pt-1.5">
                     Admissions Fee Receipts
                   </div>
                 </div>
@@ -3003,26 +3008,26 @@ export default function SuperAdminMasterDashboard() {
                 {/* Gallery Media KPI */}
                 <div
                   onClick={() => setActiveTab('gallery')}
-                  className="bg-white p-5 rounded-2xl border border-[#E8EEFF] shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+                  className="glass-card p-5 rounded-2xl shadow-sm hover:scale-[1.01] hover:border-indigo-500/40 transition-all cursor-pointer flex flex-col justify-between group"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C716C]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       Website Media
                     </span>
-                    <div className="w-7 h-7 rounded-lg bg-[#E8EEFF] flex items-center justify-center text-[#89190E] group-hover:bg-[#89190E] group-hover:text-white transition-colors">
+                    <div className="w-7 h-7 rounded-lg bg-purple-500/10 dark:bg-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400 group-hover:bg-purple-600 group-hover:text-white transition-colors">
                       <ImageIcon className="w-3.5 h-3.5" />
                     </div>
                   </div>
                   <div>
-                    <div className="font-serif text-3xl font-bold text-[#071B37]">
+                    <div className="font-mono text-3xl font-bold text-slate-900 dark:text-white">
                       {galleryItems.length}
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] text-purple-600 font-bold mt-0.5">
+                    <div className="flex items-center gap-1 text-[11px] text-purple-600 dark:text-purple-400 font-bold mt-0.5">
                       <Sparkles className="w-3 h-3" />
                       <span>Live on /gallery</span>
                     </div>
                   </div>
-                  <div className="mt-2 text-[10px] text-[#58413D] truncate border-t border-gray-100 pt-1.5">
+                  <div className="mt-2 text-[10px] text-slate-500 dark:text-slate-400 truncate border-t border-slate-200 dark:border-white/10 pt-1.5">
                     Campus photographs
                   </div>
                 </div>
@@ -3031,17 +3036,17 @@ export default function SuperAdminMasterDashboard() {
               {/* 4. Analytics Grid: Enrollment Trends (SVG from code.html) & Razorpay Split */}
               <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* Left: Enrollment Trends Chart */}
-                <div className="lg:col-span-7 bg-white p-6 rounded-2xl border border-[#E8EEFF] shadow-xs flex flex-col justify-between">
+                <div className="lg:col-span-7 glass-card p-6 rounded-3xl shadow-sm border border-slate-200/80 dark:border-white/10 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h2 className="font-serif text-lg font-bold text-[#071B37]">
-                        Enrollment Trends & Intake Curve
+                      <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                        Enrollment Trends &amp; Intake Curve
                       </h2>
-                      <p className="text-xs text-[#58413D]">
-                        Admissions distribution (May - Oct 2026) across Judiciary & CLAT cohorts
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Admissions distribution (May - Oct 2026) across Judiciary &amp; CLAT cohorts
                       </p>
                     </div>
-                    <span className="px-2.5 py-1 rounded-lg bg-[#F0F3FF] text-[11px] font-bold text-[#89190E]">
+                    <span className="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
                       Monthly Cohorts
                     </span>
                   </div>
@@ -3084,101 +3089,101 @@ export default function SuperAdminMasterDashboard() {
                     </svg>
                   </div>
 
-                  <div className="flex justify-between text-[11px] font-mono text-[#8C716C] pt-2 border-t border-gray-100">
+                  <div className="flex justify-between text-[11px] font-mono text-slate-400 pt-2 border-t border-slate-200 dark:border-white/10">
                     <span>MAY</span>
                     <span>JUN</span>
                     <span>JUL</span>
                     <span>AUG</span>
                     <span>SEP</span>
-                    <span className="font-bold text-[#89190E]">OCT 2026 (PEAK)</span>
+                    <span className="font-bold text-indigo-600 dark:text-indigo-400">OCT 2026 (PEAK)</span>
                   </div>
 
-                  <div className="mt-4 pt-3 flex flex-wrap items-center justify-between gap-3 bg-[#F0F3FF]/70 p-3 rounded-xl text-xs">
+                  <div className="mt-4 pt-3 flex flex-wrap items-center justify-between gap-3 bg-slate-50 dark:bg-white/5 p-3 rounded-2xl text-xs">
                     <div className="flex items-center gap-4">
-                      <span className="flex items-center gap-1.5 font-semibold text-[#071B37]">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#89190E]" />
+                      <span className="flex items-center gap-1.5 font-semibold text-slate-900 dark:text-white">
+                        <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
                         Judiciary Foundation (58%)
                       </span>
-                      <span className="flex items-center gap-1.5 font-semibold text-[#071B37]">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#B8860B]" />
+                      <span className="flex items-center gap-1.5 font-semibold text-slate-900 dark:text-white">
+                        <span className="w-2.5 h-2.5 rounded-full bg-violet-500" />
                         CLAT 2-Year (29%)
                       </span>
                     </div>
-                    <div className="font-mono text-[11px] text-[#58413D]">
-                      Conversion Rate: <strong className="text-emerald-700">31.4%</strong>
+                    <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                      Conversion Rate: <strong className="text-emerald-600 dark:text-emerald-400">31.4%</strong>
                     </div>
                   </div>
                 </div>
 
                 {/* Right: Revenue Breakdown & Razorpay Settlement */}
-                <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-[#E8EEFF] shadow-xs flex flex-col justify-between">
+                <div className="lg:col-span-5 glass-card p-6 rounded-3xl shadow-sm border border-slate-200/80 dark:border-white/10 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h2 className="font-serif text-lg font-bold text-[#071B37]">
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                           Revenue Overview
                         </h2>
-                        <p className="text-xs text-[#58413D]">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                           Institutional Admissions Reconciliation
                         </p>
                       </div>
-                      <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200">
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold border border-emerald-500/20">
                         98.4% Success
                       </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="p-3.5 rounded-xl bg-[#F0F3FF]">
-                        <span className="text-[10px] uppercase font-bold text-[#8C716C] block">
+                      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">
                           Captured Fees
                         </span>
-                        <div className="font-serif text-xl font-bold text-[#89190E] mt-0.5">
+                        <div className="font-mono text-xl font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">
                           {totalRevenue > 0 ? `₹${totalRevenue.toLocaleString("en-IN")}` : "₹0"}
                         </div>
-                        <span className="text-[10px] text-gray-500">{transactions.length} settled order{transactions.length === 1 ? "" : "s"}</span>
+                        <span className="text-[10px] text-slate-400">{transactions.length} settled order{transactions.length === 1 ? "" : "s"}</span>
                       </div>
-                      <div className="p-3.5 rounded-xl bg-[#F0F3FF]">
-                        <span className="text-[10px] uppercase font-bold text-[#8C716C] block">
+                      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">
                           Avg Order Value
                         </span>
-                        <div className="font-serif text-xl font-bold text-[#071B37] mt-0.5">
+                        <div className="font-mono text-xl font-bold text-slate-900 dark:text-white mt-0.5">
                           {transactions.length > 0 ? `₹${Math.round(totalRevenue / transactions.length).toLocaleString("en-IN")}` : "₹0"}
                         </div>
-                        <span className="text-[10px] text-gray-500">Across legal batches</span>
+                        <span className="text-[10px] text-slate-400">Across legal batches</span>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <div className="flex justify-between items-center text-xs font-bold text-[#071B37]">
+                      <div className="flex justify-between items-center text-xs font-bold text-slate-900 dark:text-white">
                         <span>Payment Channels</span>
-                        <span className="text-[#58413D] font-normal text-[11px]">Instant UPI</span>
+                        <span className="text-slate-400 font-normal text-[11px]">Instant UPI</span>
                       </div>
-                      <div className="w-full h-2.5 rounded-full bg-gray-100 flex overflow-hidden">
-                        <div className="bg-[#89190E] h-full" style={{ width: '60%' }} title="UPI: 60%" />
-                        <div className="bg-[#B8860B] h-full" style={{ width: '25%' }} title="NetBanking: 25%" />
-                        <div className="bg-[#10233F] h-full" style={{ width: '15%' }} title="Cards: 15%" />
+                      <div className="w-full h-2.5 rounded-full bg-slate-100 dark:bg-white/10 flex overflow-hidden">
+                        <div className="bg-indigo-600 h-full" style={{ width: '60%' }} title="UPI: 60%" />
+                        <div className="bg-violet-600 h-full" style={{ width: '25%' }} title="NetBanking: 25%" />
+                        <div className="bg-blue-600 h-full" style={{ width: '15%' }} title="Cards: 15%" />
                       </div>
-                      <div className="grid grid-cols-3 gap-2 pt-1 text-[11px] text-[#58413D]">
+                      <div className="grid grid-cols-3 gap-2 pt-1 text-[11px] text-slate-500 dark:text-slate-400">
                         <span className="flex items-center gap-1">
-                          <span className="w-2 h-2 rounded-full bg-[#89190E]" /> UPI: 60%
+                          <span className="w-2 h-2 rounded-full bg-indigo-600" /> UPI: 60%
                         </span>
                         <span className="flex items-center gap-1">
-                          <span className="w-2 h-2 rounded-full bg-[#B8860B]" /> NetBanking: 25%
+                          <span className="w-2 h-2 rounded-full bg-violet-600" /> NetBanking: 25%
                         </span>
                         <span className="flex items-center gap-1">
-                          <span className="w-2 h-2 rounded-full bg-[#10233F]" /> Cards: 15%
+                          <span className="w-2 h-2 rounded-full bg-blue-600" /> Cards: 15%
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-gray-100 mt-4 flex items-center justify-between text-xs">
-                    <span className="font-mono text-[11px] text-gray-500">
-                      Merchant: <code className="text-[#89190E]">RZP_MSI_LIVE_9021</code>
+                  <div className="pt-4 border-t border-slate-200 dark:border-white/10 mt-4 flex items-center justify-between text-xs">
+                    <span className="font-mono text-[11px] text-slate-400">
+                      Merchant: <code className="text-indigo-600 dark:text-indigo-400">RZP_MSI_LIVE_9021</code>
                     </span>
                     <button
                       onClick={() => setActiveTab('transactions')}
-                      className="text-[#89190E] font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                      className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       <span>View Receipts</span>
                       <ChevronRight className="w-3.5 h-3.5" />
@@ -3190,12 +3195,12 @@ export default function SuperAdminMasterDashboard() {
               {/* 5. Today's Live Operations Cards (from code.html) */}
               <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Live Classes Monitor */}
-                <div className="bg-white p-6 rounded-2xl border border-[#E8EEFF] shadow-xs flex flex-col justify-between">
+                <div className="glass-card p-6 rounded-3xl shadow-sm border border-slate-200/80 dark:border-white/10 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
-                        <Video className="w-4 h-4 text-[#89190E]" />
-                        <h3 className="font-serif text-base font-bold text-[#071B37]">
+                        <Video className="w-4 h-4 text-indigo-500" />
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white">
                           Live Sessions Today
                         </h3>
                       </div>
@@ -3262,50 +3267,50 @@ export default function SuperAdminMasterDashboard() {
                 </div>
 
                 {/* Reception Intake Summary */}
-                <div className="bg-white p-6 rounded-2xl border border-[#E8EEFF] shadow-xs flex flex-col justify-between">
+                <div className="glass-card p-6 rounded-3xl shadow-sm border border-slate-200/80 dark:border-white/10 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
-                        <PhoneCall className="w-4 h-4 text-[#89190E]" />
-                        <h3 className="font-serif text-base font-bold text-[#071B37]">
+                        <PhoneCall className="w-4 h-4 text-indigo-500" />
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white">
                           Reception Desk Synchronized Queue
                         </h3>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold border border-emerald-500/20">
                         {leads.length} Leads in Queue
                       </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 mb-3">
-                      <div className="p-3 rounded-xl bg-[#F0F3FF]">
-                        <span className="text-[10px] uppercase font-bold text-[#8C716C] block">
+                      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">
                           New Unassigned
                         </span>
-                        <div className="font-serif text-xl font-bold text-[#89190E] mt-0.5">
+                        <div className="font-mono text-xl font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">
                           {leads.filter((l) => l.status === 'New').length}
                         </div>
-                        <span className="text-[10px] text-gray-500">Awaiting callback</span>
+                        <span className="text-[10px] text-slate-400">Awaiting callback</span>
                       </div>
-                      <div className="p-3 rounded-xl bg-[#F0F3FF]">
-                        <span className="text-[10px] uppercase font-bold text-[#8C716C] block">
+                      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">
                           Active Follow-ups
                         </span>
-                        <div className="font-serif text-xl font-bold text-amber-700 mt-0.5">
+                        <div className="font-mono text-xl font-bold text-amber-600 dark:text-amber-400 mt-0.5">
                           {leads.filter((l) => l.status === 'Follow-up').length}
                         </div>
-                        <span className="text-[10px] text-gray-500">Counselor active</span>
+                        <span className="text-[10px] text-slate-400">Counselor active</span>
                       </div>
                     </div>
 
-                    <p className="text-[11px] text-[#58413D] leading-relaxed">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                       Two-way link established with Receptionist Harshit. Leads created in this terminal instantly show up on the reception intake register.
                     </p>
                   </div>
 
-                  <div className="pt-3 border-t border-gray-100 mt-3 flex justify-end">
+                  <div className="pt-3 border-t border-slate-200 dark:border-white/10 mt-3 flex justify-end">
                     <button
                       onClick={() => setActiveTab('leads')}
-                      className="text-xs font-bold text-[#89190E] hover:underline flex items-center gap-1 cursor-pointer"
+                      className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       <span>Open Unified Lead CRM</span>
                       <ChevronRight className="w-3.5 h-3.5" />
@@ -3319,16 +3324,16 @@ export default function SuperAdminMasterDashboard() {
           {/* TAB 2: REGISTERED STUDENTS MANAGEMENT (AUDIO 2 SPECIFIC: ONLY REAL STUDENTS) */}
           {activeTab === 'students' && (
             <div className="space-y-6 animate-fadeIn">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-[#E8EEFF] shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-card p-6 rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-sm">
                 <div>
-                  <div className="flex items-center gap-2 text-[11px] font-bold text-[#89190E] uppercase tracking-wider mb-1">
+                  <div className="flex items-center gap-2 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1">
                     <GraduationCap className="w-4 h-4" />
                     <span>Real Registered Students Database</span>
                   </div>
-                  <h2 className="font-serif text-2xl font-bold text-[#071B37]">
+                  <h2 className="font-serif text-2xl font-bold text-slate-900 dark:text-white">
                     Active Student Accounts ({filteredStudents.length})
                   </h2>
-                  <p className="text-xs text-[#58413D] mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Live disk-backed records. Hard-refresh safe • Deletions and additions sync with student portal.
                   </p>
                 </div>
@@ -3336,7 +3341,7 @@ export default function SuperAdminMasterDashboard() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setShowAddStudentModal(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-bold transition-all shadow-md btn-press cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     <span>+ Add New Student</span>
@@ -3345,11 +3350,11 @@ export default function SuperAdminMasterDashboard() {
               </div>
 
               {/* Students Table */}
-              <div className="bg-white rounded-2xl border border-[#E8EEFF] shadow-xs overflow-hidden">
+              <div className="glass-card rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-[#F0F3FF] uppercase font-bold text-[10px] text-[#8C716C] tracking-wider border-b border-[#E8EEFF]">
+                      <tr className="bg-slate-100/75 dark:bg-white/5 uppercase font-bold text-[10px] text-slate-500 dark:text-slate-400 tracking-wider border-b border-slate-200 dark:border-white/10">
                         <th className="py-3.5 px-4">Student Name</th>
                         <th className="py-3.5 px-4">Mobile Number</th>
                         <th className="py-3.5 px-4">Enrolled Stream / Batch</th>
@@ -3360,53 +3365,53 @@ export default function SuperAdminMasterDashboard() {
                         <th className="py-3.5 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#E8EEFF]">
+                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                       {filteredStudents.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="text-center py-12 text-gray-500 font-sans">
+                          <td colSpan={8} className="text-center py-12 text-slate-400 dark:text-slate-500 font-sans">
                             No registered students found. Click "+ Add New Student" to enroll the first student.
                           </td>
                         </tr>
                       ) : (
                         filteredStudents.map((stu) => (
-                          <tr key={stu.id || stu.phone} className="hover:bg-[#F0F3FF]/50 transition-colors">
+                          <tr key={stu.id || stu.phone} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors">
                             <td className="py-3.5 px-4">
                               <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-full bg-[#89190E]/10 text-[#89190E] flex items-center justify-center font-bold text-xs shrink-0">
+                                <div className="w-8 h-8 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center justify-center font-bold text-xs shrink-0">
                                   {(stu.name || 'ST').slice(0, 2).toUpperCase()}
                                 </div>
                                 <div>
-                                  <span className="font-bold text-[#071B37] block">{stu.name}</span>
-                                  <span className="text-[10px] text-gray-500 font-mono">{stu.email || '—'}</span>
+                                  <span className="font-bold text-slate-900 dark:text-white block">{stu.name}</span>
+                                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">{stu.email || '—'}</span>
                                 </div>
                               </div>
                             </td>
-                            <td className="py-3.5 px-4 font-mono font-semibold text-[#10233F]">
+                            <td className="py-3.5 px-4 font-mono font-semibold text-slate-700 dark:text-slate-300">
                               +91 {stu.phone.slice(0, 5)} {stu.phone.slice(5)}
                             </td>
-                            <td className="py-3.5 px-4 text-[#58413D] font-medium max-w-xs truncate">
+                            <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 font-medium max-w-xs truncate">
                               {stu.stream}
                             </td>
-                            <td className="py-3.5 px-4 font-mono font-bold text-[#10233F]">
+                            <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">
                               ₹{(stu.totalFee || 0).toLocaleString('en-IN')}
                             </td>
-                            <td className="py-3.5 px-4 font-mono font-bold text-emerald-700">
+                            <td className="py-3.5 px-4 font-mono font-bold text-emerald-600 dark:text-emerald-400">
                               ₹{(stu.paidFee || 0).toLocaleString('en-IN')}
                             </td>
                             <td className="py-3.5 px-4 font-mono">
                               {stu.dueFee && stu.dueFee > 0 ? (
-                                <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                                <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                                   ₹{stu.dueFee.toLocaleString('en-IN')} Due
                                 </span>
                               ) : (
-                                <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                                   Cleared ✓
                                 </span>
                               )}
                             </td>
                             <td className="py-3.5 px-4 font-mono">
                               <div className="flex items-center gap-1.5">
-                                <span className="bg-gray-50 border border-gray-200 px-2 py-0.5 rounded text-[11px] font-bold text-[#89190E]">
+                                <span className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-2 py-0.5 rounded text-[11px] font-bold text-indigo-600 dark:text-indigo-400 font-mono">
                                   {showStudentPasswords[stu.phone]
                                     ? (stu.password || 'Student@MSI2026')
                                     : '••••••••'}
@@ -3414,7 +3419,7 @@ export default function SuperAdminMasterDashboard() {
                                 <button
                                   type="button"
                                   onClick={() => toggleStudentPasswordVisibility(stu.phone)}
-                                  className="text-gray-400 hover:text-[#89190E] cursor-pointer"
+                                  className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer"
                                   title={showStudentPasswords[stu.phone] ? 'Hide Password' : 'Show Password'}
                                 >
                                   {showStudentPasswords[stu.phone] ? (
@@ -3429,7 +3434,7 @@ export default function SuperAdminMasterDashboard() {
                                     navigator.clipboard.writeText(stu.password || 'Student@MSI2026');
                                     showToast(`Password for ${stu.name} copied!`);
                                   }}
-                                  className="text-gray-400 hover:text-[#89190E] cursor-pointer"
+                                  className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer"
                                   title="Copy Password"
                                 >
                                   <Copy className="w-3 h-3" />
@@ -3444,7 +3449,7 @@ export default function SuperAdminMasterDashboard() {
                                     setStudentForCollectFee(stu);
                                     setCollectFeeAmount(String(stu.dueFee && stu.dueFee > 0 ? stu.dueFee : (stu.totalFee || 5000)));
                                   }}
-                                  className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-700 transition-colors cursor-pointer"
+                                  className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500 hover:text-white text-amber-600 dark:text-amber-400 border border-amber-500/20 transition-colors cursor-pointer"
                                   title="Record / Collect Fee Payment & Generate Receipt"
                                 >
                                   <Receipt className="w-3.5 h-3.5" />
@@ -3454,28 +3459,28 @@ export default function SuperAdminMasterDashboard() {
                                     setSelectedStudentForCourseAssign(stu);
                                     setAssignCourseTargetCourseId(courses[0]?.id || '');
                                   }}
-                                  className="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 transition-colors cursor-pointer"
+                                  className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-600 hover:text-white text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 transition-colors cursor-pointer"
                                   title="Assign Course Directly to Student"
                                 >
                                   <BookOpen className="w-3.5 h-3.5" />
                                 </button>
                                 <button
                                   onClick={() => setSelectedStudentForView(stu)}
-                                  className="p-1.5 rounded-lg bg-gray-100 hover:bg-[#89190E] hover:text-white text-gray-600 transition-colors cursor-pointer"
+                                  className="p-1.5 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-800 dark:hover:bg-white/20 hover:text-white text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 transition-colors cursor-pointer"
                                   title="View Complete Student Profile"
                                 >
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
                                 <button
                                   onClick={() => handleOpenEditStudent(stu)}
-                                  className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 transition-colors cursor-pointer"
+                                  className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-600 hover:text-white text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 transition-colors cursor-pointer"
                                   title="Edit Student Profile, Stream & Fee Structure"
                                 >
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
                                 <button
                                   onClick={() => setStudentToDelete(stu)}
-                                  className="p-1.5 rounded-lg bg-red-50 hover:bg-red-600 hover:text-white text-red-600 transition-colors cursor-pointer"
+                                  className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-600 hover:text-white text-rose-600 dark:text-rose-400 border border-rose-500/20 transition-colors cursor-pointer"
                                   title="Permanently Delete Student"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -3495,16 +3500,16 @@ export default function SuperAdminMasterDashboard() {
           {/* TAB 3: LEAD CRM & RECEPTION LINK (AUDIO 2 SPECIFIC: TWO-WAY SYNC) */}
           {activeTab === 'leads' && (
             <div className="space-y-6 animate-fadeIn">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-[#E8EEFF] shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-card p-6 rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-sm">
                 <div>
-                  <div className="flex items-center gap-2 text-[11px] font-bold text-[#89190E] uppercase tracking-wider mb-1">
+                  <div className="flex items-center gap-2 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1">
                     <PhoneCall className="w-4 h-4" />
                     <span>Reception Telecalling Desk Synchronization</span>
                   </div>
-                  <h2 className="font-serif text-2xl font-bold text-[#071B37]">
+                  <h2 className="font-serif text-2xl font-bold text-slate-900 dark:text-white">
                     Unified Lead Register ({filteredLeads.length})
                   </h2>
-                  <p className="text-xs text-[#58413D] mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Any lead entered here immediately displays on the Reception Desk portal and persists permanently on disk.
                   </p>
                 </div>
@@ -3513,36 +3518,36 @@ export default function SuperAdminMasterDashboard() {
                   <button
                     type="button"
                     onClick={() => setShowMetaWebhookModal(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#E8DCCB] hover:bg-[#FFF9EF] text-[#10233F] text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all shadow-xs cursor-pointer"
                   >
-                    <Share2 className="w-3.5 h-3.5 text-[#89190E]" />
+                    <Share2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                     <span>Meta Webhook</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleExportLeadsToExcel}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold transition-all shadow-xs cursor-pointer"
                     title="Export all current leads to an Excel spreadsheet (.xlsx)"
                   >
-                    <Download className="w-3.5 h-3.5 text-emerald-600" />
+                    <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     <span>Export to Excel (.xlsx)</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setShowBulkLeadModal(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FFF9EF] hover:bg-[#FCEFD8] border border-[#EFC988] text-[#89190E] text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-bold transition-all shadow-xs cursor-pointer"
                     title="Open Excel Studio to directly form an Excel sheet or upload spreadsheet"
                   >
-                    <FileSpreadsheet className="w-4 h-4 text-[#89190E]" />
-                    <span>ðŸ“Š Excel Sheet Studio (Upload / Form Sheet)</span>
+                    <FileSpreadsheet className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                    <span>Excel Sheet Studio (Upload / Form Sheet)</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setShowAddLeadModal(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-bold transition-all shadow-md btn-press cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     <span>+ Generate Single Lead</span>
@@ -3552,11 +3557,11 @@ export default function SuperAdminMasterDashboard() {
 
 
               {/* Leads Table */}
-              <div className="bg-white rounded-2xl border border-[#E8EEFF] shadow-xs overflow-hidden">
+              <div className="glass-card rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-[#F0F3FF] uppercase font-bold text-[10px] text-[#8C716C] tracking-wider border-b border-[#E8EEFF]">
+                      <tr className="bg-slate-100/75 dark:bg-white/5 uppercase font-bold text-[10px] text-slate-500 dark:text-slate-400 tracking-wider border-b border-slate-200 dark:border-white/10">
                         <th className="py-3.5 px-4">Lead Name</th>
                         <th className="py-3.5 px-4">Contact Mobile</th>
                         <th className="py-3.5 px-4">Target Course</th>
@@ -3566,10 +3571,10 @@ export default function SuperAdminMasterDashboard() {
                         <th className="py-3.5 px-4">Latest Counselor Remark</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#E8EEFF]">
+                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                       {filteredLeads.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="text-center py-12 text-gray-500">
+                          <td colSpan={7} className="text-center py-12 text-slate-400 dark:text-slate-500 font-sans">
                             No leads found in reception queue.
                           </td>
                         </tr>
@@ -3577,37 +3582,37 @@ export default function SuperAdminMasterDashboard() {
                         filteredLeads.map((ld) => {
                           const rowClass =
                             ld.status === 'Dead'
-                              ? 'border-l-[6px] border-l-red-600 bg-red-100/90 hover:bg-red-200/90 border-b border-red-300 text-red-950 font-medium'
+                              ? 'border-l-4 border-l-rose-500 bg-rose-500/5 hover:bg-rose-500/10'
                               : ld.status === 'Converted'
-                              ? 'border-l-[6px] border-l-emerald-600 bg-emerald-100/90 hover:bg-emerald-200/90 border-b border-emerald-300 text-emerald-950 font-medium'
+                              ? 'border-l-4 border-l-emerald-500 bg-emerald-500/5 hover:bg-emerald-500/10'
                               : ld.status === 'Follow-up'
-                              ? 'border-l-[6px] border-l-amber-500 bg-amber-100/90 hover:bg-amber-200/90 border-b border-amber-300 text-amber-950 font-medium'
-                              : 'border-l-[6px] border-l-blue-500 bg-blue-50/70 hover:bg-blue-100/70 border-b border-blue-200 text-[#10233F]';
+                              ? 'border-l-4 border-l-amber-500 bg-amber-500/5 hover:bg-amber-500/10'
+                              : 'border-l-4 border-l-indigo-500 bg-indigo-500/5 hover:bg-indigo-500/10';
 
                           return (
                             <tr key={ld.id} className={`transition-colors ${rowClass}`}>
                               <td className="py-3.5 px-4">
-                                <span className="font-bold text-[#071B37] block">{ld.name}</span>
-                                <span className="text-[10px] text-gray-500">{ld.source}</span>
+                                <span className="font-bold text-slate-900 dark:text-white block">{ld.name}</span>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400">{ld.source}</span>
                               </td>
-                              <td className="py-3.5 px-4 font-mono font-bold text-[#10233F]">
+                              <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">
                                 {ld.mobile}
                               </td>
-                              <td className="py-3.5 px-4 text-[#58413D] font-medium">
+                              <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 font-medium">
                                 {ld.targetCourse}
                               </td>
-                              <td className="py-3.5 px-4 text-gray-600">{ld.location}</td>
+                              <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400">{ld.location}</td>
                               <td className="py-3.5 px-4">
                                 <div className="flex flex-col gap-1.5">
                                   <span
                                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold w-fit ${
                                       ld.status === 'Converted'
-                                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                                         : ld.status === 'Follow-up'
-                                        ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
                                         : ld.status === 'Dead'
-                                        ? 'bg-red-100 text-red-800 border border-red-300'
-                                        : 'bg-blue-100 text-blue-800 border border-blue-300'
+                                        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                                        : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20'
                                     }`}
                                   >
                                     {ld.status}
@@ -3622,13 +3627,13 @@ export default function SuperAdminMasterDashboard() {
                                         className={`px-1.5 py-0.5 text-[9px] font-bold rounded cursor-pointer transition-all ${
                                           ld.status === st
                                             ? st === 'Converted'
-                                              ? 'bg-emerald-600 text-white shadow-2xs'
+                                              ? 'bg-emerald-600 text-white shadow-xs'
                                               : st === 'Follow-up'
-                                              ? 'bg-amber-500 text-white shadow-2xs'
+                                              ? 'bg-amber-500 text-white shadow-xs'
                                               : st === 'Dead'
-                                              ? 'bg-red-600 text-white shadow-2xs'
-                                              : 'bg-blue-600 text-white shadow-2xs'
-                                            : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200'
+                                              ? 'bg-rose-600 text-white shadow-xs'
+                                              : 'bg-indigo-600 text-white shadow-xs'
+                                            : 'bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10'
                                         }`}
                                       >
                                         {st === 'Follow-up' ? 'Follow' : st === 'Converted' ? 'Convert' : st}
@@ -3637,12 +3642,12 @@ export default function SuperAdminMasterDashboard() {
                                   </div>
                                 </div>
                               </td>
-                            <td className="py-3.5 px-4 text-gray-700 font-medium">
-                              {ld.agent}
-                            </td>
-                            <td className="py-3.5 px-4 text-gray-500 max-w-xs truncate">
-                              {ld.latestRemark}
-                            </td>
+                              <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 font-medium">
+                                {ld.agent}
+                              </td>
+                              <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 max-w-xs truncate">
+                                {ld.latestRemark}
+                              </td>
                             </tr>
                           );
                         })
@@ -3653,18 +3658,18 @@ export default function SuperAdminMasterDashboard() {
               </div>
 
               {/* Receptionist Staff Accounts Card (User Audio Request) */}
-              <div className="bg-white rounded-2xl border border-[#E8EEFF] shadow-xs overflow-hidden">
-                <div className="p-6 border-b border-[#E8EEFF] flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-white to-[#F0F3FF]/40">
+              <div className="glass-card rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-200 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-100/50 dark:bg-white/5">
                   <div>
-                    <div className="flex items-center gap-2 text-[11px] font-bold text-[#89190E] uppercase tracking-wider mb-1">
+                    <div className="flex items-center gap-2 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1">
                       <Users className="w-4 h-4" />
                       <span>Front Desk Staff Credentials</span>
                     </div>
-                    <h3 className="font-serif text-xl font-bold text-[#071B37]">
+                    <h3 className="font-serif text-xl font-bold text-slate-900 dark:text-white">
                       Receptionist Accounts ({totalReceptionistCount})
                     </h3>
-                    <p className="text-xs text-[#58413D] mt-0.5">
-                      Front-desk team members authorized to log in at <code>/login</code> or <code>/reception/login</code> to receive inquiries and call leads.
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Front-desk team members authorized to log in at <code className="bg-slate-200/60 dark:bg-white/10 px-1.5 py-0.5 rounded text-indigo-600 dark:text-indigo-400 font-mono text-[11px]">/login</code> or <code className="bg-slate-200/60 dark:bg-white/10 px-1.5 py-0.5 rounded text-indigo-600 dark:text-indigo-400 font-mono text-[11px]">/reception/login</code> to receive inquiries and call leads.
                     </p>
                   </div>
 
@@ -3672,7 +3677,7 @@ export default function SuperAdminMasterDashboard() {
                     <Link
                       href="/reception/login"
                       target="_blank"
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#E8EEFF] hover:border-[#89190E] text-[#89190E] text-xs font-bold transition-all"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:border-indigo-500 text-indigo-600 dark:text-indigo-400 text-xs font-bold transition-all shadow-xs"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                       <span>Open Reception Portal</span>
@@ -3680,7 +3685,7 @@ export default function SuperAdminMasterDashboard() {
 
                     <button
                       onClick={() => setShowAddReceptionistModal(true)}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-bold transition-all shadow-md btn-press cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>+ Add Receptionist Staff</span>
@@ -3691,7 +3696,7 @@ export default function SuperAdminMasterDashboard() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-[#F0F3FF] uppercase font-bold text-[10px] text-[#8C716C] tracking-wider border-b border-[#E8EEFF]">
+                      <tr className="bg-slate-100/75 dark:bg-white/5 uppercase font-bold text-[10px] text-slate-500 dark:text-slate-400 tracking-wider border-b border-slate-200 dark:border-white/10">
                         <th className="py-3 px-4">Staff Member</th>
                         <th className="py-3 px-4">Login Mobile</th>
                         <th className="py-3 px-4">Login Password</th>
@@ -3700,27 +3705,27 @@ export default function SuperAdminMasterDashboard() {
                         <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#E8EEFF]">
+                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                       {/* Senior Receptionist / Permanent Desk Row */}
                       {seniorDeskRecord && (
-                        <tr className="hover:bg-[#F0F3FF]/40 transition-colors bg-[#FFFDF9]">
+                        <tr className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors bg-indigo-50/20 dark:bg-indigo-950/20">
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2.5">
-                              <div className="w-7 h-7 rounded-full bg-[#89190E] text-white flex items-center justify-center font-bold text-[11px] shrink-0">
+                              <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
                                 {(seniorDeskRecord.name || 'H').slice(0, 1).toUpperCase()}
                               </div>
                               <div>
-                                <span className="font-bold text-[#071B37] block">{seniorDeskRecord.name}</span>
-                                <span className="text-[10px] text-gray-500">Fixed System Administrator</span>
+                                <span className="font-bold text-slate-900 dark:text-white block">{seniorDeskRecord.name}</span>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400">Fixed System Administrator</span>
                               </div>
                             </div>
                           </td>
-                          <td className="py-3 px-4 font-mono font-bold text-[#10233F]">
+                          <td className="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white">
                             {seniorDeskRecord.phone}
                           </td>
                           <td className="py-3 px-4 font-mono">
                             <div className="flex items-center gap-1.5">
-                              <span className="bg-white border border-gray-200 px-2 py-0.5 rounded text-[11px] font-bold text-[#89190E]">
+                              <span className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-2 py-0.5 rounded text-[11px] font-bold text-indigo-600 dark:text-indigo-400 font-mono">
                                 {seniorDeskRecord.password}
                               </span>
                               <button
@@ -3729,18 +3734,18 @@ export default function SuperAdminMasterDashboard() {
                                   navigator.clipboard.writeText(seniorDeskRecord.password);
                                   showToast(`Password for ${seniorDeskRecord.name} copied!`);
                                 }}
-                                className="text-gray-400 hover:text-[#89190E] cursor-pointer"
+                                className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer"
                                 title="Copy Password"
                               >
                                 <Copy className="w-3 h-3" />
                               </button>
                             </div>
                           </td>
-                          <td className="py-3 px-4 text-gray-500 font-mono text-[11px]">
+                          <td className="py-3 px-4 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                             {seniorDeskRecord.email || '—'}
                           </td>
                           <td className="py-3 px-4">
-                            <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                            <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                               Active Senior Desk
                             </span>
                           </td>
@@ -3748,14 +3753,14 @@ export default function SuperAdminMasterDashboard() {
                             <div className="flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => handleOpenEditReceptionist(seniorDeskRecord)}
-                                className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors cursor-pointer"
                                 title="Edit Receptionist Account"
                               >
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 onClick={() => setReceptionistToDelete(seniorDeskRecord)}
-                                className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg text-rose-500 dark:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                                 title="Delete Receptionist Account"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -3767,24 +3772,24 @@ export default function SuperAdminMasterDashboard() {
 
                       {/* Dynamic Receptionists */}
                       {visibleReceptionists.map((rec) => (
-                        <tr key={rec.id} className="hover:bg-[#F0F3FF]/40 transition-colors">
+                        <tr key={rec.id} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors">
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2.5">
-                              <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-[11px] shrink-0">
+                              <div className="w-7 h-7 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center justify-center font-bold text-[11px] shrink-0">
                                 {rec.name.slice(0, 1).toUpperCase()}
                               </div>
                               <div>
-                                <span className="font-bold text-[#071B37] block">{rec.name}</span>
-                                <span className="text-[10px] text-gray-500 font-mono">ID: {rec.id}</span>
+                                <span className="font-bold text-slate-900 dark:text-white block">{rec.name}</span>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">ID: {rec.id}</span>
                               </div>
                             </div>
                           </td>
-                          <td className="py-3 px-4 font-mono font-bold text-[#10233F]">
+                          <td className="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white">
                             {rec.phone}
                           </td>
                           <td className="py-3 px-4 font-mono">
                             <div className="flex items-center gap-1.5">
-                              <span className="bg-gray-50 border border-gray-200 px-2 py-0.5 rounded text-[11px] font-bold text-[#89190E]">
+                              <span className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-2 py-0.5 rounded text-[11px] font-bold text-indigo-600 dark:text-indigo-400 font-mono">
                                 {rec.password}
                               </span>
                               <button
@@ -3793,18 +3798,18 @@ export default function SuperAdminMasterDashboard() {
                                   navigator.clipboard.writeText(rec.password);
                                   showToast(`Password for ${rec.name} copied!`);
                                 }}
-                                className="text-gray-400 hover:text-[#89190E] cursor-pointer"
+                                className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer"
                                 title="Copy Password"
                               >
                                 <Copy className="w-3 h-3" />
                               </button>
                             </div>
                           </td>
-                          <td className="py-3 px-4 text-gray-500 font-mono text-[11px]">
+                          <td className="py-3 px-4 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                             {rec.email || '—'}
                           </td>
                           <td className="py-3 px-4">
-                            <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                            <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                               Active
                             </span>
                           </td>
@@ -3812,14 +3817,14 @@ export default function SuperAdminMasterDashboard() {
                             <div className="flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => handleOpenEditReceptionist(rec)}
-                                className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors cursor-pointer"
                                 title="Edit Receptionist Account"
                               >
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 onClick={() => setReceptionistToDelete(rec)}
-                                className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg text-rose-500 dark:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                                 title="Delete Receptionist Account"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -3838,16 +3843,16 @@ export default function SuperAdminMasterDashboard() {
           {/* TAB 4: TEACHERS & FACULTY (AUDIO 3 SPECIFIC) */}
           {activeTab === 'teachers' && (
             <div className="space-y-6 animate-fadeIn">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-[#E8EEFF] shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-card p-6 rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-sm">
                 <div>
-                  <div className="flex items-center gap-2 text-[11px] font-bold text-[#89190E] uppercase tracking-wider mb-1">
+                  <div className="flex items-center gap-2 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1">
                     <UserCheck className="w-4 h-4" />
                     <span>Institutional Faculty Management</span>
                   </div>
-                  <h2 className="font-serif text-2xl font-bold text-[#071B37]">
+                  <h2 className="font-serif text-2xl font-bold text-slate-900 dark:text-white">
                     Certified Mentors & Instructors ({teachers.length})
                   </h2>
-                  <p className="text-xs text-[#58413D] mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Faculty accounts for judicial and legal entrance coaching. Approvals and assignments reflect across faculty dashboards.
                   </p>
                 </div>
@@ -3855,7 +3860,7 @@ export default function SuperAdminMasterDashboard() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setShowAddTeacherModal(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-bold transition-all shadow-md btn-press cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     <span>+ Add Faculty Member</span>
@@ -3868,59 +3873,59 @@ export default function SuperAdminMasterDashboard() {
                 {teachers.map((tc) => (
                   <div
                     key={tc.id}
-                    className="bg-white rounded-2xl border border-[#E8EEFF] p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+                    className="glass-card rounded-2xl border border-slate-200/80 dark:border-white/10 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-[#FFF3DD] text-[#89190E] font-serif font-bold text-base flex items-center justify-center border border-[#EFC988]/60 shrink-0">
+                          <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-serif font-bold text-base flex items-center justify-center border border-indigo-500/20 shrink-0">
                             {tc.name.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <h3 className="font-bold text-sm text-[#071B37] leading-tight">
+                            <h3 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">
                               {tc.name}
                             </h3>
-                            <span className="text-[11px] text-[#89190E] font-medium block">
+                            <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium block">
                               {tc.designation}
                             </span>
-                            <span className="text-[10px] text-gray-500 font-mono">
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
                               {tc.email}
                             </span>
                           </div>
                         </div>
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                             tc.status === 'approved'
-                              ? 'bg-emerald-100 text-emerald-800'
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
                               : tc.status === 'pending'
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-red-100 text-red-800'
+                              ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                              : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
                           }`}
                         >
                           {tc.status.toUpperCase()}
                         </span>
                       </div>
 
-                      <div className="p-3 rounded-xl bg-[#F0F3FF] text-xs space-y-1 mb-3">
-                        <div className="text-[11px] text-[#58413D]">
-                          <strong>Specialization:</strong> {tc.specialization || tc.department}
+                      <div className="p-3 rounded-xl bg-slate-100/75 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 text-xs space-y-1 mb-3">
+                        <div className="text-[11px] text-slate-600 dark:text-slate-400">
+                          <strong className="text-slate-700 dark:text-slate-300">Specialization:</strong> {tc.specialization || tc.department}
                         </div>
-                        <div className="text-[11px] text-[#58413D]">
-                          <strong>Experience:</strong> {tc.experienceYears} Years Academic / Judicial
+                        <div className="text-[11px] text-slate-600 dark:text-slate-400">
+                          <strong className="text-slate-700 dark:text-slate-300">Experience:</strong> {tc.experienceYears} Years Academic / Judicial
                         </div>
-                        <div className="text-[11px] text-[#58413D]">
-                          <strong>Assigned Courses:</strong> {tc.assignedCourseIds?.length || 0} Batches
+                        <div className="text-[11px] text-slate-600 dark:text-slate-400">
+                          <strong className="text-slate-700 dark:text-slate-300">Assigned Courses:</strong> {tc.assignedCourseIds?.length || 0} Batches
                         </div>
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-[#E8EEFF] flex items-center justify-between gap-2">
+                    <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex items-center justify-between gap-2">
                       <button
                         onClick={() => {
                           setAssigningTeacher(tc);
                           setTeacherSelectedCourseIds(tc.assignedCourseIds || []);
                         }}
-                        className="flex-1 py-1.5 rounded-lg bg-[#F0F3FF] hover:bg-[#E8EEFF] text-[#071B37] font-bold text-[11px] transition-colors cursor-pointer text-center"
+                        className="flex-1 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold text-[11px] transition-colors cursor-pointer text-center border border-indigo-500/20"
                       >
                         Assign Courses
                       </button>
@@ -3929,13 +3934,13 @@ export default function SuperAdminMasterDashboard() {
                         <>
                           <button
                             onClick={() => handleApproveTeacher(tc.id)}
-                            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition-colors cursor-pointer"
+                            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition-colors cursor-pointer shadow-xs"
                           >
                             Approve
                           </button>
                           <button
                             onClick={() => handleRejectTeacher(tc.id)}
-                            className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] transition-colors cursor-pointer"
+                            className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] transition-colors cursor-pointer shadow-xs"
                           >
                             Reject
                           </button>
@@ -3944,16 +3949,16 @@ export default function SuperAdminMasterDashboard() {
 
                       <button
                         onClick={() => handleOpenEditFaculty(tc)}
-                        className="py-1.5 px-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold text-[11px] transition-colors cursor-pointer flex items-center justify-center gap-1"
+                        className="py-1.5 px-2.5 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-bold text-[11px] transition-colors cursor-pointer flex items-center justify-center gap-1"
                         title={`Edit ${tc.name}`}
                       >
-                        <Pencil className="w-3.5 h-3.5 text-emerald-700" />
+                        <Pencil className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
                         <span>Edit</span>
                       </button>
 
                       <button
                         onClick={() => setTeacherToDelete(tc)}
-                        className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 border border-red-200 hover:border-red-300 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg text-rose-500 dark:text-rose-400 hover:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 transition-colors cursor-pointer"
                         title={`Delete ${tc.name}`}
                         aria-label={`Delete ${tc.name}`}
                       >
@@ -3969,16 +3974,16 @@ export default function SuperAdminMasterDashboard() {
           {/* TAB 5: COURSES & LMS */}
           {activeTab === 'courses' && (
             <div className="space-y-6 animate-fadeIn">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-[#E8EEFF] shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-card p-6 rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-sm">
                 <div>
-                  <div className="flex items-center gap-2 text-[11px] font-bold text-[#89190E] uppercase tracking-wider mb-1">
+                  <div className="flex items-center gap-2 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1">
                     <BookOpen className="w-4 h-4" />
                     <span>Curriculum & Batch Administration</span>
                   </div>
-                  <h2 className="font-serif text-2xl font-bold text-[#071B37]">
+                  <h2 className="font-serif text-2xl font-bold text-slate-900 dark:text-white">
                     Published Law Coaching Programs ({courses.length})
                   </h2>
-                  <p className="text-xs text-[#58413D] mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Judiciary, CLAT, AILET, and LL.M Foundation syllabi synchronized with student learning portal.
                   </p>
                 </div>
@@ -3991,7 +3996,7 @@ export default function SuperAdminMasterDashboard() {
                       }
                       setShowAddCourseModal(true);
                     }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-bold transition-all shadow-md btn-press cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     <span>+ Create Course & Assign Faculty</span>
@@ -4004,11 +4009,11 @@ export default function SuperAdminMasterDashboard() {
                 {courses.map((crs) => (
                   <div
                     key={crs.id}
-                    className="bg-white rounded-2xl border border-[#E8EEFF] p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+                    className="glass-card rounded-2xl border border-slate-200/80 dark:border-white/10 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
                   >
                     <div>
                       {crs.thumbnail && (
-                        <div className="relative h-32 w-full rounded-xl overflow-hidden mb-3 bg-gray-100">
+                        <div className="relative h-32 w-full rounded-xl overflow-hidden mb-3 bg-slate-100 dark:bg-white/5">
                           <Image
                             src={crs.thumbnail}
                             alt={crs.title}
@@ -4023,17 +4028,17 @@ export default function SuperAdminMasterDashboard() {
                       )}
 
                       <div className="flex items-center justify-between mb-2">
-                        <span className="px-2 py-0.5 rounded-full bg-[#89190E]/10 text-[#89190E] text-[10px] font-bold uppercase">
+                        <span className="px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-[10px] font-bold uppercase">
                           {crs.category}
                         </span>
-                        <span className="font-bold text-xs text-[#071B37]">
+                        <span className="font-bold text-xs text-slate-900 dark:text-white font-mono">
                           ₹{crs.price.toLocaleString('en-IN')}
                         </span>
                       </div>
-                      <h3 className="font-serif font-bold text-base text-[#071B37] mb-1">
+                      <h3 className="font-serif font-bold text-base text-slate-900 dark:text-white mb-1">
                         {crs.title}
                       </h3>
-                      <p className="text-xs text-[#58413D] line-clamp-2 mb-3">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">
                         {crs.headline}
                       </p>
                       <div className="p-3 rounded-xl bg-[#F0F3FF] text-[11px] space-y-1 text-[#58413D]">

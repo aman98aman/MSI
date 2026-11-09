@@ -342,9 +342,23 @@ export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
-    if (!id) {
+    let idsToDelete: string[] = [];
+    if (id) {
+      idsToDelete = [id];
+    } else {
+      try {
+        const body = await req.json().catch(() => ({}));
+        if (Array.isArray(body?.ids)) {
+          idsToDelete = body.ids;
+        } else if (body?.id) {
+          idsToDelete = [body.id];
+        }
+      } catch (_) {}
+    }
+
+    if (idsToDelete.length === 0) {
       return NextResponse.json(
-        { success: false, message: 'Lead ID is required.' },
+        { success: false, message: 'Lead ID or list of IDs is required.' },
         { status: 400 }
       );
     }
@@ -353,7 +367,7 @@ export async function DELETE(req: NextRequest) {
       try {
         const db = await getDb();
         if (db) {
-          await db.collection('leads').deleteOne({ id });
+          await db.collection('leads').deleteMany({ id: { $in: idsToDelete } });
         }
       } catch (err) {
         console.warn('[Leads MongoDB Delete Error]:', err);
@@ -361,14 +375,15 @@ export async function DELETE(req: NextRequest) {
     }
 
     const leads = await getLeadsAsync();
-    const filtered = leads.filter((l) => l.id !== id);
+    const filtered = leads.filter((l) => !idsToDelete.includes(l.id));
 
     writeLeadsToDisk(filtered);
 
     return NextResponse.json({
       success: true,
-      message: 'Lead removed successfully.',
+      message: `${idsToDelete.length} lead(s) removed successfully.`,
       leads: filtered,
+      count: filtered.length,
     });
   } catch (error: any) {
     return NextResponse.json(

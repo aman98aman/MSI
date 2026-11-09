@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/footer/Footer';
@@ -30,7 +30,7 @@ export default function BlogPage() {
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
 
-  const articles: Article[] = [
+const INITIAL_ARTICLES: Article[] = [
     {
       id: 1,
       title: 'Cracking PCS (Judicial Services): Strategy, Judgment Writing & High Court Precedents',
@@ -106,7 +106,33 @@ export default function BlogPage() {
     },
   ];
 
-  const featuredArticle = articles.find((a) => a.featured);
+  const [articles, setArticles] = useState<Article[]>(INITIAL_ARTICLES);
+
+  useEffect(() => {
+    fetch('/api/blogs')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.blogs) && data.blogs.length > 0) {
+          const mapped: Article[] = data.blogs.map((b: any, idx: number) => ({
+            id: typeof b.id === 'number' ? b.id : idx + 1,
+            title: b.title,
+            category: (b.category || 'judiciary') as any,
+            categoryLabel: b.categoryLabel || 'Judicial Services',
+            date: b.date || 'Recent',
+            readTime: b.readTime || '5 min read',
+            excerpt: b.excerpt || '',
+            author: b.author || 'MSI Faculty',
+            authorRole: b.authorRole || 'Faculty Member',
+            avatar: b.avatar || '/images/avatars/avatar-1.webp',
+            featured: idx === 0,
+          }));
+          setArticles(mapped);
+        }
+      })
+      .catch((err) => console.warn('Could not load dynamic blogs:', err));
+  }, []);
+
+  const featuredArticle = articles.find((a) => a.featured) || articles[0];
   const regularArticles = articles.filter((a) => !a.featured);
 
   const filteredArticles =

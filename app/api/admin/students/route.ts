@@ -106,12 +106,58 @@ export async function DELETE(req: NextRequest) {
     let phone = searchParams.get('phone');
     let id = searchParams.get('id');
 
-    if (!phone && !id) {
-      try {
-        const body = await req.json().catch(() => ({}));
+    let body: any = {};
+    try {
+      body = await req.json().catch(() => ({}));
+      if (!phone && !id) {
         phone = body?.phone;
         id = body?.id;
-      } catch (_) {}
+      }
+    } catch (_) {}
+
+    // Support Bulk Deletion: Array of items, phones, or ids
+    if (Array.isArray(body?.items) && body.items.length > 0) {
+      for (const item of body.items) {
+        const cleanPhone = (item.phone || '').replace(/\D/g, '').slice(-10);
+        const cleanId = (item.id || '').trim();
+        await deleteStudentAsync(cleanPhone || cleanId, cleanId || cleanPhone);
+      }
+      const updatedStudents = await getStudentsAsync();
+      return NextResponse.json({
+        success: true,
+        message: `${body.items.length} students permanently deleted from records.`,
+        students: updatedStudents,
+        count: updatedStudents.length,
+      });
+    }
+
+    if (Array.isArray(body?.phones) && body.phones.length > 0) {
+      for (const p of body.phones) {
+        const cleanPhone = (p || '').replace(/\D/g, '').slice(-10);
+        await deleteStudentAsync(cleanPhone, cleanPhone);
+      }
+      const updatedStudents = await getStudentsAsync();
+      return NextResponse.json({
+        success: true,
+        message: `${body.phones.length} students permanently deleted from records.`,
+        students: updatedStudents,
+        count: updatedStudents.length,
+      });
+    }
+
+    if (Array.isArray(body?.ids) && body.ids.length > 0) {
+      for (const targetId of body.ids) {
+        const cleanId = (targetId || '').trim();
+        const cleanPhone = cleanId.replace(/\D/g, '').slice(-10);
+        await deleteStudentAsync(cleanPhone || cleanId, cleanId || cleanPhone);
+      }
+      const updatedStudents = await getStudentsAsync();
+      return NextResponse.json({
+        success: true,
+        message: `${body.ids.length} students permanently deleted from records.`,
+        students: updatedStudents,
+        count: updatedStudents.length,
+      });
     }
 
     if (!phone && !id) {
@@ -132,6 +178,7 @@ export async function DELETE(req: NextRequest) {
       success: true,
       message: 'Student account permanently deleted from records.',
       students: updatedStudents,
+      count: updatedStudents.length,
     });
   } catch (error: any) {
     return NextResponse.json(

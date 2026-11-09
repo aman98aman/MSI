@@ -184,10 +184,23 @@ type CategoryFilter = 'all' | 'judiciary' | 'jurisprudence' | 'clat';
 type ViewMode = 'list' | 'grid';
 
 export default function BlogPreview() {
+  const [articles, setArticles] = useState<GazetteArticle[]>(GAZETTE_ARTICLES);
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
+
+  // Dynamic fetch from /api/blogs
+  useEffect(() => {
+    fetch('/api/blogs')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.blogs) && data.blogs.length > 0) {
+          setArticles(data.blogs);
+        }
+      })
+      .catch((err) => console.warn('Could not fetch dynamic blogs:', err));
+  }, []);
 
   // Expanded takeaways accordion per article ID
   const [expandedTakeaways, setExpandedTakeaways] = useState<{ [key: number]: boolean }>({});
@@ -281,7 +294,7 @@ export default function BlogPreview() {
 
   // Filtered Articles based on Category and Search Query
   const filteredArticles = useMemo(() => {
-    return GAZETTE_ARTICLES.filter((article) => {
+    return articles.filter((article) => {
       const matchesCategory =
         activeCategory === 'all' || article.category === activeCategory;
       const q = searchQuery.toLowerCase().trim();
@@ -290,20 +303,21 @@ export default function BlogPreview() {
         article.title.toLowerCase().includes(q) ||
         article.excerpt.toLowerCase().includes(q) ||
         article.author.toLowerCase().includes(q) ||
-        article.statutesCited.some((s) => s.toLowerCase().includes(q));
+        (Array.isArray(article.statutesCited) &&
+          article.statutesCited.some((s) => s.toLowerCase().includes(q)));
       return matchesCategory && matchesSearch;
     });
-  }, [activeCategory, searchQuery]);
+  }, [articles, activeCategory, searchQuery]);
 
   // Counts for tabs
   const categoryCounts = useMemo(() => {
     return {
-      all: GAZETTE_ARTICLES.length,
-      judiciary: GAZETTE_ARTICLES.filter((a) => a.category === 'judiciary').length,
-      jurisprudence: GAZETTE_ARTICLES.filter((a) => a.category === 'jurisprudence').length,
-      clat: GAZETTE_ARTICLES.filter((a) => a.category === 'clat').length,
+      all: articles.length,
+      judiciary: articles.filter((a) => a.category === 'judiciary').length,
+      jurisprudence: articles.filter((a) => a.category === 'jurisprudence').length,
+      clat: articles.filter((a) => a.category === 'clat').length,
     };
-  }, []);
+  }, [articles]);
 
   return (
     <section className="py-20 sm:py-28 bg-[#FFF9EF] relative overflow-hidden" aria-label="MSI Gazette">

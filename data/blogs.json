@@ -1,0 +1,101 @@
+[
+  {
+    "id": 1794238456788,
+    "slug": "bxvxv-xv-cv-nvc-xvcxvxv-x-c-v-xv-cv-cvvvvvvvvvvvvvvvvvvvvvvvvvv",
+    "title": "bxvxv xv cv nvc xvcxvxv x c v xv  cv   cvvvvvvvvvvvvvvvvvvvvvvvvvv",
+    "category": "clat",
+    "categoryLabel": "CLAT & NLUs",
+    "date": "November 2026",
+    "readTime": "5 min read",
+    "excerpt": "cccccccccccccccccccccccccccccccccccccccccccccc",
+    "author": "Harshit Singh",
+    "authorRole": "Legal Academic Panel",
+    "avatar": "/images/avatars/avatar-1.webp",
+    "accentColor": "#89190E",
+    "initialClaps": 50,
+    "keyTakeaways": [],
+    "statutesCited": [],
+    "fullSummary": "ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "content": "ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "coverImage": "",
+    "isPublished": true,
+    "createdAt": "2026-11-09T15:34:16.789Z",
+    "updatedAt": "2026-11-09T15:34:16.789Z"
+  },
+  {
+    "id": 1794238079170,
+    "slug": "deep",
+    "title": "DEEP",
+    "category": "judiciary",
+    "categoryLabel": "Judicial Services",
+    "date": "November 2026",
+    "readTime": "5 min read",
+    "excerpt": "JJGHFH",
+    "author": "Harshit Singh",
+    "authorRole": "Legal Academic Panel",
+    "avatar": "/images/avatars/avatar-1.webp",
+    "accentColor": "#89190E",
+    "initialClaps": 50,
+    "keyTakeaways": [],
+    "statutesCited": [],
+    "fullSummary": "JVFJFJFJH",
+    "content": "JVFJFJFJH",
+    "coverImage": "",
+    "isPublished": true,
+    "createdAt": "2026-11-09T15:27:59.186Z",
+    "updatedAt": "2026-11-09T15:27:59.186Z"
+  },
+  {
+    "id": 3,
+    "slug": "mastering-clat-passage-based-reasoning-gk",
+    "title": "Mastering CLAT & PU Law Entrance: Tackling Passage-Based Reasoning & Current Affairs",
+    "category": "clat",
+    "categoryLabel": "Law Entrance",
+    "date": "August 2026",
+    "readTime": "5 min read",
+    "excerpt": "Proven test strategies for scoring high in Critical Reasoning, Passage Mapping, and Static GK for NLU and Panjab University admissions.",
+    "author": "Ms. Riya Hooda",
+    "authorRole": "Faculty – Logical Reasoning",
+    "avatar": "/images/avatars/avatar-5.webp",
+    "accentColor": "#89190E",
+    "badge": "High-Yield Entrance Guide",
+    "initialClaps": 189,
+    "keyTakeaways": [
+      "Rapid passage mapping to isolate premises, counter-premises, and conclusion in under 75 seconds.",
+      "Eliminating seductive answer traps in Legal Reasoning."
+    ],
+    "statutesCited": [
+      "Law of Torts",
+      "Indian Contract Act § 56"
+    ],
+    "fullSummary": "The modern CLAT paper rewards rapid analytical comprehension over rote memory. Ms. Riya Hooda shares the proprietary MSI reading method.",
+    "isPublished": true
+  },
+  {
+    "id": 4,
+    "slug": "the-new-criminal-laws-bns-bnss-bsa-aspirants",
+    "title": "The New Criminal Laws (BNS, BNSS, BSA 2023): Critical Shifts Judicial Aspirants Must Know",
+    "category": "judiciary",
+    "categoryLabel": "Judicial Services",
+    "date": "July 2026",
+    "readTime": "7 min read",
+    "excerpt": "Examining key statutory shifts from IPC, CrPC, and Indian Evidence Act to the newly enacted Bharatiya Sanhitas.",
+    "author": "Dr. Vikramaditya Sharma",
+    "authorRole": "Senior Professor of Procedural Law",
+    "avatar": "/images/avatars/avatar-4.webp",
+    "accentColor": "#10233F",
+    "badge": "Syllabus Core",
+    "initialClaps": 421,
+    "keyTakeaways": [
+      "Detailed cross-reference comparative table mapping IPC provisions to Bharatiya Nyaya Sanhita (BNS).",
+      "Electronic evidence admissibility mandatory timelines."
+    ],
+    "statutesCited": [
+      "BNS 2023 § 103",
+      "BNSS 2023 § 107",
+      "BSA 2023 § 63(4)"
+    ],
+    "fullSummary": "The replacement of legacy British-era criminal codes by Bharatiya Nyaya Sanhita, BNSS, and BSA represents a massive transformation.",
+    "isPublished": true
+  }
+]

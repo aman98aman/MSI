@@ -633,44 +633,97 @@ img, video {
   animation: goldenAuraPulse 3s ease-in-out infinite;
 }
 
-/* ── Law Gavel Strike Animation ────────────────────────────── */
+/* ── Law Gavel Strike & Synchronized Progress Bar Animation (1.35s cycle) ────── */
 @keyframes gavelStrikeMotion {
-  0%, 100% {
+  0% {
     transform: rotate(-26deg);
   }
+  14% {
+    transform: rotate(-2deg);
+  }
   18% {
+    /* Precise Downward Impact */
     transform: rotate(0deg);
   }
   22% {
-    transform: rotate(-5deg);
+    /* Realistic Micro-Rebound */
+    transform: rotate(-3.5deg);
   }
-  28% {
+  27% {
+    /* Settle on Sound Block */
     transform: rotate(0deg);
   }
-  62% {
+  50% {
+    /* Authoritative Pause */
     transform: rotate(0deg);
   }
-  82% {
+  75% {
+    /* Controlled Upward Backswing */
+    transform: rotate(-26deg);
+  }
+  100% {
     transform: rotate(-26deg);
   }
 }
 
 @keyframes gavelRippleWave {
   0%, 17% {
+    transform: scale(0.15);
+    opacity: 0;
+  }
+  18% {
+    transform: scale(0.35);
+    opacity: 1;
+  }
+  42% {
+    transform: scale(2.2);
+    opacity: 0.45;
+  }
+  68% {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+@keyframes gavelImpactFlash {
+  0%, 17% {
     transform: scale(0.2);
     opacity: 0;
   }
   18% {
-    transform: scale(0.3);
-    opacity: 0.95;
+    transform: scale(1.15);
+    opacity: 1;
   }
-  48% {
-    transform: scale(2.4);
+  28% {
+    transform: scale(1.6);
     opacity: 0;
   }
   100% {
-    transform: scale(2.4);
+    transform: scale(1.6);
     opacity: 0;
+  }
+}
+
+@keyframes gavelTrackPulse {
+  0%, 17% {
+    box-shadow: 0 0 0px rgba(200, 164, 93, 0);
+    border-color: rgba(200, 164, 93, 0.28);
+  }
+  18% {
+    box-shadow: 0 0 16px rgba(231, 209, 154, 0.75), 0 0 28px rgba(200, 164, 93, 0.4);
+    border-color: rgba(231, 209, 154, 0.85);
+  }
+  38% {
+    box-shadow: 0 0 8px rgba(200, 164, 93, 0.25);
+    border-color: rgba(200, 164, 93, 0.4);
+  }
+  70%, 100% {
+    box-shadow: 0 0 0px rgba(200, 164, 93, 0);
+    border-color: rgba(200, 164, 93, 0.28);
   }
 }
 
@@ -706,18 +759,32 @@ img, video {
 }
 
 .animate-gavel-strike {
-  transform-origin: 22% 78%;
-  animation: gavelStrikeMotion 1.8s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+  transform-box: view-box;
+  transform-origin: 18px 52px;
+  animation: gavelStrikeMotion 1.35s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
 
 .animate-gavel-ripple {
-  transform-origin: center;
-  animation: gavelRippleWave 1.8s ease-out infinite;
+  transform-box: view-box;
+  transform-origin: 78px 46px;
+  animation: gavelRippleWave 1.35s ease-out infinite;
+}
+
+.animate-gavel-flash {
+  transform-box: view-box;
+  transform-origin: 78px 46px;
+  animation: gavelImpactFlash 1.35s ease-out infinite;
+}
+
+.animate-gavel-track-pulse {
+  animation: gavelTrackPulse 1.35s ease-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-gavel-strike,
   .animate-gavel-ripple,
+  .animate-gavel-flash,
+  .animate-gavel-track-pulse,
   .animate-logo-float,
   .animate-sheen-sweep,
   .animate-astrolabe,

@@ -342,125 +342,203 @@ export default function SplashScreen({
         </h1>
 
         {/* Subtitle Legal Motto */}
-        <p className="font-serif italic text-xs sm:text-sm text-[#E7D19A]/90 font-medium tracking-wide mb-6">
-          Crafting Legal Brilliance, Creating a Better Nation
+        <p className="font-serif text-xs sm:text-sm text-[#E7D19A]/90 font-medium tracking-[0.16em] uppercase mb-6 drop-shadow-xs">
+          CRAFTING LEGAL BRILLIANCE, CREATING A BETTER NATION
         </p>
 
         {/* ══════════════════════════════════════════════════════ */}
         {/* 3. LAW-INSPIRED GAVEL LOADING ANIMATION & PROGRESS BAR */}
         {/* ══════════════════════════════════════════════════════ */}
-        <div className="w-full max-w-[320px] sm:max-w-[420px] flex flex-col items-center">
+        <div className="w-full max-w-[340px] sm:max-w-[460px] md:max-w-[500px] flex flex-col items-center">
           
-          {/* Animated Golden Law Gavel + Sound Block + Strike Ripple */}
-          <div className="relative w-28 h-16 flex items-center justify-center mb-1">
-            <svg
-              viewBox="0 0 100 60"
-              className="w-full h-full overflow-visible"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <defs>
-                {/* Antique Gold Metallic Gradients */}
-                <linearGradient id="goldHeadGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#E7D19A" />
-                  <stop offset="50%" stopColor="#C8A45D" />
-                  <stop offset="100%" stopColor="#8A6B2D" />
-                </linearGradient>
+          {/* Header row above track: Loading Status Text & Percentage */}
+          <div className="w-full flex items-end justify-between px-1 mb-2">
+            <div className="flex flex-col text-left">
+              <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-[0.18em] text-[#E7D19A] uppercase drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+                PREPARING YOUR LEARNING EXPERIENCE
+              </span>
+              <span className="text-[8.5px] sm:text-[9.5px] font-mono text-[#E7D19A]/65 tracking-wider">
+                {statusMessage}
+              </span>
+            </div>
 
-                <linearGradient id="goldHandleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#C8A45D" />
-                  <stop offset="40%" stopColor="#E7D19A" />
-                  <stop offset="70%" stopColor="#8A6B2D" />
-                  <stop offset="100%" stopColor="#5E4316" />
-                </linearGradient>
+            <div className="flex items-baseline space-x-0.5 shrink-0 pl-3">
+              <span className="font-serif text-2xl sm:text-3xl font-black tracking-tight text-[#FDFBF7] drop-shadow-[0_2px_12px_rgba(200,164,93,0.4)] tabular-nums">
+                {String(progress).padStart(2, '0')}
+              </span>
+              <span className="font-serif text-xs sm:text-sm text-[#C8A45D] font-bold">
+                %
+              </span>
+            </div>
+          </div>
 
-                <linearGradient id="soundBlockGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#E7D19A" />
-                  <stop offset="45%" stopColor="#C8A45D" />
-                  <stop offset="100%" stopColor="#4A101D" />
-                </linearGradient>
+          {/* Luxury Dock: Animated Golden Gavel BESIDE the Loading Progress Bar */}
+          <div className="w-full flex items-center gap-2.5 sm:gap-3.5 bg-black/30 backdrop-blur-xs border border-[#C8A45D]/25 rounded-2xl p-2 sm:p-2.5 shadow-[0_8px_28px_rgba(48,11,21,0.65)]">
+            
+            {/* 1. Animated Golden Gavel (Appears beside the loading progress bar) */}
+            <div className="relative w-16 h-12 sm:w-20 sm:h-14 shrink-0 flex items-center justify-center">
+              <svg
+                viewBox="0 0 110 70"
+                className="w-full h-full overflow-visible"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <defs>
+                  {/* Metallic Antique Gold Head Gradient */}
+                  <linearGradient id="gavelGoldHead" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#FFF9EF" />
+                    <stop offset="25%" stopColor="#E7D19A" />
+                    <stop offset="65%" stopColor="#C8A45D" />
+                    <stop offset="100%" stopColor="#8A6B2D" />
+                  </linearGradient>
 
-                <radialGradient id="strikeGlowGrad" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#E7D19A" stopOpacity="0.9" />
-                  <stop offset="60%" stopColor="#C8A45D" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="#651C2C" stopOpacity="0" />
-                </radialGradient>
-              </defs>
+                  {/* Polished Turned Gold Handle Gradient */}
+                  <linearGradient id="gavelGoldHandle" x1="0%" y1="0%" x2="100%" y2="50%">
+                    <stop offset="0%" stopColor="#8A6B2D" />
+                    <stop offset="30%" stopColor="#E7D19A" />
+                    <stop offset="60%" stopColor="#C8A45D" />
+                    <stop offset="100%" stopColor="#5E4316" />
+                  </linearGradient>
 
-              {/* Sound Block (Pedestal where gavel strikes) */}
-              <g id="soundBlock" transform="translate(56, 42)">
-                {/* Circular Strike Ripple Wave */}
-                <circle
-                  cx="14"
-                  cy="5"
-                  r="12"
-                  fill="url(#strikeGlowGrad)"
-                  className="animate-gavel-ripple"
-                />
-                {/* Sound block base */}
-                <ellipse cx="14" cy="7" rx="15" ry="4" fill="#300B15" opacity="0.6" />
-                <rect x="0" y="3" width="28" height="5" rx="2.5" fill="url(#soundBlockGrad)" stroke="#E7D19A" strokeWidth="0.5" />
-                <ellipse cx="14" cy="3" rx="14" ry="2.5" fill="#E7D19A" opacity="0.8" />
-              </g>
+                  {/* Sound Block Gradient */}
+                  <linearGradient id="gavelBlockGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#E7D19A" />
+                    <stop offset="40%" stopColor="#C8A45D" />
+                    <stop offset="85%" stopColor="#4A101D" />
+                    <stop offset="100%" stopColor="#300B15" />
+                  </linearGradient>
 
-              {/* Gavel Assembly (Hammer + Handle with Strike Rotation) */}
-              <g id="gavelAssembly" className="animate-gavel-strike" style={{ transformOrigin: '28px 46px' }}>
-                {/* Polished Gavel Handle */}
-                <path
-                  d="M26 44 L58 20"
-                  stroke="url(#goldHandleGrad)"
-                  strokeWidth="3.2"
-                  strokeLinecap="round"
-                />
-                {/* Handle Pommel End Cap */}
-                <circle cx="26" cy="44" r="2.8" fill="url(#goldHeadGrad)" stroke="#4A101D" strokeWidth="0.6" />
-                {/* Decorative Handle Ring */}
-                <circle cx="48" cy="27.5" r="2.2" fill="#E7D19A" />
+                  {/* Impact Light Pulse */}
+                  <radialGradient id="gavelFlashGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
+                    <stop offset="35%" stopColor="#FFF9EF" stopOpacity="0.9" />
+                    <stop offset="70%" stopColor="#E7D19A" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="#C8A45D" stopOpacity="0" />
+                  </radialGradient>
 
-                {/* Gavel Head (Cylindrical Mallet with Gold & Maroon Accents) */}
-                <g transform="translate(58, 20) rotate(-37)">
-                  {/* Outer Main Mallet Body */}
-                  <rect x="-6" y="-12" width="12" height="24" rx="2.5" fill="url(#goldHeadGrad)" stroke="#FDFBF7" strokeWidth="0.5" />
-                  {/* Central Maroon Inlay Band */}
-                  <rect x="-6" y="-3.5" width="12" height="7" fill="#651C2C" />
-                  {/* Center Gold Accent Ring */}
-                  <line x1="-6" y1="0" x2="6" y2="0" stroke="#E7D19A" strokeWidth="0.8" />
-                  {/* Top Beveled Striking Face */}
-                  <ellipse cx="0" cy="-12" rx="6" ry="2" fill="#E7D19A" />
-                  {/* Bottom Striking Face */}
-                  <ellipse cx="0" cy="12" rx="6" ry="2" fill="#8A6B2D" />
+                  {/* Impact Ripple Glow */}
+                  <radialGradient id="gavelRippleGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#E7D19A" stopOpacity="0.85" />
+                    <stop offset="60%" stopColor="#C8A45D" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#651C2C" stopOpacity="0" />
+                  </radialGradient>
+                </defs>
+
+                {/* Sound Block (Anvil pedestal on the right of the gavel) */}
+                <g id="soundBlockGroup">
+                  {/* Floor Contact Shadow */}
+                  <ellipse cx="78" cy="56" rx="18" ry="4.5" fill="#1A050B" opacity="0.7" />
+
+                  {/* Sound Block Tier 1 Pedestal */}
+                  <rect x="62" y="48" width="32" height="7" rx="2" fill="url(#gavelBlockGrad)" stroke="#E7D19A" strokeWidth="0.6" />
+
+                  {/* Sound Block Tier 2 Strike Plate */}
+                  <ellipse cx="78" cy="48" rx="15" ry="3.8" fill="#C8A45D" stroke="#FFF9EF" strokeWidth="0.5" />
+                  <ellipse cx="78" cy="47.5" rx="13" ry="2.8" fill="#E7D19A" opacity="0.9" />
+
+                  {/* Circular Strike Ripple Wave */}
+                  <circle
+                    cx="78"
+                    cy="46"
+                    r="16"
+                    fill="url(#gavelRippleGrad)"
+                    stroke="#E7D19A"
+                    strokeWidth="0.8"
+                    className="animate-gavel-ripple"
+                  />
+
+                  {/* Impact Light Pulse Spark */}
+                  <circle
+                    cx="78"
+                    cy="46"
+                    r="8"
+                    fill="url(#gavelFlashGrad)"
+                    className="animate-gavel-flash"
+                  />
                 </g>
-              </g>
-            </svg>
-          </div>
 
-          {/* Dynamic Percentage Counter */}
-          <div className="flex items-baseline justify-center space-x-1 mb-1.5">
-            <span className="font-serif text-3xl sm:text-4xl font-black tracking-tight text-[#FDFBF7] drop-shadow-[0_2px_12px_rgba(200,164,93,0.4)] tabular-nums">
-              {String(progress).padStart(2, '0')}
-            </span>
-            <span className="font-serif text-lg sm:text-xl text-[#C8A45D] font-bold">
-              %
-            </span>
-          </div>
+                {/* Gavel Assembly (Handle + Head rotating from pommel pivot) */}
+                <g
+                  id="gavelAssembly"
+                  className="animate-gavel-strike"
+                  style={{ transformOrigin: '18px 52px' }}
+                >
+                  {/* Turned Ergonomic Handle */}
+                  <path
+                    d="M 18 52 L 74 38"
+                    stroke="url(#gavelGoldHandle)"
+                    strokeWidth="3.6"
+                    strokeLinecap="round"
+                  />
+                  {/* Handle Highlight Line */}
+                  <path
+                    d="M 22 50.8 L 72 37.5"
+                    stroke="#FFF9EF"
+                    strokeWidth="0.9"
+                    strokeLinecap="round"
+                    opacity="0.75"
+                  />
 
-          {/* Cycling Institutional Status Label */}
-          <div className="h-4 flex items-center justify-center mb-2.5">
-            <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-[0.2em] text-[#E7D19A] uppercase transition-all duration-300">
-              {statusMessage}
-            </span>
-          </div>
+                  {/* Handle Pommel End Cap */}
+                  <circle cx="18" cy="52" r="3.2" fill="url(#gavelGoldHead)" stroke="#300B15" strokeWidth="0.7" />
+                  <circle cx="17.2" cy="51.2" r="1.2" fill="#FFF9EF" opacity="0.9" />
 
-          {/* Luxury Horizontal Progress Track with Illuminated Head */}
-          <div className="relative w-full h-[3px] bg-black/40 border border-[#C8A45D]/25 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-[#651C2C] via-[#C8A45D] to-[#E7D19A] rounded-full transition-all duration-100 ease-out shadow-[0_0_12px_#C8A45D]"
-              style={{ width: `${progress}%` }}
-            />
+                  {/* Decorative Ring Knurlings on Handle */}
+                  <circle cx="36" cy="47.5" r="2.2" fill="#E7D19A" stroke="#8A6B2D" strokeWidth="0.5" />
+                  <circle cx="58" cy="42" r="2.2" fill="#E7D19A" stroke="#8A6B2D" strokeWidth="0.5" />
+
+                  {/* Gavel Head (Cylindrical Mallet with Maroon Inlay & Antique Gold Bevels) */}
+                  <g transform="translate(78, 37)">
+                    {/* Main Mallet Cylinder Body */}
+                    <rect
+                      x="-6.5"
+                      y="-12"
+                      width="13"
+                      height="21"
+                      rx="2.5"
+                      fill="url(#gavelGoldHead)"
+                      stroke="#FFF9EF"
+                      strokeWidth="0.5"
+                    />
+
+                    {/* Central Rich Maroon Inlay Band */}
+                    <rect x="-6.5" y="-3.5" width="13" height="6.5" fill="#651C2C" />
+                    <line x1="-6.5" y1="-0.25" x2="6.5" y2="-0.25" stroke="#E7D19A" strokeWidth="0.7" />
+
+                    {/* Top Beveled Face (Crown) */}
+                    <ellipse cx="0" cy="-12" rx="6.5" ry="2.2" fill="#FFF9EF" stroke="#C8A45D" strokeWidth="0.4" />
+
+                    {/* Bottom Striking Face (Impact plate making contact) */}
+                    <ellipse cx="0" cy="9" rx="6.5" ry="2.2" fill="#8A6B2D" stroke="#E7D19A" strokeWidth="0.5" />
+                    <ellipse cx="0" cy="8.2" rx="5.5" ry="1.6" fill="#C8A45D" />
+                  </g>
+                </g>
+              </svg>
+            </div>
+
+            {/* 2. Thin Horizontal Loading Bar Beside the Gavel */}
+            <div className="flex-1 flex flex-col justify-center pr-1">
+              <div className="relative w-full h-[5px] sm:h-[6px] bg-[#1A050B]/90 rounded-full border border-[#C8A45D]/30 overflow-visible animate-gavel-track-pulse">
+                {/* Smooth Animated Gold Fill */}
+                <div
+                  className="h-full bg-gradient-to-r from-[#651C2C] via-[#C8A45D] to-[#E7D19A] rounded-full transition-all duration-150 ease-out relative shadow-[0_0_12px_rgba(200,164,93,0.5)]"
+                  style={{ width: `${Math.max(progress, 2)}%` }}
+                >
+                  {/* Soft illuminated leading edge */}
+                  <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#FFF9EF] shadow-[0_0_8px_#FFF9EF,0_0_14px_#E7D19A,0_0_22px_#C8A45D] animate-pulse" />
+                </div>
+              </div>
+
+              {/* Mini Track Sub-labels */}
+              <div className="flex items-center justify-between text-[8px] sm:text-[9px] font-mono text-[#E7D19A]/60 mt-1.5 tracking-wider">
+                <span>INITIALIZING KERNEL</span>
+                <span>VERIFIED SECURE</span>
+              </div>
+            </div>
           </div>
 
           {/* Bottom HUD Metadata */}
-          <div className="w-full flex items-center justify-between text-[9px] font-mono text-[#E7D19A]/60 mt-2 tracking-wider">
+          <div className="w-full flex items-center justify-between text-[9px] font-mono text-[#E7D19A]/60 mt-2.5 tracking-wider px-1">
             <span>PCS-J · CLAT · PU LAW</span>
             <span>300+ SELECTIONS</span>
           </div>

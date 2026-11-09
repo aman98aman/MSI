@@ -69,27 +69,39 @@ export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     let id = searchParams.get('id');
 
-    if (!id) {
+    let idsToDelete: string[] = [];
+    if (id) {
+      idsToDelete = [id.trim()];
+    } else {
       try {
         const body = await req.json().catch(() => ({}));
-        id = body?.id || body?.email || body?.phone;
+        if (Array.isArray(body?.ids)) {
+          idsToDelete = body.ids.filter((x: any) => typeof x === 'string' && x.trim()).map((x: string) => x.trim());
+        } else if (body?.id || body?.email || body?.phone) {
+          idsToDelete = [String(body.id || body.email || body.phone).trim()];
+        }
       } catch (_) {}
     }
 
-    if (!id || !id.trim()) {
+    if (idsToDelete.length === 0) {
       return NextResponse.json(
         { success: false, message: 'Receptionist ID, mobile number, or email required for deletion.' },
         { status: 400 }
       );
     }
 
-    const result = await deleteReceptionistAsync(id.trim());
+    let lastResult: any = null;
+    for (const targetId of idsToDelete) {
+      lastResult = await deleteReceptionistAsync(targetId);
+    }
+
+    const remaining = lastResult ? lastResult.remainingReceptionists : await getReceptionistsAsync();
+
     return NextResponse.json({
       success: true,
-      message: `Receptionist (${id}) deleted successfully.`,
-      receptionists: result.remainingReceptionists,
-      count: result.remainingReceptionists.length,
-      deletedCount: result.deletedCount,
+      message: `${idsToDelete.length} receptionist(s) deleted successfully.`,
+      receptionists: remaining,
+      count: remaining.length,
     });
   } catch (error: any) {
     return NextResponse.json(

@@ -90,6 +90,7 @@ import {
 } from '@/lib/lmsStore';
 import { Lead } from '@/components/reception/data/leadsMockData';
 import { ReceptionistRecord } from '@/lib/receptionistStore';
+import { MarketingUserRecord } from '@/lib/marketingUserStore';
 import { GalleryItem } from '../api/admin/gallery/route';
 import { AdminTransaction } from '../api/admin/transactions/route';
 import * as XLSX from 'xlsx';
@@ -104,7 +105,8 @@ type AdminTab =
   | 'teachers'
   | 'courses'
   | 'gallery'
-  | 'transactions';
+  | 'transactions'
+  | 'marketing';
 
 interface RegisteredStudent {
   id: string;
@@ -265,6 +267,28 @@ export default function SuperAdminMasterDashboard() {
     email?: string;
     pass: string;
   } | null>(null);
+
+  // 4d. Marketing Staff Management States
+  const [marketingUsers, setMarketingUsers] = useState<MarketingUserRecord[]>([]);
+  const [marketingUsersLoaded, setMarketingUsersLoaded] = useState(false);
+  const [showAddMarketingModal, setShowAddMarketingModal] = useState(false);
+  const [newMarketingName, setNewMarketingName] = useState('');
+  const [newMarketingPhone, setNewMarketingPhone] = useState('');
+  const [newMarketingEmail, setNewMarketingEmail] = useState('');
+  const [newMarketingPassword, setNewMarketingPassword] = useState('Marketing@MSI2026');
+  const [newMarketingDesignation, setNewMarketingDesignation] = useState('Marketing Executive');
+  const [isSubmittingMarketing, setIsSubmittingMarketing] = useState(false);
+  const [marketingUserToDelete, setMarketingUserToDelete] = useState<MarketingUserRecord | null>(null);
+  const [isDeletingMarketing, setIsDeletingMarketing] = useState(false);
+  const [createdMarketingCredentials, setCreatedMarketingCredentials] = useState<{
+    name: string;
+    phone: string;
+    email?: string;
+    pass: string;
+  } | null>(null);
+  const [selectedMarketingIds, setSelectedMarketingIds] = useState<string[]>([]);
+  const [showBulkDeleteMarketingModal, setShowBulkDeleteMarketingModal] = useState(false);
+  const [isBulkDeletingMarketing, setIsBulkDeletingMarketing] = useState(false);
 
   // 4b. Bulk Lead Import Modal (Excel / CSV)
   const [showBulkLeadModal, setShowBulkLeadModal] = useState(false);
@@ -548,6 +572,20 @@ export default function SuperAdminMasterDashboard() {
     }
   }, []);
 
+  const fetchMarketingUsers = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/marketing-users', { cache: 'no-store' });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.users)) {
+        setMarketingUsers(data.users);
+      }
+    } catch (err) {
+      console.warn('Could not fetch marketing users from disk:', err);
+    } finally {
+      setMarketingUsersLoaded(true);
+    }
+  }, []);
+
   const fetchCourses = useCallback(async () => {
     try {
       const res = await fetch('/api/courses', { cache: 'no-store' });
@@ -567,6 +605,7 @@ export default function SuperAdminMasterDashboard() {
       fetchStudents(),
       fetchLeads(),
       fetchReceptionists(),
+      fetchMarketingUsers(),
       fetchGallery(),
       fetchTransactions(),
       fetchFaculty(),
@@ -577,7 +616,7 @@ export default function SuperAdminMasterDashboard() {
       }),
     ]);
     setIsRefreshing(false);
-  }, [fetchStudents, fetchLeads, fetchReceptionists, fetchGallery, fetchTransactions, fetchFaculty, fetchCourses]);
+  }, [fetchStudents, fetchLeads, fetchReceptionists, fetchMarketingUsers, fetchGallery, fetchTransactions, fetchFaculty, fetchCourses]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -587,6 +626,7 @@ export default function SuperAdminMasterDashboard() {
         fetchStudents();
         fetchLeads();
         fetchReceptionists();
+        fetchMarketingUsers();
         fetchFaculty();
         fetchCourses();
         fetchTransactions();
@@ -639,9 +679,11 @@ export default function SuperAdminMasterDashboard() {
         fetchCourses();
       } else if (activeTab === 'transactions') {
         fetchTransactions();
+      } else if (activeTab === 'marketing') {
+        fetchMarketingUsers();
       }
     }
-  }, [activeTab, isAuthenticated, fetchStudents, fetchLeads, fetchReceptionists, fetchFaculty, fetchCourses, fetchTransactions]);
+  }, [activeTab, isAuthenticated, fetchStudents, fetchLeads, fetchReceptionists, fetchMarketingUsers, fetchFaculty, fetchCourses, fetchTransactions]);
 
   // â”€â”€ Action Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // 1. Add Student
@@ -1157,6 +1199,129 @@ export default function SuperAdminMasterDashboard() {
       showToast('Network error while deleting receptionist.');
     } finally {
       setIsDeletingReceptionist(false);
+    }
+  };
+
+  // ── Marketing Staff Handlers ──────────────────────────────────────────────
+  const handleCreateMarketingUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMarketingName.trim() || !newMarketingPhone.trim() || !newMarketingPassword.trim()) {
+      showToast('Please enter full name, mobile number, and password.');
+      return;
+    }
+
+    const cleanPhone = newMarketingPhone.replace(/\D/g, '').slice(-10);
+    if (cleanPhone.length !== 10) {
+      showToast('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    setIsSubmittingMarketing(true);
+    try {
+      const res = await fetch('/api/admin/marketing-users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newMarketingName.trim(),
+          phone: cleanPhone,
+          email: newMarketingEmail.trim().toLowerCase(),
+          password: newMarketingPassword.trim(),
+          designation: newMarketingDesignation.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Marketing account for ${newMarketingName} created successfully!`);
+        setShowAddMarketingModal(false);
+        setCreatedMarketingCredentials({
+          name: newMarketingName.trim(),
+          phone: cleanPhone,
+          email: newMarketingEmail.trim(),
+          pass: newMarketingPassword.trim(),
+        });
+        setNewMarketingName('');
+        setNewMarketingPhone('');
+        setNewMarketingEmail('');
+        setNewMarketingPassword('Marketing@MSI2026');
+        fetchMarketingUsers();
+      } else {
+        showToast(data.message || 'Failed to create marketing user.');
+      }
+    } catch (err) {
+      showToast('Network error while creating marketing member.');
+    } finally {
+      setIsSubmittingMarketing(false);
+    }
+  };
+
+  const handleDeleteMarketingUser = async () => {
+    if (!marketingUserToDelete) return;
+    setIsDeletingMarketing(true);
+    try {
+      const res = await fetch(`/api/admin/marketing-users?id=${encodeURIComponent(marketingUserToDelete.id)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Marketing user ${marketingUserToDelete.name} removed successfully.`);
+        setMarketingUsers((prev) => prev.filter((u) => u.id !== marketingUserToDelete.id));
+        setMarketingUserToDelete(null);
+        fetchMarketingUsers();
+      } else {
+        showToast(data.message || 'Failed to delete marketing staff.');
+      }
+    } catch (err) {
+      showToast('Network error while deleting marketing staff.');
+    } finally {
+      setIsDeletingMarketing(false);
+    }
+  };
+
+  const isAllMarketingSelected =
+    marketingUsers.length > 0 &&
+    marketingUsers.every((u) => selectedMarketingIds.includes(u.id));
+
+  const toggleSelectAllMarketing = () => {
+    if (isAllMarketingSelected) {
+      setSelectedMarketingIds([]);
+    } else {
+      setSelectedMarketingIds(marketingUsers.map((u) => u.id));
+    }
+  };
+
+  const toggleSelectMarketing = (id: string) => {
+    setSelectedMarketingIds((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDeleteMarketing = async () => {
+    if (selectedMarketingIds.length === 0) return;
+    setIsBulkDeletingMarketing(true);
+
+    setMarketingUsers((prev) => prev.filter((u) => !selectedMarketingIds.includes(u.id)));
+
+    try {
+      const res = await fetch('/api/admin/marketing-users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedMarketingIds }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`${selectedMarketingIds.length} marketing member(s) removed successfully.`);
+      } else {
+        showToast(data.message || 'Failed to delete marketing members.');
+      }
+      setSelectedMarketingIds([]);
+      setShowBulkDeleteMarketingModal(false);
+      fetchMarketingUsers();
+    } catch (err) {
+      showToast('Network error while deleting marketing members.');
+      fetchMarketingUsers();
+    } finally {
+      setIsBulkDeletingMarketing(false);
     }
   };
 
@@ -2646,6 +2811,39 @@ export default function SuperAdminMasterDashboard() {
               <Receipt className="w-4 h-4 shrink-0" />
               <span className="truncate">Transactions & Receipts</span>
             </button>
+          </div>
+
+          {/* Marketing & Outreach */}
+          <div className="space-y-1">
+            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#8C716C] font-bold">
+              Marketing & Outreach
+            </div>
+            <button
+              onClick={() => setActiveTab('marketing')}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors text-left cursor-pointer ${
+                activeTab === 'marketing'
+                  ? 'bg-[#E8EEFF] text-[#89190E] font-bold shadow-xs'
+                  : 'text-[#58413D] hover:bg-[#F0F3FF] hover:text-[#071B37]'
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <Share2 className="w-4 h-4 shrink-0" />
+                <span className="truncate">Marketing Team & Desk</span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+                {marketingUsers.length}
+              </span>
+            </button>
+            <Link
+              href="/marketing"
+              target="_blank"
+              className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold text-[#89190E] hover:bg-[#F0F3FF] transition-colors"
+            >
+              <div className="flex items-center gap-2 truncate">
+                <ArrowUpRight className="w-3.5 h-3.5 shrink-0 text-[#89190E]" />
+                <span className="truncate">Open Marketing Portal</span>
+              </div>
+            </Link>
           </div>
         </div>
 
@@ -4560,6 +4758,209 @@ export default function SuperAdminMasterDashboard() {
                   onClose={() => setSelectedTxnForReceipt(null)}
                 />
               )}
+            </div>
+          )}
+
+          {/* ================================================================ */}
+          {/* TAB: MARKETING TEAM MANAGEMENT                                  */}
+          {/* ================================================================ */}
+          {activeTab === 'marketing' && (
+            <div className="space-y-6">
+              {/* Top Banner & Quick Actions */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-[#E8EEFF] shadow-xs">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-serif font-black text-[#071B37]">
+                      Marketing & Outreach Staff Management
+                    </h2>
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#89190E]/10 text-[#89190E] border border-[#89190E]/20 text-[11px] font-bold">
+                      {marketingUsers.length} Staff Members
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 max-w-2xl leading-relaxed">
+                    Marketing executives sign in at <strong className="text-[#89190E]">/marketing/login</strong> to publish & delete public website articles, assign incoming leads to receptionists, and monitor front desk follow-up ratios.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Link
+                    href="/marketing"
+                    target="_blank"
+                    className="px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-1.5 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Open Marketing Portal</span>
+                  </Link>
+
+                  <button
+                    onClick={() => {
+                      setNewMarketingName('');
+                      setNewMarketingPhone('');
+                      setNewMarketingEmail('');
+                      setNewMarketingPassword('Marketing@MSI2026');
+                      setNewMarketingDesignation('Marketing Executive');
+                      setShowAddMarketingModal(true);
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-[#89190E] hover:bg-[#70140B] text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-[#89190E]/20 transition-all cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>+ Add Marketing Member</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Floating Bulk Action Bar */}
+              {selectedMarketingIds.length > 0 && (
+                <div className="bg-[#10233F] text-white px-5 py-3 rounded-2xl flex items-center justify-between shadow-xl border border-[#EFC988]/40 animate-slide-in">
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#EFC988] animate-pulse" />
+                    <span>
+                      <strong className="font-bold text-[#EFC988]">{selectedMarketingIds.length}</strong> of{' '}
+                      {marketingUsers.length} marketing member(s) selected
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSelectedMarketingIds([])}
+                      className="px-3 py-1.5 rounded-xl text-xs font-semibold text-gray-300 hover:text-white transition-colors cursor-pointer"
+                    >
+                      Deselect All
+                    </button>
+                    <button
+                      onClick={() => setShowBulkDeleteMarketingModal(true)}
+                      className="px-4 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete Selected ({selectedMarketingIds.length})</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Marketing Staff Table */}
+              <div className="bg-white rounded-2xl border border-[#E8EEFF] shadow-xs overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-[#F0F3FF]/70 text-[#58413D] uppercase tracking-wider text-[11px] border-b border-[#E8EEFF]">
+                      <tr>
+                        <th className="py-3 px-4 w-10 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isAllMarketingSelected}
+                            onChange={toggleSelectAllMarketing}
+                            className="w-4 h-4 rounded text-[#89190E] focus:ring-[#89190E] cursor-pointer"
+                          />
+                        </th>
+                        <th className="py-3 px-4 font-bold">Staff Member</th>
+                        <th className="py-3 px-4 font-bold">Designation</th>
+                        <th className="py-3 px-4 font-bold">Login Mobile</th>
+                        <th className="py-3 px-4 font-bold">Official Email</th>
+                        <th className="py-3 px-4 font-bold">Portal Password</th>
+                        <th className="py-3 px-4 font-bold">Status</th>
+                        <th className="py-3 px-4 font-bold text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#E8EEFF]">
+                      {marketingUsers.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="py-12 text-center text-gray-400">
+                            No marketing members registered yet. Click &ldquo;+ Add Marketing Member&rdquo; to create credentials.
+                          </td>
+                        </tr>
+                      ) : (
+                        marketingUsers.map((user) => {
+                          const isSelected = selectedMarketingIds.includes(user.id);
+                          return (
+                            <tr
+                              key={user.id}
+                              className={`transition-colors ${
+                                isSelected ? 'bg-amber-50/60' : 'hover:bg-[#F0F3FF]/50'
+                              }`}
+                            >
+                              <td className="py-3.5 px-4 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => toggleSelectMarketing(user.id)}
+                                  className="w-4 h-4 rounded text-[#89190E] focus:ring-[#89190E] cursor-pointer"
+                                />
+                              </td>
+                              <td className="py-3.5 px-4 font-medium">
+                                <div className="font-bold text-[#071B37] text-sm">{user.name}</div>
+                                <div className="text-[10px] text-gray-400 font-mono">ID: {user.id}</div>
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <span className="px-2 py-0.5 rounded-md bg-[#89190E]/5 text-[#89190E] font-semibold text-[11px]">
+                                  {user.designation || 'Marketing Executive'}
+                                </span>
+                              </td>
+                              <td className="py-3.5 px-4 font-mono font-bold text-[#071B37]">
+                                +91 {user.phone}
+                              </td>
+                              <td className="py-3.5 px-4 font-mono text-gray-600">
+                                {user.email || '—'}
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-mono font-bold text-[#89190E] bg-gray-50 px-2 py-0.5 rounded border border-gray-200 text-xs">
+                                    {user.password}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(user.password);
+                                      showToast(`Password for ${user.name} copied!`);
+                                    }}
+                                    className="p-1 text-gray-400 hover:text-[#89190E] cursor-pointer"
+                                    title="Copy Password"
+                                  >
+                                    <Copy className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    user.status === 'active'
+                                      ? 'bg-emerald-100 text-emerald-800'
+                                      : 'bg-slate-100 text-slate-600'
+                                  }`}
+                                >
+                                  {user.status}
+                                </span>
+                              </td>
+                              <td className="py-3.5 px-4 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const text = `MSI Marketing Desk Login:\nStaff Name: ${user.name}\nLogin Mobile: ${user.phone}\nPassword: ${user.password}\nPortal URL: ${typeof window !== 'undefined' ? window.location.origin : ''}/marketing/login`;
+                                      navigator.clipboard.writeText(text);
+                                      showToast(`WhatsApp credentials card for ${user.name} copied!`);
+                                    }}
+                                    className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer"
+                                    title="Copy WhatsApp Credentials"
+                                  >
+                                    <Share2 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setMarketingUserToDelete(user)}
+                                    className="p-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                                    title="Delete Marketing Account"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           )}
         </main>
@@ -7452,6 +7853,269 @@ export default function SuperAdminMasterDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODALS: MARKETING MANAGEMENT ──────────────────────────────── */}
+      {/* 1. Add Marketing Member Modal */}
+      {showAddMarketingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#E8DCCB] relative">
+            <button
+              onClick={() => setShowAddMarketingModal(false)}
+              className="absolute top-5 right-5 text-gray-400 hover:text-gray-700 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl bg-[#89190E]/10 text-[#89190E] flex items-center justify-center">
+                <Share2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-serif text-lg font-bold text-[#10233F]">
+                  Add Marketing Team Member
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Create marketing staff credentials to manage public blogs and assign leads.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleCreateMarketingUser} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase text-[#10233F] mb-1">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Neha Sharma"
+                  value={newMarketingName}
+                  onChange={(e) => setNewMarketingName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8DCCB] text-xs text-[#10233F] focus:outline-none focus:border-[#89190E]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase text-[#10233F] mb-1">
+                    10-Digit Mobile (Login ID) *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="9888877771"
+                    maxLength={10}
+                    value={newMarketingPhone}
+                    onChange={(e) => setNewMarketingPhone(e.target.value.replace(/\D/g, ''))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8DCCB] text-xs font-mono font-bold text-[#10233F] focus:outline-none focus:border-[#89190E]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase text-[#10233F] mb-1">
+                    Designation
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Marketing Executive"
+                    value={newMarketingDesignation}
+                    onChange={(e) => setNewMarketingDesignation(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8DCCB] text-xs text-[#10233F] focus:outline-none focus:border-[#89190E]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase text-[#10233F] mb-1">
+                  Official Email Address
+                </label>
+                <input
+                  type="email"
+                  placeholder="marketing@msi-institutes.edu.in"
+                  value={newMarketingEmail}
+                  onChange={(e) => setNewMarketingEmail(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8DCCB] text-xs text-[#10233F] focus:outline-none focus:border-[#89190E]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase text-[#10233F] mb-1">
+                  Portal Password *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newMarketingPassword}
+                  onChange={(e) => setNewMarketingPassword(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8DCCB] text-xs font-mono font-bold text-[#89190E] focus:outline-none focus:border-[#89190E]"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddMarketingModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-[#E8DCCB] text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingMarketing}
+                  className="flex-1 py-2.5 rounded-xl bg-[#89190E] hover:bg-[#70140B] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmittingMarketing ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
+                  <span>Create Account</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Delete Marketing Member Confirmation Modal */}
+      {marketingUserToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-red-200 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <h3 className="font-serif text-lg font-bold text-[#10233F] mb-1">
+              Delete Marketing Member?
+            </h3>
+            <p className="text-xs text-gray-500 mb-5">
+              Are you sure you want to permanently delete <strong>{marketingUserToDelete.name}</strong> ({marketingUserToDelete.phone})? They will immediately lose access to the marketing desk portal.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setMarketingUserToDelete(null)}
+                disabled={isDeletingMarketing}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteMarketingUser}
+                disabled={isDeletingMarketing}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isDeletingMarketing ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <span>Confirm Delete</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Bulk Delete Marketing Members Modal */}
+      {showBulkDeleteMarketingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-red-200 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h3 className="font-serif text-lg font-bold text-[#10233F] mb-1">
+              Bulk Delete {selectedMarketingIds.length} Marketing Member(s)?
+            </h3>
+            <p className="text-xs text-gray-500 mb-5">
+              Are you sure you want to permanently remove {selectedMarketingIds.length} selected marketing account(s)? This cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowBulkDeleteMarketingModal(false)}
+                disabled={isBulkDeletingMarketing}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDeleteMarketing}
+                disabled={isBulkDeletingMarketing}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isBulkDeletingMarketing ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <span>Delete Selected</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Marketing Credentials Created Modal */}
+      {createdMarketingCredentials && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#EFC988] text-center">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+              <Check className="w-6 h-6" />
+            </div>
+            <h3 className="font-serif text-lg font-bold text-[#10233F] mb-1">
+              Marketing Account Created!
+            </h3>
+            <p className="text-xs text-gray-500 mb-5">
+              Share these credentials with the marketing executive. They can sign in at the marketing desk.
+            </p>
+
+            <div className="bg-[#FFF9EF] p-4 rounded-2xl border border-[#E8DCCB] text-left text-xs space-y-2 mb-5">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Staff Name:</span>
+                <span className="font-bold text-[#10233F]">{createdMarketingCredentials.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Login Mobile:</span>
+                <span className="font-mono font-bold text-[#10233F]">{createdMarketingCredentials.phone}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Password:</span>
+                <span className="font-mono font-bold text-[#89190E] bg-white px-2 py-0.5 rounded border border-[#E8DCCB]">
+                  {createdMarketingCredentials.pass}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  const text = `MSI Marketing Desk Login:\nName: ${createdMarketingCredentials.name}\nLogin Mobile: ${createdMarketingCredentials.phone}\nPassword: ${createdMarketingCredentials.pass}\nPortal: ${typeof window !== 'undefined' ? window.location.origin : ''}/marketing/login`;
+                  navigator.clipboard.writeText(text);
+                  showToast('WhatsApp credentials copied to clipboard!');
+                }}
+                className="flex-1 py-2.5 rounded-xl border border-[#89190E] text-[#89190E] hover:bg-[#89190E]/5 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copy Credentials</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCreatedMarketingCredentials(null)}
+                className="flex-1 py-2.5 rounded-xl bg-[#10233F] hover:bg-[#071B37] text-white text-xs font-bold cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}

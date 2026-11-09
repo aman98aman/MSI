@@ -1,0 +1,134 @@
+[
+  {
+    "id": 1794238079170,
+    "slug": "deep",
+    "title": "DEEP",
+    "category": "judiciary",
+    "categoryLabel": "Judicial Services",
+    "date": "November 2026",
+    "readTime": "5 min read",
+    "excerpt": "JJGHFH",
+    "author": "Harshit Singh",
+    "authorRole": "Legal Academic Panel",
+    "avatar": "/images/avatars/avatar-1.webp",
+    "accentColor": "#89190E",
+    "initialClaps": 50,
+    "keyTakeaways": [],
+    "statutesCited": [],
+    "fullSummary": "JVFJFJFJH",
+    "content": "JVFJFJFJH",
+    "coverImage": "",
+    "isPublished": true,
+    "createdAt": "2026-11-09T15:27:59.186Z",
+    "updatedAt": "2026-11-09T15:27:59.186Z"
+  },
+  {
+    "id": 1,
+    "slug": "cracking-pcs-judicial-services-strategy",
+    "title": "Cracking PCS (Judicial Services): Strategy, Judgment Writing & High Court Precedents",
+    "category": "judiciary",
+    "categoryLabel": "Judicial Services",
+    "date": "September 2026",
+    "readTime": "6 min read",
+    "excerpt": "A systematic roadmap for mastering Civil Procedure, Criminal Law, BNSS 2023, and scoring high in Mains judgment writing.",
+    "author": "Adv. Rajesh Kumar",
+    "authorRole": "Head — Judiciary & PCS J Division",
+    "avatar": "/images/avatars/avatar-3.webp",
+    "accentColor": "#89190E",
+    "badge": "Trending #1 in Punjab PCS-J",
+    "initialClaps": 248,
+    "keyTakeaways": [
+      "Master procedural transitions under the newly enacted Bharatiya Nagarik Suraksha Sanhita (BNSS 2023).",
+      "Judicial framing of issues in Civil cases & framing of charges in Criminal trials with exact statutory citation.",
+      "Three-tier evaluation framework for appraisal of witness testimony and electronic evidence (BSA Sec 63)."
+    ],
+    "statutesCited": [
+      "BNSS 2023 § 173",
+      "CPC 1908 Order XIV",
+      "BSA 2023 § 63",
+      "Constitution Art. 235"
+    ],
+    "fullSummary": "Success in State Judicial Services examinations demands far more than verbatim memorization of bare acts. In this comprehensive dispatch, Adv. Rajesh Kumar breaks down the analytical doctrine needed to clear the Punjab and Haryana High Court Judicial Mains examinations.",
+    "isPublished": true
+  },
+  {
+    "id": 2,
+    "slug": "national-moot-court-victory-msi-law-delegation",
+    "title": "National Moot Court Victory: MSI Law Delegation Triumphs on Constitutional Rights",
+    "category": "jurisprudence",
+    "categoryLabel": "Legal Jurisprudence",
+    "date": "August 2026",
+    "readTime": "6 min read",
+    "excerpt": "An inside look at our integrated law students formulating appellate arguments before a simulated 5-judge Supreme Court bench.",
+    "author": "Dr. Ekta Gahlawat",
+    "authorRole": "Faculty – Legal Studies, MSI",
+    "avatar": "/images/avatars/avatar-2.webp",
+    "accentColor": "#10233F",
+    "badge": "National Champions 2026",
+    "initialClaps": 312,
+    "keyTakeaways": [
+      "Framing appellate questions of law concerning data privacy vs. statutory surveillance doctrines.",
+      "Adherence to Harvard Bluebook & Indian Law Institute (ILI) citation protocols in winning memorials."
+    ],
+    "statutesCited": [
+      "Constitution Art. 21",
+      "Constitution Art. 32",
+      "DPDP Act 2023 § 4"
+    ],
+    "fullSummary": "The MSI Group of Institutes Law delegation recently clinched top honours at the 14th National Constitutional Law Moot Court Competition.",
+    "isPublished": true
+  },
+  {
+    "id": 3,
+    "slug": "mastering-clat-passage-based-reasoning-gk",
+    "title": "Mastering CLAT & PU Law Entrance: Tackling Passage-Based Reasoning & Current Affairs",
+    "category": "clat",
+    "categoryLabel": "Law Entrance",
+    "date": "August 2026",
+    "readTime": "5 min read",
+    "excerpt": "Proven test strategies for scoring high in Critical Reasoning, Passage Mapping, and Static GK for NLU and Panjab University admissions.",
+    "author": "Ms. Riya Hooda",
+    "authorRole": "Faculty – Logical Reasoning",
+    "avatar": "/images/avatars/avatar-5.webp",
+    "accentColor": "#89190E",
+    "badge": "High-Yield Entrance Guide",
+    "initialClaps": 189,
+    "keyTakeaways": [
+      "Rapid passage mapping to isolate premises, counter-premises, and conclusion in under 75 seconds.",
+      "Eliminating seductive answer traps in Legal Reasoning."
+    ],
+    "statutesCited": [
+      "Law of Torts",
+      "Indian Contract Act § 56"
+    ],
+    "fullSummary": "The modern CLAT paper rewards rapid analytical comprehension over rote memory. Ms. Riya Hooda shares the proprietary MSI reading method.",
+    "isPublished": true
+  },
+  {
+    "id": 4,
+    "slug": "the-new-criminal-laws-bns-bnss-bsa-aspirants",
+    "title": "The New Criminal Laws (BNS, BNSS, BSA 2023): Critical Shifts Judicial Aspirants Must Know",
+    "category": "judiciary",
+    "categoryLabel": "Judicial Services",
+    "date": "July 2026",
+    "readTime": "7 min read",
+    "excerpt": "Examining key statutory shifts from IPC, CrPC, and Indian Evidence Act to the newly enacted Bharatiya Sanhitas.",
+    "author": "Dr. Vikramaditya Sharma",
+    "authorRole": "Senior Professor of Procedural Law",
+    "avatar": "/images/avatars/avatar-4.webp",
+    "accentColor": "#10233F",
+    "badge": "Syllabus Core",
+    "initialClaps": 421,
+    "keyTakeaways": [
+      "Detailed cross-reference comparative table mapping IPC provisions to Bharatiya Nyaya Sanhita (BNS).",
+      "Electronic evidence admissibility mandatory timelines."
+    ],
+    "statutesCited": [
+      "BNS 2023 § 103",
+      "BNSS 2023 § 107",
+      "BSA 2023 § 63(4)"
+    ],
+    "fullSummary": "The replacement of legacy British-era criminal codes by Bharatiya Nyaya Sanhita, BNSS, and BSA represents a massive transformation.",
+    "isPublished": true
+  }
+]

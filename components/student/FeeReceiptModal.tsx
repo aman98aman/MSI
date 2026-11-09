@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { X, Printer, Edit3, Check, RotateCcw, Plus, Trash2, Calculator, Download } from 'lucide-react';
+import { X, Printer, Edit3, Eye, Check, RotateCcw, Plus, Trash2, Calculator, Download } from 'lucide-react';
 import { StudentProfile } from './data/studentMockData';
 
 // --------------------------------------------------------------------------
@@ -117,23 +117,29 @@ export interface GSTInvoiceData {
 }
 
 export interface FeeReceiptModalProps {
-  transaction: any;
+  transaction?: any;
   student?: Partial<StudentProfile> | any;
+  availableStudents?: Array<any>;
   allowEdit?: boolean;
+  isCreateMode?: boolean;
   onClose: () => void;
+  onSave?: (invoiceData: GSTInvoiceData) => Promise<void> | void;
 }
 
 export default function FeeReceiptModal({
   transaction,
   student,
+  availableStudents,
   allowEdit = false,
+  isCreateMode = false,
   onClose,
+  onSave,
 }: FeeReceiptModalProps) {
-  if (!transaction) return null;
+  if (!transaction && !isCreateMode) return null;
 
   // Format Date DD/MM/YYYY
   const getFormattedDate = () => {
-    if (transaction.date && typeof transaction.date === 'string' && transaction.date.includes('/')) {
+    if (transaction?.date && typeof transaction.date === 'string' && transaction.date.includes('/')) {
       return transaction.date;
     }
     const d = new Date();
@@ -144,29 +150,34 @@ export default function FeeReceiptModal({
   };
 
   const calculateDefaults = (): GSTInvoiceData => {
-    const rawAmt = Number(transaction.amount) || 20000;
+    if (transaction?.invoiceData) {
+      return transaction.invoiceData;
+    }
+
+    const rawAmt = Number(transaction?.amount) || 20000;
     // Reverse calculation for 18% inclusive GST
     const taxableNum = Number((rawAmt / 1.18).toFixed(2));
     const gstTotal = Number((rawAmt - taxableNum).toFixed(2));
     const halfGst = Number((gstTotal / 2).toFixed(2));
 
     const invoiceNumber =
-      transaction.receiptNo ||
-      transaction.receiptNumber ||
-      (transaction.id ? `MSI-${transaction.id.replace(/\D/g, '').slice(-4) || '65'}` : '65');
+      transaction?.receiptNo ||
+      transaction?.receiptNumber ||
+      (transaction?.id ? `MSI-${transaction.id.replace(/\D/g, '').slice(-4) || '65'}` : `INV-MSI-2026-${Math.floor(1000 + Math.random() * 9000)}`);
 
     // Build Buyer Full Line
     let buyer = '';
     if (student?.name) {
       buyer = student.name.toUpperCase();
-      if (student.guardianName) {
-        const relation = student.gender === 'Female' ? 'D/O' : 'S/O';
-        buyer += ` ${relation} ${student.guardianName.toUpperCase()}`;
+      if (student.guardianName || student.profile?.guardianName) {
+        const g = student.guardianName || student.profile?.guardianName;
+        const relation = (student.gender || student.profile?.gender) === 'Female' ? 'D/O' : 'S/O';
+        buyer += ` ${relation} ${g.toUpperCase()}`;
       }
-      if (student.batch || student.courseTitle) {
-        buyer += ` ${student.batch || student.courseTitle}`;
+      if (student.batch || student.courseTitle || student.stream) {
+        buyer += ` ${student.batch || student.courseTitle || student.stream}`;
       }
-    } else if (transaction.studentName) {
+    } else if (transaction?.studentName) {
       buyer = transaction.studentName.toUpperCase();
       if (transaction.courseTitle) {
         buyer += ` ${transaction.courseTitle.toUpperCase()}`;
@@ -176,9 +187,10 @@ export default function FeeReceiptModal({
     }
 
     const itemDesc =
-      transaction.courseTitle ||
-      transaction.remarks ||
+      transaction?.courseTitle ||
+      transaction?.remarks ||
       student?.courseTitle ||
+      student?.stream ||
       student?.batch ||
       'CLAT (LLB)';
 
@@ -191,16 +203,16 @@ export default function FeeReceiptModal({
       invoiceNo: invoiceNumber,
       invoiceDate: getFormattedDate(),
       placeOfSupply: '03-PUNJAB',
-      modeOfSupply: transaction.mode || transaction.paymentMethod || 'ONLINE / UPI',
+      modeOfSupply: transaction?.mode || transaction?.paymentMethod || 'ONLINE / UPI',
       soldToName: buyer,
-      addressLine1: student?.address || '#3007 GTB NAGAR',
+      addressLine1: student?.address || student?.profile?.address || '#3007 GTB NAGAR',
       addressLine2: 'Khrar , PUNJAB- 140301',
       buyerGst: '',
-      buyerPhone: student?.phone || transaction.studentPhone || '9463113195',
+      buyerPhone: student?.phone || transaction?.studentPhone || '9463113195',
       grMarka: '',
-      poNo: transaction.orderId || transaction.razorpayOrderId || '',
+      poNo: transaction?.orderId || transaction?.razorpayOrderId || '',
       poDate: '',
-      remarks: transaction.remarks || '',
+      remarks: transaction?.remarks || '',
       items: [
         {
           id: '1',
@@ -244,13 +256,86 @@ export default function FeeReceiptModal({
   };
 
   const [invoice, setInvoice] = useState<GSTInvoiceData>(calculateDefaults());
-  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [isEditMode, setIsEditMode] = useState<boolean>(Boolean(allowEdit || isCreateMode));
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
+  const [selectedStudentPicker, setSelectedStudentPicker] = useState<string>('');
   const printAreaRef = useRef<HTMLDivElement>(null);
-  const canEdit = false;
+  const canEdit = Boolean(allowEdit || isCreateMode) && isEditMode;
 
   useEffect(() => {
     setInvoice(calculateDefaults());
   }, [transaction, student]);
+
+  const handleSaveInvoice = async () => {
+    setIsSaving(true);
+    setSaveSuccess(false);
+    try {
+      if (onSave) {
+        await onSave(invoice);
+      }
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      console.error('Failed to save invoice:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePickStudent = (phoneOrId: string) => {
+    if (!phoneOrId || !availableStudents) return;
+    const found = availableStudents.find(
+      (s: any) => s.phone === phoneOrId || s.id === phoneOrId
+    );
+    if (!found) return;
+
+    let buyer = found.name ? found.name.toUpperCase() : '';
+    const guardian = found.profile?.guardianName || found.guardianName;
+    if (guardian) {
+      const relation = (found.gender || found.profile?.gender) === 'Female' ? 'D/O' : 'S/O';
+      buyer += ` ${relation} ${guardian.toUpperCase()}`;
+    }
+    const courseTitle = found.stream || found.profile?.courseTitle || found.batch || '';
+    if (courseTitle) {
+      buyer += ` ${courseTitle.toUpperCase()}`;
+    }
+
+    const cleanPhone = (found.phone || '').replace(/\D/g, '').slice(-10);
+    const feeAmt = found.dueFee && found.dueFee > 0 ? found.dueFee : (found.totalFee || 20000);
+    const taxableNum = Number((feeAmt / 1.18).toFixed(2));
+    const gstTotal = Number((feeAmt - taxableNum).toFixed(2));
+    const halfGst = Number((gstTotal / 2).toFixed(2));
+    const itemDesc = courseTitle || 'Judicial Studies Program';
+
+    setInvoice((prev) => ({
+      ...prev,
+      soldToName: buyer || prev.soldToName,
+      buyerPhone: cleanPhone || prev.buyerPhone,
+      addressLine1: found.profile?.address || found.address || prev.addressLine1,
+      items: [
+        {
+          id: '1',
+          description: itemDesc,
+          hsn: '999293',
+          qty: '1PCS',
+          mrp: '0.00',
+          ntRate: Number(feeAmt).toFixed(2),
+          txRate: taxableNum.toFixed(2),
+          disc: '',
+          gstRate: '18%',
+          amount: taxableNum.toFixed(2),
+        },
+      ],
+      totalTaxable: taxableNum.toFixed(2),
+      totalAmount: taxableNum.toFixed(2),
+      taxTaxable: taxableNum.toFixed(2),
+      taxSgst: halfGst.toFixed(2),
+      taxCgst: halfGst.toFixed(2),
+      netAmount: Number(feeAmt).toFixed(2),
+      inWords: numberToWords(feeAmt),
+    }));
+  };
 
   // Recalculate GST & totals based on Net Amount
   const handleAutoCalculateFromNet = (customNetAmount?: number) => {
@@ -682,13 +767,54 @@ export default function FeeReceiptModal({
         {/* Top Control Bar (Hidden on print) */}
         <div className="print:hidden bg-[#10233F] text-white px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 border-b border-[#EFC988]/30">
           <div className="flex items-center space-x-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+            <span className={`w-2.5 h-2.5 rounded-full ${canEdit ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
             <span className="text-xs font-mono text-[#EFC988] font-bold uppercase tracking-wider">
-              Official Institutional E-Receipt • Verified Authenticity
+              {isCreateMode
+                ? 'Official Institutional Invoice Creator • Verified GST Standard'
+                : canEdit
+                ? 'Institutional Invoice Editor • Active Edit Mode'
+                : 'Official Institutional E-Receipt • Verified Authenticity'}
             </span>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center flex-wrap gap-2">
+            {(allowEdit || isCreateMode) && (
+              <button
+                type="button"
+                onClick={() => setIsEditMode(!isEditMode)}
+                className={`px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center space-x-1.5 transition-colors cursor-pointer ${
+                  isEditMode
+                    ? 'border-amber-400 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20'
+                    : 'border-[#EFC988]/40 hover:bg-white/10 text-[#EFC988]'
+                }`}
+                title="Toggle between inline editing and authentic print preview"
+              >
+                {isEditMode ? <Eye className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
+                <span>{isEditMode ? 'Print Preview' : 'Edit Invoice'}</span>
+              </button>
+            )}
+
+            {(allowEdit || isCreateMode) && onSave && (
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={handleSaveInvoice}
+                className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center space-x-1.5 transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+                title="Save and record this invoice to transactions ledger"
+              >
+                {isSaving ? (
+                  <RotateCcw className="w-3.5 h-3.5 animate-spin" />
+                ) : saveSuccess ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-300" />
+                ) : (
+                  <Check className="w-3.5 h-3.5" />
+                )}
+                <span>
+                  {isSaving ? 'Saving...' : saveSuccess ? 'Saved to Ledger ✓' : 'Save to Ledger'}
+                </span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handlePrintSingleSheet}
@@ -708,6 +834,42 @@ export default function FeeReceiptModal({
             </button>
           </div>
         </div>
+
+        {/* Quick Auto-Fill Bar for Registered Students */}
+        {canEdit && availableStudents && availableStudents.length > 0 && (
+          <div className="print:hidden bg-[#0A182B] px-4 sm:px-6 py-2.5 border-b border-[#EFC988]/20 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+            <div className="flex items-center gap-2 text-gray-300">
+              <span className="text-[#EFC988] font-bold">Auto-Fill:</span>
+              <span className="text-gray-300">Quickly fill invoice from registered student records:</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedStudentPicker}
+                onChange={(e) => {
+                  setSelectedStudentPicker(e.target.value);
+                  handlePickStudent(e.target.value);
+                }}
+                className="bg-[#10233F] text-white border border-[#EFC988]/40 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-[#EFC988] font-medium"
+              >
+                <option value="">— Select Student to Auto-Populate —</option>
+                {availableStudents.map((st: any) => (
+                  <option key={st.phone || st.id} value={st.phone || st.id}>
+                    {st.name} ({st.stream || 'Course'} • +91 {st.phone})
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => handleAutoCalculateFromNet()}
+                className="px-2.5 py-1 rounded bg-[#EFC988]/20 hover:bg-[#EFC988]/30 text-[#EFC988] text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                title="Recalculate 18% GST and words from net amount"
+              >
+                <Calculator className="w-3 h-3" />
+                <span>Recalculate GST</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Live Invoice Preview (Exact visual match to sample PDF) */}
         <div className="flex-1 overflow-y-auto p-3 sm:p-5 bg-gray-100 text-black font-sans flex justify-center">

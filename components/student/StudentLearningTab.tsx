@@ -37,6 +37,7 @@ import {
   getStoredEnrollments,
   LMS_SYNC_EVENT,
 } from '@/lib/lmsStore';
+import GlassCard from '../glass/GlassCard';
 
 interface StudentLearningTabProps {
   videos: RecordedVideo[];
@@ -166,27 +167,27 @@ export default function StudentLearningTab({
   return (
     <div className="space-y-6">
       {/* Top Banner with Subject & Section Filters */}
-      <div className="p-6 sm:p-7 rounded-3xl bg-white border border-[#E8DCCB] shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#E8DCCB]">
+      <GlassCard variant="elevated" className="p-6 sm:p-7">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-gray-200/50 dark:border-white/10">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#89190E]" />
-              <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#10233F]">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#89190E] dark:bg-[#EFC988] animate-pulse" />
+              <h2 className="font-serif text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 Academic Learning & Research Hub
               </h2>
             </div>
-            <p className="text-xs sm:text-sm text-[#526174] mt-1">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
               MSI modular video curriculum, annotated Bare Act digests, PYQs, and research assignments.
             </p>
           </div>
 
           {/* Subject Filter Dropdown */}
           <div className="flex items-center space-x-2">
-            <Filter className="w-4 h-4 text-[#89190E]" />
+            <Filter className="w-4 h-4 text-[#89190E] dark:text-[#EFC988]" />
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
-              className="p-2 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF] text-xs font-semibold text-[#10233F] focus:outline-none focus:border-[#89190E]"
+              className="p-2 rounded-xl border border-gray-200/80 dark:border-white/10 bg-white/70 dark:bg-white/5 text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-none focus:border-[#89190E] dark:focus:border-[#EFC988]"
             >
               <option value="all">All Disciplines & Subjects</option>
               <option value="Code of Criminal Procedure">Code of Criminal Procedure (CrPC)</option>
@@ -212,14 +213,14 @@ export default function StudentLearningTab({
               onClick={() => setSubSection(item.id as typeof subSection)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                 subSection === item.id
-                  ? 'bg-[#89190E] text-white shadow-xs'
-                  : 'bg-[#FFF9EF] text-[#526174] hover:text-[#10233F] hover:bg-[#E8DCCB]/60'
+                  ? 'bg-linear-to-r from-[#89190E] to-[#B22222] text-white shadow-xs'
+                  : 'bg-white/60 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-200/60 dark:border-white/10'
               }`}
             >
               <span>{item.label}</span>
               <span
                 className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                  subSection === item.id ? 'bg-white/20 text-white' : 'bg-[#E8DCCB] text-[#526174]'
+                  subSection === item.id ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300'
                 }`}
               >
                 {item.count}
@@ -227,19 +228,19 @@ export default function StudentLearningTab({
             </button>
           ))}
         </div>
-      </div>
+      </GlassCard>
 
       {/* Course Entitlement Rule Reminder Banner */}
-      <div className="p-4 rounded-2xl bg-[#FFF3DD] border border-[#EFC988] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#89190E]">
+      <div className="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200 backdrop-blur-md">
         <div className="flex items-center space-x-2.5">
-          <ShieldAlert className="w-4 h-4 text-[#89190E] flex-shrink-0" />
+          <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
           <span>
             <strong>Enrolled Courses Active:</strong> You have {enrolledMsi.length} enrolled video courses. Progress and notes synchronize automatically.
           </span>
         </div>
         <Link
           href="/courses"
-          className="text-xs font-bold underline text-[#89190E] hover:text-[#65130D] whitespace-nowrap"
+          className="text-xs font-bold underline text-[#89190E] dark:text-[#EFC988] hover:opacity-80 whitespace-nowrap transition-colors"
         >
           Enroll in More Courses →
         </Link>

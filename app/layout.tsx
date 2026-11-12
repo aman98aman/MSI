@@ -113,6 +113,31 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
+      <head>
+        {/* Google Tag Manager (GTM-TPNLF9HQ) */}
+        <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-TPNLF9HQ" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());`,
+          }}
+        />
+        {/* Google Tag (G-D2WPY06XWQ) */}
+        <script async src="https://www.googletagmanager.com/gtm.js?id=G-D2WPY06XWQ" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());`,
+          }}
+        />
+      </head>
+      <body className="min-h-screen flex flex-col font-sans bg-[#FFF9EF] text-[#10233F] antialiased selection:bg-[#EFC988] selection:text-[#89190E]">
+        <SplashScreen />
+        <CustomCursor />
+        {children}
+        <FloatingActionDock />
       <body className="min-h-screen flex flex-col font-sans bg-[#FFF9EF] dark:bg-[#0B1020] text-[#10233F] dark:text-[#F8FAFC] antialiased selection:bg-[#EFC988] selection:text-[#89190E]">
         <ThemeProvider>
           <SplashScreen />

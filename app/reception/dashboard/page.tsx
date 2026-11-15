@@ -241,7 +241,7 @@ export default function ReceptionDashboardPage() {
   const todayTotal = visitors.length;
 
   return (
-    <div className="min-h-screen bg-[#FFF9EF] flex flex-col selection:bg-[#EFC988] selection:text-[#89190E]">
+    <div className="min-h-screen dashboard-bg text-gray-900 dark:text-gray-100 flex flex-col selection:bg-[#EFC988] selection:text-[#89190E] antialiased">
       {/* 1. Header with live headcount & official receptionist badge */}
       <ReceptionHeader
         currentStaff={currentStaff}

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import ThemeToggle from '@/components/glass/ThemeToggle';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -279,7 +280,7 @@ export default function TeacherLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF9EF] flex flex-col justify-between selection:bg-[#EFC988] selection:text-[#89190E] relative overflow-hidden">
+    <div className="min-h-screen dashboard-bg flex flex-col justify-between selection:bg-indigo-500/20 selection:text-indigo-600 relative overflow-hidden text-slate-900 dark:text-white">
       {/* Blueprint Grid Background */}
       <div className="absolute inset-0 blueprint-grid opacity-25 pointer-events-none" />
       <div className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-[#10233F]/5 rounded-full blur-3xl pointer-events-none" />
@@ -299,7 +300,7 @@ export default function TeacherLoginPage() {
             />
           </div>
           <div>
-            <span className="font-serif font-bold text-lg text-[#10233F] tracking-tight block leading-none">
+            <span className="font-serif font-bold text-lg text-slate-900 dark:text-white tracking-tight block leading-none">
               MSI
             </span>
             <span className="text-[10px] tracking-wider text-[#89190E] font-bold uppercase block mt-0.5">
@@ -311,7 +312,7 @@ export default function TeacherLoginPage() {
         <div className="flex items-center space-x-2 sm:space-x-3">
           <Link
             href="/student/login"
-            className="hidden sm:flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-white border border-[#E8DCCB] hover:border-[#10233F] text-xs font-semibold text-[#10233F] transition-all shadow-xs"
+            className="hidden sm:flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-white border border-slate-200 dark:border-white/10 hover:border-[#10233F] text-xs font-semibold text-slate-900 dark:text-white transition-all shadow-xs"
           >
             <Users className="w-3.5 h-3.5 text-[#EFC988]" />
             <span>Student Portal</span>
@@ -320,17 +321,18 @@ export default function TeacherLoginPage() {
 
           <Link
             href="/"
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-white border border-[#E8DCCB] hover:border-[#89190E] text-xs font-semibold text-[#526174] hover:text-[#89190E] transition-all shadow-xs"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-white border border-slate-200 dark:border-white/10 hover:border-[#89190E] text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[#89190E] transition-all shadow-xs"
           >
             <Globe className="w-3.5 h-3.5 text-[#89190E]" />
             <span className="hidden sm:inline">Main Website</span>
           </Link>
+          <ThemeToggle />
         </div>
       </header>
 
       {/* Main Login / Sign Up Card Container */}
       <main className="relative z-10 flex-1 flex items-center justify-center p-4 sm:p-8">
-        <div className="w-full max-w-md bg-white border border-[#E8DCCB] rounded-3xl p-6 sm:p-9 shadow-2xl hud-bracket relative">
+        <div className="w-full max-w-md glass-card-elevated border border-slate-200/80 dark:border-white/10 rounded-3xl p-6 sm:p-9 shadow-2xl relative text-slate-900 dark:text-white">
           
           {/* Top Title & Icon */}
           <div className="text-center">
@@ -340,10 +342,10 @@ export default function TeacherLoginPage() {
             <span className="text-[10px] font-mono tracking-widest text-[#89190E] uppercase font-bold">
               Faculty & Teacher Portal
             </span>
-            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#10233F] mt-1">
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mt-1">
               {authTab === 'signin' ? 'Faculty Sign In' : 'Apply as Instructor'}
             </h1>
-            <p className="text-xs text-[#526174] mt-1.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
               {authTab === 'signin'
                 ? 'Access assigned batches, lecture schedules & course content.'
                 : 'Submit your credentials for Super Admin review and course authorization.'}
@@ -351,7 +353,7 @@ export default function TeacherLoginPage() {
           </div>
 
           {/* Tab Switcher: Sign In vs Sign Up */}
-          <div className="mt-5 p-1 rounded-2xl bg-[#FFF9EF] border border-[#E8DCCB] grid grid-cols-2 gap-1">
+          <div className="mt-5 p-1 rounded-2xl bg-slate-100/75 dark:bg-white/5 border border-slate-200 dark:border-white/10 grid grid-cols-2 gap-1">
             <button
               type="button"
               onClick={() => {
@@ -360,8 +362,8 @@ export default function TeacherLoginPage() {
               }}
               className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 authTab === 'signin'
-                  ? 'bg-[#89190E] text-white shadow-sm'
-                  : 'text-[#526174] hover:text-[#10233F]'
+                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white'
               }`}
             >
               Faculty Sign In
@@ -374,8 +376,8 @@ export default function TeacherLoginPage() {
               }}
               className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 authTab === 'signup'
-                  ? 'bg-[#89190E] text-white shadow-sm'
-                  : 'text-[#526174] hover:text-[#10233F]'
+                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white'
               }`}
             >
               Sign Up / Apply
@@ -393,40 +395,40 @@ export default function TeacherLoginPage() {
           {authTab === 'signin' && (
             <form onSubmit={handleLogin} className="mt-5 space-y-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-1.5">
                     Authorized Mobile Number or Email ID *
                   </label>
                   <div className="relative">
-                    <Phone className="w-4 h-4 text-[#526174] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Phone className="w-4 h-4 text-slate-500 dark:text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       required
                       value={phoneOrEmail}
                       onChange={(e) => setPhoneOrEmail(e.target.value)}
                       placeholder="9792303434 or name@msi-institutes.edu.in"
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs sm:text-sm text-[#10233F] focus:outline-none focus:border-[#89190E] transition-all font-mono"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all font-mono"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-1.5">
                     Password
                   </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-[#526174] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-slate-500 dark:text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="w-full pl-10 pr-10 py-3 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs sm:text-sm text-[#10233F] focus:outline-none focus:border-[#89190E] transition-all font-mono"
+                      className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all font-mono"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#526174] hover:text-[#10233F]"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -436,7 +438,7 @@ export default function TeacherLoginPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3.5 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center space-x-2 transition-all shadow-lg shadow-[#89190E]/30 btn-chamfered active:scale-98 disabled:opacity-75 cursor-pointer"
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-md btn-press text-white font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center space-x-2 transition-all shadow-lg shadow-[#89190E]/30 btn-chamfered active:scale-98 disabled:opacity-75 cursor-pointer"
                 >
                   {isLoading ? (
                     <span>Authenticating Faculty...</span>
@@ -449,7 +451,7 @@ export default function TeacherLoginPage() {
                 </button>
 
                 <div className="text-center pt-2">
-                  <span className="text-xs text-[#526174]">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
                     Want to teach at MSI?{' '}
                     <button
                       type="button"
@@ -484,7 +486,7 @@ export default function TeacherLoginPage() {
               ) : (
                 <form onSubmit={handleSignUp} className="mt-5 space-y-3">
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-1">
                       Full Name & Title
                     </label>
                     <input
@@ -493,12 +495,12 @@ export default function TeacherLoginPage() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Adv. Ramanuj Sengupta"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs text-[#10233F] focus:outline-none focus:border-[#89190E]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-1">
                       Email Address
                     </label>
                     <input
@@ -507,19 +509,19 @@ export default function TeacherLoginPage() {
                       value={signupEmail}
                       onChange={(e) => setSignupEmail(e.target.value)}
                       placeholder="ramanuj.law@gmail.com"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs text-[#10233F] focus:outline-none focus:border-[#89190E]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-1">
                         Stream
                       </label>
                       <select
                         value={stream}
                         onChange={(e) => setStream(e.target.value as 'Law' | 'Entrance')}
-                        className="w-full px-2.5 py-2.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs font-semibold text-[#10233F]"
+                        className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-xs font-semibold text-slate-900 dark:text-white"
                       >
                         <option value="Law">Judicial Services (PCS J / ADJ)</option>
                         <option value="Entrance">CLAT & Law Entrance</option>
@@ -527,20 +529,20 @@ export default function TeacherLoginPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-1">
                         Experience (Years)
                       </label>
                       <input
                         type="number"
                         value={experienceYears}
                         onChange={(e) => setExperienceYears(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs text-[#10233F]"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-xs text-slate-900 dark:text-white"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-1">
                       Specialization & Paper
                     </label>
                     <input
@@ -549,12 +551,12 @@ export default function TeacherLoginPage() {
                       value={specialization}
                       onChange={(e) => setSpecialization(e.target.value)}
                       placeholder="e.g. Constitutional Law, BNSS Criminal Trial"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs text-[#10233F] focus:outline-none focus:border-[#89190E]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-1">
                       Highest Qualification
                     </label>
                     <input
@@ -562,14 +564,14 @@ export default function TeacherLoginPage() {
                       value={qualifications}
                       onChange={(e) => setQualifications(e.target.value)}
                       placeholder="e.g. LL.M (Gold Medalist), Ph.D."
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs text-[#10233F] focus:outline-none focus:border-[#89190E]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 glass-input text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full py-3.5 mt-2 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center space-x-2 transition-all shadow-lg shadow-[#89190E]/30 btn-chamfered active:scale-98 disabled:opacity-75 cursor-pointer"
+                    className="w-full py-3.5 mt-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-md btn-press text-white font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center space-x-2 transition-all shadow-lg shadow-[#89190E]/30 btn-chamfered active:scale-98 disabled:opacity-75 cursor-pointer"
                   >
                     {isLoading ? (
                       <span>Submitting Application...</span>
@@ -582,7 +584,7 @@ export default function TeacherLoginPage() {
                   </button>
 
                   <div className="text-center pt-2">
-                    <span className="text-xs text-[#526174]">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
                       Already verified?{' '}
                       <button
                         type="button"
@@ -599,7 +601,7 @@ export default function TeacherLoginPage() {
           )}
 
           {/* Security & Regulatory Footnote */}
-          <div className="mt-6 pt-5 border-t border-[#E8DCCB] flex items-center justify-center space-x-2 text-[11px] text-[#526174]">
+          <div className="mt-6 pt-5 border-t border-slate-200 dark:border-white/10 flex items-center justify-center space-x-2 text-[11px] text-slate-500 dark:text-slate-400">
             <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
             <span>MSI Group of Institutes Faculty Board</span>
           </div>
@@ -609,7 +611,7 @@ export default function TeacherLoginPage() {
         {/* First-Time Login: Mandatory Password Change Modal */}
         {firstTimeFaculty && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#E8DCCB] relative">
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-white/10 relative">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-[#89190E]/10 text-[#89190E] flex items-center justify-center">
                   <Lock className="w-6 h-6" />
@@ -618,14 +620,14 @@ export default function TeacherLoginPage() {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#89190E]">
                     First-Time Security Setup
                   </span>
-                  <h3 className="font-serif text-lg font-bold text-[#10233F]">
+                  <h3 className="font-serif text-lg font-bold text-slate-900 dark:text-white">
                     Create Your Permanent Password
                   </h3>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-[#FFF9EF] border border-[#E8DCCB] text-xs text-[#526174] mb-5">
-                <p className="font-bold text-[#10233F] mb-1">
+              <div className="p-3.5 rounded-2xl bg-slate-100/75 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs text-slate-500 dark:text-slate-400 mb-5">
+                <p className="font-bold text-slate-900 dark:text-white mb-1">
                   Welcome, {firstTimeFaculty.name}!
                 </p>
                 <p>
@@ -643,7 +645,7 @@ export default function TeacherLoginPage() {
 
               <form onSubmit={handleFirstTimePasswordChange} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase text-[#10233F] mb-1">
+                  <label className="block text-xs font-bold uppercase text-slate-900 dark:text-white mb-1">
                     New Password *
                   </label>
                   <input
@@ -652,12 +654,12 @@ export default function TeacherLoginPage() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Min. 6 characters"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8DCCB] text-xs text-[#10233F] focus:outline-none focus:border-[#89190E]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase text-[#10233F] mb-1">
+                  <label className="block text-xs font-bold uppercase text-slate-900 dark:text-white mb-1">
                     Confirm New Password *
                   </label>
                   <input
@@ -666,7 +668,7 @@ export default function TeacherLoginPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Re-type your new password"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8DCCB] text-xs text-[#10233F] focus:outline-none focus:border-[#89190E]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
                   />
                 </div>
 
@@ -674,14 +676,14 @@ export default function TeacherLoginPage() {
                   <button
                     type="button"
                     onClick={() => setFirstTimeFaculty(null)}
-                    className="flex-1 py-2.5 rounded-xl border border-[#E8DCCB] text-xs font-bold text-gray-600 hover:bg-gray-50"
+                    className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold text-gray-600 hover:bg-gray-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isChangingPass}
-                    className="flex-1 py-2.5 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-md btn-press text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs cursor-pointer"
                   >
                     {isChangingPass ? (
                       <span>Saving...</span>
@@ -697,7 +699,7 @@ export default function TeacherLoginPage() {
       </main>
 
       {/* Footer Strip */}
-      <footer className="relative z-10 py-4 text-center text-xs text-[#526174] border-t border-[#E8DCCB]/60">
+      <footer className="relative z-10 py-4 text-center text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-white/10/60">
         © {new Date().getFullYear()} MSI Group of Institutes. All rights reserved. • Kharar, Mohali, Punjab.
       </footer>
     </div>

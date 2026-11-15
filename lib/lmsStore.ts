@@ -674,8 +674,6 @@ export function unmarkTeacherDeletedLocally(id?: string, email?: string, phone?:
 const BASE_DELETED_TEACHER_IDS = [
   'fac-law-shikha',
   'ss7487320@gmail.com',
-  '9814423004',
-  '+91 98144 23004',
   'test-dummy',
   'fac-1792779313911',
   'deleteme@msi.edu.in'
@@ -702,7 +700,6 @@ export function markTeacherDeletedLocally(teacherId: string, email?: string, pho
     const toAdd = [
       teacherId.trim().toLowerCase(),
       ...(email ? [email.trim().toLowerCase()] : []),
-      ...(phone ? [phone.replace(/\D/g, '').slice(-10)] : []),
     ].filter(Boolean);
 
     let changed = false;
@@ -841,11 +838,9 @@ export function getStoredTeachers(): TeacherApprovalRecord[] {
     const isDeleted = (t: TeacherApprovalRecord) => {
       const tId = (t.id || '').toLowerCase().trim();
       const tEmail = (t.email || '').toLowerCase().trim();
-      const tPhone = (t.phone || '').replace(/\D/g, '').slice(-10);
       return (
-        deleted.includes(tId) ||
-        deleted.includes(tEmail) ||
-        (tPhone.length >= 10 && deleted.includes(tPhone))
+        (tId && deleted.includes(tId)) ||
+        (tEmail && deleted.includes(tEmail))
       );
     };
 
@@ -895,11 +890,9 @@ export function saveStoredTeachers(teachers: TeacherApprovalRecord[], emitEvent 
     const isDeleted = (t: TeacherApprovalRecord) => {
       const tId = (t.id || '').toLowerCase().trim();
       const tEmail = (t.email || '').toLowerCase().trim();
-      const tPhone = (t.phone || '').replace(/\D/g, '').slice(-10);
       return (
-        deleted.includes(tId) ||
-        deleted.includes(tEmail) ||
-        (tPhone.length >= 10 && deleted.includes(tPhone))
+        (tId && deleted.includes(tId)) ||
+        (tEmail && deleted.includes(tEmail))
       );
     };
     const valid = teachers.filter((t) => !isDeleted(t));
@@ -927,10 +920,6 @@ export async function syncTeachersFromServer(): Promise<TeacherApprovalRecord[]>
         data.deletedTeachers.forEach((dt: any) => {
           if (dt.id) deletedEntries.push(dt.id.toLowerCase().trim());
           if (dt.email) deletedEntries.push(dt.email.toLowerCase().trim());
-          if (dt.phone) {
-            const clean = dt.phone.replace(/\D/g, '').slice(-10);
-            if (clean) deletedEntries.push(clean);
-          }
         });
         localStorage.setItem(STORAGE_KEY_DELETED_TEACHERS, JSON.stringify(Array.from(new Set(deletedEntries))));
       }
@@ -1571,18 +1560,14 @@ export function deleteTeacherAction(teacherId: string, email?: string, phone?: s
   markTeacherDeletedLocally(teacherId, email, phone);
   const cleanId = teacherId.trim().toLowerCase();
   const cleanEmail = (email || '').trim().toLowerCase();
-  const cleanPhone = (phone || '').replace(/\D/g, '').slice(-10);
 
   const teachers = getStoredTeachers();
   const updatedTeachers = teachers.filter((t) => {
     const tId = (t.id || '').toLowerCase().trim();
     const tEmail = (t.email || '').toLowerCase().trim();
-    const tPhone = (t.phone || '').replace(/\D/g, '').slice(-10);
-    return (
-      tId !== cleanId &&
-      (!cleanEmail || tEmail !== cleanEmail) &&
-      (cleanPhone.length < 10 || tPhone !== cleanPhone)
-    );
+    const matchId = cleanId && tId === cleanId;
+    const matchEmail = cleanEmail && tEmail === cleanEmail;
+    return !matchId && !matchEmail;
   });
   saveStoredTeachers(updatedTeachers);
 

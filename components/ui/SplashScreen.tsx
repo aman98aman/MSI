@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
-import { Sparkles, ArrowRight, ShieldCheck, Scale, Award } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 
 interface SplashScreenProps {
   onComplete?: () => void;
@@ -11,28 +11,50 @@ interface SplashScreenProps {
 
 export default function SplashScreen({
   onComplete,
-  minDurationMs = 2600,
+  minDurationMs = 2100,
 }: SplashScreenProps) {
   const [progress, setProgress] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
   const [shouldRender, setShouldRender] = useState(true);
-  const [statusMessage, setStatusMessage] = useState('INITIALIZING LEGAL ARCHIVES...');
+  const [statusMessage, setStatusMessage] = useState('PREPARING YOUR LEARNING EXPERIENCE');
+
+  // Generate subtle golden stardust particle coordinates
+  const particles = useMemo(() => {
+    return Array.from({ length: 22 }).map((_, i) => ({
+      id: i,
+      top: `${(i * 17 + 13) % 94}%`,
+      left: `${(i * 23 + 7) % 96}%`,
+      size: `${1.5 + ((i % 4) * 0.7)}px`,
+      delay: `${(i * 0.23).toFixed(2)}s`,
+      duration: `${3.5 + ((i % 3) * 1.2)}s`,
+      opacity: 0.2 + ((i % 5) * 0.12),
+    }));
+  }, []);
+
+  // Symmetrical horizontal-diagonal line configurations
+  const horizontalLines = useMemo(() => {
+    return [
+      { yOffset: -55, angle: -5, length: '180px', smLength: '260px', opacity: 0.85, delay: '0.15s', thickness: 1.5 },
+      { yOffset: -33, angle: -4, length: '210px', smLength: '310px', opacity: 0.65, delay: '0.22s', thickness: 1.0 },
+      { yOffset: -11, angle: -6, length: '240px', smLength: '360px', opacity: 0.90, delay: '0.30s', thickness: 1.5 },
+      { yOffset: 11, angle: -5, length: '230px', smLength: '340px', opacity: 0.75, delay: '0.38s', thickness: 1.0 },
+      { yOffset: 33, angle: -4, length: '200px', smLength: '290px', opacity: 0.60, delay: '0.45s', thickness: 1.2 },
+      { yOffset: 55, angle: -6, length: '170px', smLength: '240px', opacity: 0.45, delay: '0.52s', thickness: 1.0 },
+    ];
+  }, []);
 
   useEffect(() => {
-    // Check if user already saw the splash screen in this session
     const hasSeen = typeof window !== 'undefined' && sessionStorage.getItem('msi_splash_viewed');
-    
-    // Balanced duration: 2.6s on first load, or 1.8s on return so animations are appreciated
-    const targetDuration = hasSeen ? 1800 : minDurationMs;
+    const targetDuration = hasSeen ? 1200 : minDurationMs;
     const startTime = performance.now();
     let animationFrameId: number;
 
     const milestones = [
-      { at: 20, text: 'INDEXING CONSTITUTIONAL PRECEDENTS...' },
-      { at: 45, text: 'CALIBRATING PCS J & CLAT MODULES...' },
-      { at: 75, text: 'LOADING PANJAB UNIVERSITY LAW ARCHIVES...' },
+      { at: 18, text: 'PREPARING YOUR LEARNING EXPERIENCE' },
+      { at: 42, text: 'INDEXING CONSTITUTIONAL PRECEDENTS...' },
+      { at: 70, text: 'CALIBRATING PCS-J & CLAT MODULES...' },
       { at: 90, text: 'CRAFTING LEGAL BRILLIANCE...' },
-      { at: 100, text: 'WELCOME TO MSI INSTITUTES' },
+      { at: 100, text: 'WELCOME TO MSI GROUP OF INSTITUTES' },
     ];
 
     const step = (currentTime: number) => {
@@ -51,14 +73,13 @@ export default function SplashScreen({
         if (typeof window !== 'undefined') {
           sessionStorage.setItem('msi_splash_viewed', 'true');
         }
-        // Brief hold on 100% for satisfaction before curtain exit
         setTimeout(() => {
           setIsExiting(true);
           setTimeout(() => {
             setShouldRender(false);
             if (onComplete) onComplete();
-          }, 800);
-        }, 260);
+          }, 700);
+        }, 220);
       }
     };
 
@@ -73,12 +94,12 @@ export default function SplashScreen({
       sessionStorage.setItem('msi_splash_viewed', 'true');
     }
     setProgress(100);
-    setStatusMessage('WELCOME TO MSI INSTITUTES');
+    setStatusMessage('WELCOME TO MSI GROUP OF INSTITUTES');
     setIsExiting(true);
     setTimeout(() => {
       setShouldRender(false);
       if (onComplete) onComplete();
-    }, 400);
+    }, 350);
   };
 
   useEffect(() => {
@@ -96,43 +117,67 @@ export default function SplashScreen({
   return (
     <div
       onClick={handleSkip}
-      className={`fixed inset-0 z-[99999999] select-none flex flex-col items-center justify-between bg-[#060D18] text-white overflow-hidden transition-all duration-800 ease-[cubic-bezier(0.76,0,0.24,1)] ${
+      className={`fixed inset-0 z-[99999999] select-none flex flex-col items-center justify-between overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] ${
         isExiting ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
       }`}
+      style={{
+        background: 'radial-gradient(circle at 50% 45%, #651C2C 0%, #4A101D 35%, #300B15 72%, #1A050B 100%)',
+        color: '#FDFBF7',
+      }}
       aria-label="MSI Group of Institutes Splash Screen"
       role="dialog"
       aria-modal="true"
     >
-      {/* ── Background Blueprint Grid ──────────────────────── */}
-      <div className="absolute inset-0 blueprint-grid opacity-15 pointer-events-none" />
+      {/* ── Background Subtle Watermark Crest ────────────────── */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] sm:w-[680px] sm:h-[680px] opacity-[0.035] pointer-events-none select-none filter blur-[0.5px]">
+        <Image
+          src="/images/msi-official-logo.png"
+          alt=""
+          fill
+          priority
+          sizes="680px"
+          className="object-contain"
+        />
+      </div>
 
-      {/* ── Ambient Radial Flares ──────────────────────────── */}
-      {/* Crimson Royal Flare (Top Left) */}
-      <div className="absolute -top-28 -left-28 w-[550px] h-[550px] bg-[#89190E]/35 rounded-full blur-[150px] pointer-events-none animate-pulse-slow" />
+      {/* ── Ambient Radial Golden Lighting Core ──────────────── */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] sm:w-[600px] sm:h-[600px] bg-[#C8A45D]/12 rounded-full blur-[140px] pointer-events-none animate-aura-pulse" />
 
-      {/* Champagne Gold Flare (Bottom Right) */}
-      <div className="absolute -bottom-28 -right-28 w-[550px] h-[550px] bg-[#EFC988]/25 rounded-full blur-[150px] pointer-events-none animate-pulse-slow" />
+      {/* ── Soft Deep Crimson Vignette Flares ───────────────── */}
+      <div className="absolute -top-32 -left-32 w-[500px] h-[500px] bg-[#651C2C]/30 rounded-full blur-[160px] pointer-events-none" />
+      <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] bg-[#4A101D]/40 rounded-full blur-[160px] pointer-events-none" />
 
-      {/* Center Golden Core Aura */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[480px] bg-[#EFC988]/15 rounded-full blur-[120px] pointer-events-none animate-aura-pulse" />
+      {/* ── Understated Golden Stardust Particles ────────────── */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {particles.map((p) => (
+          <span
+            key={p.id}
+            className="absolute rounded-full bg-[#E7D19A]"
+            style={{
+              top: p.top,
+              left: p.left,
+              width: p.size,
+              height: p.size,
+              opacity: p.opacity,
+              boxShadow: '0 0 6px rgba(231, 209, 154, 0.6)',
+              animation: `goldDustFloat ${p.duration} ease-in-out infinite`,
+              animationDelay: p.delay,
+            }}
+          />
+        ))}
+      </div>
 
-      {/* ── HUD Corner Registration Ticks ──────────────────── */}
-      <span className="hud-dot-tl" style={{ top: 24, left: 24 }} />
-      <span className="hud-dot-tr" style={{ top: 24, right: 24 }} />
-      <span className="hud-dot-bl" style={{ bottom: 24, left: 24 }} />
-      <span className="hud-dot-br" style={{ bottom: 24, right: 24 }} />
-
-      {/* Top Gold Horizon Beam */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#EFC988] to-transparent opacity-90" />
+      {/* ── Top Subtle Gold Horizon Border ──────────────────── */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#C8A45D]/80 to-transparent opacity-90" />
 
       {/* ══════════════════════════════════════════════════════ */}
       {/* 1. TOP HEADER HUD                                     */}
       {/* ══════════════════════════════════════════════════════ */}
-      <header className="relative z-20 w-full max-w-[1400px] px-6 sm:px-12 pt-8 sm:pt-10 flex items-center justify-between text-xs font-mono tracking-widest text-[#EFC988]">
-        <div className="flex items-center space-x-3">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#89190E] animate-ping" />
-          <span className="text-[#FFF9EF]/90 uppercase font-bold text-[11px] sm:text-xs tracking-wider">
-            MSI // JUDICIAL & LEGAL ARCHIVES
+      <header className="relative z-20 w-full max-w-[1400px] px-6 sm:px-12 pt-6 sm:pt-9 flex items-center justify-between text-xs font-mono tracking-widest text-[#E7D19A]">
+        <div className="flex items-center space-x-2.5">
+          <span className="w-2 h-2 rounded-full bg-[#C8A45D] animate-ping" />
+          <span className="text-[#FDFBF7]/90 uppercase font-bold text-[10px] sm:text-xs tracking-widest">
+            MSI // ACADEMIC & JUDICIAL EXCELLENCE
           </span>
         </div>
 
@@ -141,144 +186,381 @@ export default function SplashScreen({
             e.stopPropagation();
             handleSkip();
           }}
-          className="group flex items-center space-x-2 px-4 py-1.5 rounded-full bg-white/5 hover:bg-[#89190E] text-[#FFF9EF] border border-[#E8DCCB]/30 hover:border-[#89190E] transition-all duration-300 text-[11px] font-bold tracking-wider cursor-pointer"
+          className="group flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-[#651C2C] text-[#FDFBF7] border border-[#C8A45D]/30 hover:border-[#C8A45D] transition-all duration-300 text-[11px] font-bold tracking-wider cursor-pointer shadow-xs"
         >
           <span>SKIP INTRO</span>
-          <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+          <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1 text-[#C8A45D]" />
         </button>
       </header>
 
       {/* ══════════════════════════════════════════════════════ */}
-      {/* 2. CENTER SPLASH HERO: OFFICIAL LOGO + ANIMATION     */}
+      {/* 2. CENTER HERO: HORIZONTAL DIAGONAL LINES + MSI LOGO  */}
       {/* ══════════════════════════════════════════════════════ */}
-      <main className="relative z-20 flex flex-col items-center justify-center text-center my-auto px-6 max-w-3xl">
-        {/* Animated Concentric Astrolabe Orbits & Official MSI Logo */}
-        <div className="relative w-52 h-52 sm:w-64 sm:h-64 lg:w-72 lg:h-72 flex items-center justify-center mb-6">
+      <main className="relative z-20 flex flex-col items-center justify-center text-center my-auto px-6 w-full max-w-5xl">
+        
+        {/* Crest & Architectural Line Container */}
+        <div className="relative w-full max-w-2xl flex items-center justify-center my-2 sm:my-4">
           
-          {/* Concentric Pulsing Shockwave Ring */}
-          <div
-            className="absolute inset-0 rounded-full border border-[#EFC988]/30 animate-aura-pulse pointer-events-none"
-          />
-
-          {/* Outer Dashed Celestial Astrolabe Ring (Rotating Clockwise) */}
-          <div
-            className="absolute -inset-2.5 sm:-inset-3.5 rounded-full border-2 border-dashed border-[#EFC988]/50 animate-astrolabe pointer-events-none"
-          />
-
-          {/* Fine Crimson Inner Orbit (Counter-Rotating) */}
-          <div
-            className="absolute inset-1.5 rounded-full border border-[#89190E]/80 animate-astrolabe-reverse pointer-events-none"
-          />
-
-          {/* Cardinal Diamond Jewel Points (12, 3, 6, 9 o'clock) */}
-          <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-[#EFC988] shadow-[0_0_12px_#EFC988]" />
-          <span className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-[#EFC988] shadow-[0_0_12px_#EFC988]" />
-          <span className="absolute top-1/2 -left-3.5 -translate-y-1/2 w-2 h-2 rotate-45 bg-[#89190E] shadow-[0_0_12px_#89190E]" />
-          <span className="absolute top-1/2 -right-3.5 -translate-y-1/2 w-2 h-2 rotate-45 bg-[#89190E] shadow-[0_0_12px_#89190E]" />
-
-          {/* Orbiting Golden Satellite Star */}
-          <div
-            className="absolute -inset-3.5 rounded-full animate-spin pointer-events-none"
-            style={{ animationDuration: '7s' }}
-          >
-            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 flex items-center justify-center">
-              <span className="w-3.5 h-3.5 rounded-full bg-[#EFC988] shadow-[0_0_16px_#EFC988] animate-pulse" />
-            </div>
+          {/* ── LEFT WING: Symmetrical Horizontal-Diagonal Lines ── */}
+          <div className="absolute right-1/2 mr-28 sm:mr-36 lg:mr-42 top-1/2 -translate-y-1/2 pointer-events-none hidden xs:block">
+            {horizontalLines.map((line, idx) => (
+              <div
+                key={`left-line-${idx}`}
+                className="relative flex items-center justify-end"
+                style={{
+                  height: `${line.thickness}px`,
+                  marginTop: idx === 0 ? 0 : '14px',
+                  transform: `rotate(${line.angle}deg)`,
+                }}
+              >
+                {/* Outward Expanding Horizontal Line (Center -> Left) */}
+                <div
+                  className="origin-right"
+                  style={{
+                    width: line.smLength,
+                    height: `${line.thickness}px`,
+                    background: 'linear-gradient(to left, rgba(200, 164, 93, 0.95), rgba(231, 209, 154, 0.55), rgba(200, 164, 93, 0.15), transparent)',
+                    opacity: line.opacity,
+                    boxShadow: '0 0 8px rgba(200, 164, 93, 0.3)',
+                    animation: 'horizontalLineReveal 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    animationDelay: line.delay,
+                  }}
+                />
+                {/* Gold Diamond Anchor Node */}
+                <span
+                  className="w-1.5 h-1.5 rotate-45 bg-[#E7D19A] shrink-0 ml-1.5"
+                  style={{
+                    boxShadow: '0 0 6px #C8A45D',
+                    opacity: line.opacity,
+                  }}
+                />
+              </div>
+            ))}
           </div>
 
-          {/* Central Logo Container with Floating Levitation & Specular Sheen */}
-          <div className="relative w-40 h-40 sm:w-48 sm:h-48 lg:w-56 lg:h-56 rounded-full p-1.5 bg-gradient-to-br from-[#EFC988] via-[#89190E] to-[#10233F] shadow-[0_0_55px_rgba(239,201,136,0.45),0_20px_45px_rgba(0,0,0,0.85)] animate-logo-float transition-transform duration-500 hover:scale-105 group">
-            
-            {/* Inner Golden Bezel & Mask */}
-            <div className="relative w-full h-full rounded-full overflow-hidden bg-[#0A1322] border-2 border-[#EFC988]/90">
-              
-              {/* Official MSI Group of Institutes Seal Image */}
-              <Image
-                src="/images/msi-official-logo.png"
-                alt="MSI Group of Institutes Official Logo"
-                fill
-                priority
-                className="object-contain p-1 filter drop-shadow-[0_4px_16px_rgba(0,0,0,0.7)]"
-                sizes="(max-width: 640px) 160px, (max-width: 1024px) 192px, 224px"
-              />
+          {/* ── RIGHT WING: Symmetrical Horizontal-Diagonal Lines ── */}
+          <div className="absolute left-1/2 ml-28 sm:ml-36 lg:ml-42 top-1/2 -translate-y-1/2 pointer-events-none hidden xs:block">
+            {horizontalLines.map((line, idx) => (
+              <div
+                key={`right-line-${idx}`}
+                className="relative flex items-center justify-start"
+                style={{
+                  height: `${line.thickness}px`,
+                  marginTop: idx === 0 ? 0 : '14px',
+                  transform: `rotate(${-line.angle}deg)`,
+                }}
+              >
+                {/* Gold Diamond Anchor Node */}
+                <span
+                  className="w-1.5 h-1.5 rotate-45 bg-[#E7D19A] shrink-0 mr-1.5"
+                  style={{
+                    boxShadow: '0 0 6px #C8A45D',
+                    opacity: line.opacity,
+                  }}
+                />
+                {/* Outward Expanding Horizontal Line (Center -> Right) */}
+                <div
+                  className="origin-left"
+                  style={{
+                    width: line.smLength,
+                    height: `${line.thickness}px`,
+                    background: 'linear-gradient(to right, rgba(200, 164, 93, 0.95), rgba(231, 209, 154, 0.55), rgba(200, 164, 93, 0.15), transparent)',
+                    opacity: line.opacity,
+                    boxShadow: '0 0 8px rgba(200, 164, 93, 0.3)',
+                    animation: 'horizontalLineReveal 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    animationDelay: line.delay,
+                  }}
+                />
+              </div>
+            ))}
+          </div>
 
-              {/* Specular Diagonal Light Sweep (Simulating luxury gold metallic reflection) */}
-              <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-full">
-                <div className="w-[180%] h-full bg-gradient-to-r from-transparent via-white/50 to-transparent transform -skew-x-25 animate-sheen-sweep" />
+          {/* ── CENTER: CONCENTRIC ORBITAL RINGS & ORIGINAL MSI CREST ── */}
+          <div className="relative w-48 h-48 sm:w-60 sm:h-60 lg:w-68 lg:h-68 flex items-center justify-center shrink-0">
+            
+            {/* Soft Pulsing Shockwave Aura */}
+            <div className="absolute inset-0 rounded-full border border-[#C8A45D]/30 animate-aura-pulse pointer-events-none" />
+
+            {/* Outer Dashed Celestial Astrolabe Ring (Rotating Clockwise) */}
+            <div className="absolute -inset-3 sm:-inset-4 rounded-full border-2 border-dashed border-[#C8A45D]/45 animate-astrolabe pointer-events-none" />
+
+            {/* Fine Rich Crimson / Burgundy Inner Orbit (Counter-Rotating) */}
+            <div className="absolute inset-1.5 rounded-full border border-[#882018]/90 animate-astrolabe-reverse pointer-events-none" />
+
+            {/* Cardinal Diamond Jewel Points (12, 3, 6, 9 o'clock) */}
+            <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-[#E7D19A] shadow-[0_0_10px_#C8A45D]" />
+            <span className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-[#E7D19A] shadow-[0_0_10px_#C8A45D]" />
+            <span className="absolute top-1/2 -left-3.5 -translate-y-1/2 w-2 h-2 rotate-45 bg-[#C8A45D] shadow-[0_0_10px_#C8A45D]" />
+            <span className="absolute top-1/2 -right-3.5 -translate-y-1/2 w-2 h-2 rotate-45 bg-[#C8A45D] shadow-[0_0_10px_#C8A45D]" />
+
+            {/* Orbiting Satellite Star */}
+            <div
+              className="absolute -inset-3.5 sm:-inset-4 rounded-full animate-spin pointer-events-none"
+              style={{ animationDuration: '8s' }}
+            >
+              <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 flex items-center justify-center">
+                <span className="w-3 h-3 rounded-full bg-[#E7D19A] shadow-[0_0_14px_#E7D19A] animate-pulse" />
+              </div>
+            </div>
+
+            {/* Central Seal Housing with Metallic Antique Gold Bezel */}
+            <div className="relative w-36 h-36 sm:w-48 sm:h-48 lg:w-54 lg:h-54 rounded-full p-1.5 bg-gradient-to-br from-[#E7D19A] via-[#C8A45D] to-[#4A101D] shadow-[0_0_45px_rgba(200,164,93,0.4),0_15px_35px_rgba(0,0,0,0.85)] animate-logo-float transition-transform duration-500 hover:scale-105">
+              
+              {/* Inner Burgundy Core */}
+              <div className="relative w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-[#4A101D] to-[#300B15] border-2 border-[#C8A45D]">
+                
+                {/* Original Official MSI Logo */}
+                <Image
+                  src="/images/msi-official-logo.png"
+                  alt="MSI Group of Institutes Official Logo"
+                  fill
+                  priority
+                  className="object-contain p-1 filter drop-shadow-[0_4px_14px_rgba(0,0,0,0.7)]"
+                  sizes="(max-width: 640px) 144px, 192px"
+                />
+
+                {/* Specular Diagonal Light Sweep (Simulating luxury gold metallic reflection) */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-full">
+                  <div className="w-[180%] h-full bg-gradient-to-r from-transparent via-white/40 to-transparent transform -skew-x-25 animate-sheen-sweep" />
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Location Eyebrow Badge */}
-        <div className="inline-flex items-center space-x-2.5 px-4 py-1.5 rounded-full bg-[#EFC988]/15 border border-[#EFC988]/40 mb-3 backdrop-blur-md shadow-xs">
-          <Sparkles className="w-3.5 h-3.5 text-[#EFC988]" />
-          <span className="text-[10px] sm:text-xs font-mono font-bold tracking-[0.25em] text-[#EFC988] uppercase">
-            KHARAR, MOHALI
+        <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-[#C8A45D]/15 border border-[#C8A45D]/40 mb-2.5 backdrop-blur-md shadow-xs">
+          <Sparkles className="w-3 h-3 text-[#E7D19A]" />
+          <span className="text-[10px] sm:text-xs font-mono font-bold tracking-[0.25em] text-[#E7D19A] uppercase">
+            KHARAR, MOHALI • ESTD. 2018
           </span>
         </div>
 
         {/* Grand Typography Headline */}
-        <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#EFC988] via-[#FFF9EF] to-[#EFC988] tracking-tight leading-none mb-2 drop-shadow-[0_4px_24px_rgba(239,201,136,0.3)]">
+        <h1 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#C8A45D] via-[#FDFBF7] to-[#E7D19A] tracking-tight leading-none mb-2 drop-shadow-[0_4px_24px_rgba(200,164,93,0.3)]">
           MSI GROUP OF INSTITUTES
         </h1>
 
         {/* Subtitle Legal Motto */}
-        <p className="font-serif text-sm sm:text-base text-[#F7E5BF] font-medium tracking-wider mb-6">
-          Crafting Legal Brilliance, Creating a Better Nation
+        <p className="font-serif text-xs sm:text-sm text-[#E7D19A]/90 font-medium tracking-[0.16em] uppercase mb-6 drop-shadow-xs">
+          CRAFTING LEGAL BRILLIANCE, CREATING A BETTER NATION
         </p>
 
-        {/* ── Dynamic Percentage Counter & Progress Track ───── */}
-        <div className="w-full max-w-[320px] sm:max-w-[420px]">
-          {/* Large Serif Percentage Number */}
-          <div className="flex items-baseline justify-center space-x-1 mb-2">
-            <span className="font-serif text-5xl sm:text-6xl font-black tracking-tight text-white drop-shadow-[0_4px_24px_rgba(239,201,136,0.4)] tabular-nums">
-              {String(progress).padStart(2, '0')}
-            </span>
-            <span className="font-serif text-2xl sm:text-3xl text-[#EFC988] font-bold">
-              %
-            </span>
+        {/* ══════════════════════════════════════════════════════ */}
+        {/* 3. LAW-INSPIRED GAVEL LOADING ANIMATION & PROGRESS BAR */}
+        {/* ══════════════════════════════════════════════════════ */}
+        <div className="w-full max-w-[340px] sm:max-w-[460px] md:max-w-[500px] flex flex-col items-center">
+          
+          {/* Header row above track: Loading Status Text & Percentage */}
+          <div className="w-full flex items-end justify-between px-1 mb-2">
+            <div className="flex flex-col text-left">
+              <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-[0.18em] text-[#E7D19A] uppercase drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+                PREPARING YOUR LEARNING EXPERIENCE
+              </span>
+              <span className="text-[8.5px] sm:text-[9.5px] font-mono text-[#E7D19A]/65 tracking-wider">
+                {statusMessage}
+              </span>
+            </div>
+
+            <div className="flex items-baseline space-x-0.5 shrink-0 pl-3">
+              <span className="font-serif text-2xl sm:text-3xl font-black tracking-tight text-[#FDFBF7] drop-shadow-[0_2px_12px_rgba(200,164,93,0.4)] tabular-nums">
+                {String(progress).padStart(2, '0')}
+              </span>
+              <span className="font-serif text-xs sm:text-sm text-[#C8A45D] font-bold">
+                %
+              </span>
+            </div>
           </div>
 
-          {/* Cycling Status Label */}
-          <div className="h-5 flex items-center justify-center mb-3">
-            <span className="text-[10px] sm:text-xs font-mono font-bold tracking-[0.2em] text-[#EFC988] uppercase transition-all duration-300">
-              {statusMessage}
-            </span>
+          {/* Luxury Dock: Animated Golden Gavel BESIDE the Loading Progress Bar */}
+          <div className="w-full flex items-center gap-2.5 sm:gap-3.5 bg-black/30 backdrop-blur-xs border border-[#C8A45D]/25 rounded-2xl p-2 sm:p-2.5 shadow-[0_8px_28px_rgba(48,11,21,0.65)]">
+            
+            {/* 1. Animated Golden Gavel (Appears beside the loading progress bar) */}
+            <div className="relative w-16 h-12 sm:w-20 sm:h-14 shrink-0 flex items-center justify-center">
+              <svg
+                viewBox="0 0 110 70"
+                className="w-full h-full overflow-visible"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <defs>
+                  {/* Metallic Antique Gold Head Gradient */}
+                  <linearGradient id="gavelGoldHead" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#FFF9EF" />
+                    <stop offset="25%" stopColor="#E7D19A" />
+                    <stop offset="65%" stopColor="#C8A45D" />
+                    <stop offset="100%" stopColor="#8A6B2D" />
+                  </linearGradient>
+
+                  {/* Polished Turned Gold Handle Gradient */}
+                  <linearGradient id="gavelGoldHandle" x1="0%" y1="0%" x2="100%" y2="50%">
+                    <stop offset="0%" stopColor="#8A6B2D" />
+                    <stop offset="30%" stopColor="#E7D19A" />
+                    <stop offset="60%" stopColor="#C8A45D" />
+                    <stop offset="100%" stopColor="#5E4316" />
+                  </linearGradient>
+
+                  {/* Sound Block Gradient */}
+                  <linearGradient id="gavelBlockGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#E7D19A" />
+                    <stop offset="40%" stopColor="#C8A45D" />
+                    <stop offset="85%" stopColor="#4A101D" />
+                    <stop offset="100%" stopColor="#300B15" />
+                  </linearGradient>
+
+                  {/* Impact Light Pulse */}
+                  <radialGradient id="gavelFlashGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
+                    <stop offset="35%" stopColor="#FFF9EF" stopOpacity="0.9" />
+                    <stop offset="70%" stopColor="#E7D19A" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="#C8A45D" stopOpacity="0" />
+                  </radialGradient>
+
+                  {/* Impact Ripple Glow */}
+                  <radialGradient id="gavelRippleGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#E7D19A" stopOpacity="0.85" />
+                    <stop offset="60%" stopColor="#C8A45D" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#651C2C" stopOpacity="0" />
+                  </radialGradient>
+                </defs>
+
+                {/* Sound Block (Anvil pedestal on the right of the gavel) */}
+                <g id="soundBlockGroup">
+                  {/* Floor Contact Shadow */}
+                  <ellipse cx="78" cy="56" rx="18" ry="4.5" fill="#1A050B" opacity="0.7" />
+
+                  {/* Sound Block Tier 1 Pedestal */}
+                  <rect x="62" y="48" width="32" height="7" rx="2" fill="url(#gavelBlockGrad)" stroke="#E7D19A" strokeWidth="0.6" />
+
+                  {/* Sound Block Tier 2 Strike Plate */}
+                  <ellipse cx="78" cy="48" rx="15" ry="3.8" fill="#C8A45D" stroke="#FFF9EF" strokeWidth="0.5" />
+                  <ellipse cx="78" cy="47.5" rx="13" ry="2.8" fill="#E7D19A" opacity="0.9" />
+
+                  {/* Circular Strike Ripple Wave */}
+                  <circle
+                    cx="78"
+                    cy="46"
+                    r="16"
+                    fill="url(#gavelRippleGrad)"
+                    stroke="#E7D19A"
+                    strokeWidth="0.8"
+                    className="animate-gavel-ripple"
+                  />
+
+                  {/* Impact Light Pulse Spark */}
+                  <circle
+                    cx="78"
+                    cy="46"
+                    r="8"
+                    fill="url(#gavelFlashGrad)"
+                    className="animate-gavel-flash"
+                  />
+                </g>
+
+                {/* Gavel Assembly (Handle + Head rotating from pommel pivot) */}
+                <g
+                  id="gavelAssembly"
+                  className="animate-gavel-strike"
+                  style={{ transformOrigin: '18px 52px' }}
+                >
+                  {/* Turned Ergonomic Handle */}
+                  <path
+                    d="M 18 52 L 74 38"
+                    stroke="url(#gavelGoldHandle)"
+                    strokeWidth="3.6"
+                    strokeLinecap="round"
+                  />
+                  {/* Handle Highlight Line */}
+                  <path
+                    d="M 22 50.8 L 72 37.5"
+                    stroke="#FFF9EF"
+                    strokeWidth="0.9"
+                    strokeLinecap="round"
+                    opacity="0.75"
+                  />
+
+                  {/* Handle Pommel End Cap */}
+                  <circle cx="18" cy="52" r="3.2" fill="url(#gavelGoldHead)" stroke="#300B15" strokeWidth="0.7" />
+                  <circle cx="17.2" cy="51.2" r="1.2" fill="#FFF9EF" opacity="0.9" />
+
+                  {/* Decorative Ring Knurlings on Handle */}
+                  <circle cx="36" cy="47.5" r="2.2" fill="#E7D19A" stroke="#8A6B2D" strokeWidth="0.5" />
+                  <circle cx="58" cy="42" r="2.2" fill="#E7D19A" stroke="#8A6B2D" strokeWidth="0.5" />
+
+                  {/* Gavel Head (Cylindrical Mallet with Maroon Inlay & Antique Gold Bevels) */}
+                  <g transform="translate(78, 37)">
+                    {/* Main Mallet Cylinder Body */}
+                    <rect
+                      x="-6.5"
+                      y="-12"
+                      width="13"
+                      height="21"
+                      rx="2.5"
+                      fill="url(#gavelGoldHead)"
+                      stroke="#FFF9EF"
+                      strokeWidth="0.5"
+                    />
+
+                    {/* Central Rich Maroon Inlay Band */}
+                    <rect x="-6.5" y="-3.5" width="13" height="6.5" fill="#651C2C" />
+                    <line x1="-6.5" y1="-0.25" x2="6.5" y2="-0.25" stroke="#E7D19A" strokeWidth="0.7" />
+
+                    {/* Top Beveled Face (Crown) */}
+                    <ellipse cx="0" cy="-12" rx="6.5" ry="2.2" fill="#FFF9EF" stroke="#C8A45D" strokeWidth="0.4" />
+
+                    {/* Bottom Striking Face (Impact plate making contact) */}
+                    <ellipse cx="0" cy="9" rx="6.5" ry="2.2" fill="#8A6B2D" stroke="#E7D19A" strokeWidth="0.5" />
+                    <ellipse cx="0" cy="8.2" rx="5.5" ry="1.6" fill="#C8A45D" />
+                  </g>
+                </g>
+              </svg>
+            </div>
+
+            {/* 2. Thin Horizontal Loading Bar Beside the Gavel */}
+            <div className="flex-1 flex flex-col justify-center pr-1">
+              <div className="relative w-full h-[5px] sm:h-[6px] bg-[#1A050B]/90 rounded-full border border-[#C8A45D]/30 overflow-visible animate-gavel-track-pulse">
+                {/* Smooth Animated Gold Fill */}
+                <div
+                  className="h-full bg-gradient-to-r from-[#651C2C] via-[#C8A45D] to-[#E7D19A] rounded-full transition-all duration-150 ease-out relative shadow-[0_0_12px_rgba(200,164,93,0.5)]"
+                  style={{ width: `${Math.max(progress, 2)}%` }}
+                >
+                  {/* Soft illuminated leading edge */}
+                  <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#FFF9EF] shadow-[0_0_8px_#FFF9EF,0_0_14px_#E7D19A,0_0_22px_#C8A45D] animate-pulse" />
+                </div>
+              </div>
+
+              {/* Mini Track Sub-labels */}
+              <div className="flex items-center justify-between text-[8px] sm:text-[9px] font-mono text-[#E7D19A]/60 mt-1.5 tracking-wider">
+                <span>INITIALIZING KERNEL</span>
+                <span>VERIFIED SECURE</span>
+              </div>
+            </div>
           </div>
 
-          {/* Progress Bar with Flare */}
-          <div className="relative h-[3.5px] bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-[#89190E] via-[#EFC988] to-[#FFFFFF] rounded-full transition-all duration-100 ease-out shadow-[0_0_14px_#EFC988]"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          {/* Bottom HUD Metadata Indicators */}
-          <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-mono text-white/50 mt-2.5 tracking-wider">
-            <span>PCS J · CLAT · PU LAW</span>
+          {/* Bottom HUD Metadata */}
+          <div className="w-full flex items-center justify-between text-[9px] font-mono text-[#E7D19A]/60 mt-2.5 tracking-wider px-1">
+            <span>PCS-J · CLAT · PU LAW</span>
             <span>300+ SELECTIONS</span>
           </div>
         </div>
       </main>
 
       {/* ══════════════════════════════════════════════════════ */}
-      {/* 3. FOOTER HINT & BOTTOM BEAM                          */}
+      {/* 4. FOOTER CREDITS & HINT                              */}
       {/* ══════════════════════════════════════════════════════ */}
-      <footer className="relative z-20 w-full max-w-[1400px] px-6 sm:px-12 pb-8 sm:pb-10 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-        <p className="text-[11px] text-white/50 tracking-wider">
+      <footer className="relative z-20 w-full max-w-[1400px] px-6 sm:px-12 pb-6 sm:pb-8 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-center sm:text-left">
+        <p className="text-[10px] sm:text-[11px] text-[#FDFBF7]/50 tracking-wider">
           Premier Legal Coaching Destination in Kharar, Mohali, Punjab
         </p>
 
-        <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest flex items-center space-x-1.5 hover:text-[#EFC988] transition-colors cursor-pointer">
-          <span>Click anywhere or press Esc to enter</span>
-          <span className="text-[#EFC988]">→</span>
+        <div className="text-[10px] font-mono text-[#E7D19A]/60 uppercase tracking-widest flex items-center space-x-1.5 hover:text-[#E7D19A] transition-colors cursor-pointer">
+          <span>Click anywhere to enter</span>
+          <span className="text-[#C8A45D]">→</span>
         </div>
       </footer>
 
       {/* Bottom Glowing Accent Beam */}
-      <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#89190E] via-[#EFC988] to-[#89190E] opacity-90" />
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#C8A45D]/80 to-transparent opacity-90" />
     </div>
   );
 }

@@ -23,6 +23,7 @@ import {
   StudentProfile,
   FEE_SUMMARY,
 } from './data/studentMockData';
+import GlassCard from '../glass/GlassCard';
 
 export interface FeePaymentRequest {
   id: string;
@@ -97,9 +98,9 @@ export default function StudentFeesTab({
   return (
     <div className="space-y-6">
       {/* 1. Header Banner & Fee Summary */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-linear-to-r from-[#10233F] via-[#162d50] to-[#89190E] text-white shadow-xl hud-bracket relative overflow-hidden">
-        <div className="absolute inset-0 blueprint-grid opacity-15 pointer-events-none" />
-        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="p-6 sm:p-8 rounded-3xl bg-linear-to-r from-[#0E1A2E] via-[#162D50] to-[#6A1610] text-white shadow-xl relative overflow-hidden border border-white/10">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(239,201,136,0.15),transparent_50%)] pointer-events-none" />
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6 z-10">
           <div className="max-w-xl">
             <div className="flex items-center space-x-2">
               <ShieldCheck className="w-4 h-4 text-[#EFC988]" />
@@ -130,7 +131,7 @@ export default function StudentFeesTab({
           </div>
 
           {/* Fee Balance Metric */}
-          <div className="p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center min-w-[220px] flex-shrink-0">
+          <div className="p-5 rounded-2xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/20 text-center min-w-[220px] flex-shrink-0">
             <span className="text-[10px] font-mono tracking-wider uppercase text-white/70 block">
               Pending Dues
             </span>
@@ -164,51 +165,51 @@ export default function StudentFeesTab({
 
       {/* 2. Paid vs Pending Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="p-6 rounded-3xl bg-white border border-[#E8DCCB] shadow-xs">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#526174] block">
+        <GlassCard variant="default" className="p-6">
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
             Total Program Fee
           </span>
-          <p className="font-serif text-2xl sm:text-3xl font-bold text-[#10233F] mt-2">
+          <p className="font-serif text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-2">
             ₹{totalFee.toLocaleString('en-IN')}
           </p>
-          <p className="text-xs text-[#526174] mt-1">Official enrolled curriculum ledger</p>
-        </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Official enrolled curriculum ledger</p>
+        </GlassCard>
 
-        <div className="p-6 rounded-3xl bg-white border border-emerald-200 shadow-xs">
+        <GlassCard variant="default" className="p-6 border-emerald-500/20">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 block">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block">
               Total Fee Cleared
             </span>
-            <span className="text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full">
+            <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
               {paidRatio}% Cleared
             </span>
           </div>
-          <p className="font-serif text-2xl sm:text-3xl font-bold text-emerald-700 mt-2">
+          <p className="font-serif text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">
             ₹{paidFee.toLocaleString('en-IN')}
           </p>
-          <p className="text-xs text-emerald-800 mt-1">
+          <p className="text-xs text-emerald-600 dark:text-emerald-400/80 mt-1">
             {transactions.length > 0
               ? `${transactions.length} Verified E-Receipt(s)`
               : 'Cleared via Online Transfer'}
           </p>
-        </div>
+        </GlassCard>
 
-        <div className="p-6 rounded-3xl bg-white border border-amber-200 shadow-xs">
+        <GlassCard variant="default" className="p-6 border-amber-500/20">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-800 block">
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 block">
               Outstanding Balance
             </span>
-            <span className="text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full">
+            <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
               {pendingFee === 0 ? 'Nil' : 'Active Balance'}
             </span>
           </div>
-          <p className="font-serif text-2xl sm:text-3xl font-bold text-[#89190E] mt-2">
+          <p className="font-serif text-2xl sm:text-3xl font-bold text-[#89190E] dark:text-[#EFC988] mt-2">
             ₹{pendingFee.toLocaleString('en-IN')}
           </p>
-          <p className="text-xs text-[#526174] mt-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {pendingFee === 0 ? 'Zero outstanding balance' : 'Gateway checkout active'}
           </p>
-        </div>
+        </GlassCard>
       </div>
 
       {/* 3. Official Razorpay Institutional Fee Payment Console (Same as Course Order Time) */}
@@ -360,25 +361,25 @@ export default function StudentFeesTab({
       )}
 
       {/* 4. Fee Component Breakdown Table */}
-      <div className="p-6 sm:p-7 rounded-3xl bg-white border border-[#E8DCCB] shadow-xs">
-        <div className="flex items-center justify-between pb-4 border-b border-[#E8DCCB]">
+      <GlassCard variant="elevated" className="p-6 sm:p-7">
+        <div className="flex items-center justify-between pb-4 border-b border-gray-200/50 dark:border-white/10">
           <div className="flex items-center space-x-2">
-            <CreditCard className="w-5 h-5 text-[#89190E]" />
-            <h3 className="font-serif text-lg font-bold text-[#10233F]">
+            <CreditCard className="w-5 h-5 text-[#89190E] dark:text-[#EFC988]" />
+            <h3 className="font-serif text-lg font-bold text-gray-900 dark:text-white">
               Fee Component Breakdown & Online Settlement
             </h3>
           </div>
-          <span className="text-xs text-[#526174]">Annual Syllabus Structure</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">Annual Syllabus Structure</span>
         </div>
 
         {breakdown.length === 0 ? (
-          <div className="py-8 text-center text-xs text-[#526174]">
+          <div className="py-8 text-center text-xs text-gray-500 dark:text-gray-400">
             No fee components currently billed. Your financial account is in good standing.
           </div>
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#FFF9EF] text-[#10233F] border-b border-[#E8DCCB]">
+              <thead className="bg-gray-100/60 dark:bg-white/5 text-gray-700 dark:text-gray-300 border-b border-gray-200/50 dark:border-white/10">
                 <tr>
                   <th className="p-3 font-serif font-bold">Category</th>
                   <th className="p-3 font-serif font-bold">Amount (INR)</th>
@@ -387,19 +388,19 @@ export default function StudentFeesTab({
                   <th className="p-3 font-serif font-bold text-right">Gateway Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E8DCCB]/60">
+              <tbody className="divide-y divide-gray-200/40 dark:divide-white/10">
                 {breakdown.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-[#FFF9EF]/40 transition-colors">
-                    <td className="p-3 font-semibold text-[#10233F]">{item.category}</td>
-                    <td className="p-3 font-mono font-bold text-[#10233F]">
+                  <tr key={idx} className="hover:bg-white/40 dark:hover:bg-white/5 transition-colors">
+                    <td className="p-3 font-semibold text-gray-900 dark:text-white">{item.category}</td>
+                    <td className="p-3 font-mono font-bold text-gray-800 dark:text-gray-200">
                       ₹{item.amount.toLocaleString('en-IN')}
                     </td>
                     <td className="p-3">
                       <span
                         className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                           item.status === 'Paid'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-amber-100 text-amber-800'
+                            ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                            : 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30'
                         }`}
                       >
                         {item.status === 'Paid' ? (
@@ -410,7 +411,7 @@ export default function StudentFeesTab({
                         <span>{item.status}</span>
                       </span>
                     </td>
-                    <td className="p-3 text-[#526174]">
+                    <td className="p-3 text-gray-500 dark:text-gray-400">
                       {item.dueDate ? item.dueDate : 'Receipt Generated'}
                     </td>
                     <td className="p-3 text-right">
@@ -431,8 +432,8 @@ export default function StudentFeesTab({
                           <span>Pay with Gateway</span>
                         </button>
                       ) : (
-                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 inline-flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/30 inline-flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                           <span>Cleared ✓</span>
                         </span>
                       )}
@@ -443,22 +444,22 @@ export default function StudentFeesTab({
             </table>
           </div>
         )}
-      </div>
+      </GlassCard>
 
       {/* 5. Payment History Ledger & Verified Official Receipts */}
-      <div className="p-6 sm:p-7 rounded-3xl bg-white border border-[#E8DCCB] shadow-xs">
-        <div className="flex items-center justify-between pb-4 border-b border-[#E8DCCB]">
+      <GlassCard variant="elevated" className="p-6 sm:p-7">
+        <div className="flex items-center justify-between pb-4 border-b border-gray-200/50 dark:border-white/10">
           <div className="flex items-center space-x-2">
-            <FileText className="w-5 h-5 text-[#89190E]" />
-            <h3 className="font-serif text-lg font-bold text-[#10233F]">
+            <FileText className="w-5 h-5 text-[#89190E] dark:text-[#EFC988]" />
+            <h3 className="font-serif text-lg font-bold text-gray-900 dark:text-white">
               Payment History Ledger & Verified Official Receipts
             </h3>
           </div>
-          <span className="text-xs text-[#526174]">Instant PDF Download</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">Instant PDF Download</span>
         </div>
 
         {transactions.length === 0 ? (
-          <div className="py-8 text-center text-xs text-[#526174]">
+          <div className="py-8 text-center text-xs text-gray-500 dark:text-gray-400">
             No payment transactions on record yet. Any payments made online via Razorpay will generate verifiable e-receipts here.
           </div>
         ) : (
@@ -466,37 +467,37 @@ export default function StudentFeesTab({
             {transactions.map((tx) => (
               <div
                 key={tx.id}
-                className="p-5 rounded-2xl border border-[#E8DCCB] hover:border-[#89190E] transition-all bg-[#FFF9EF]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className="p-5 rounded-2xl border border-gray-200/60 dark:border-white/10 hover:border-[#89190E] dark:hover:border-[#EFC988] transition-all bg-white/60 dark:bg-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs font-mono font-bold text-[#89190E] bg-[#FFF3DD] px-2.5 py-0.5 rounded-md border border-[#EFC988]">
+                    <span className="text-xs font-mono font-bold text-[#89190E] dark:text-[#EFC988] bg-[#89190E]/10 dark:bg-[#89190E]/20 px-2.5 py-0.5 rounded-md border border-[#89190E]/20 dark:border-[#EFC988]/30">
                       {tx.receiptNo}
                     </span>
-                    <span className="text-[11px] text-[#526174]">Paid on {tx.date}</span>
-                    <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400">Paid on {tx.date}</span>
+                    <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
                       ● {tx.status}
                     </span>
                   </div>
-                  <h4 className="font-serif font-bold text-sm sm:text-base text-[#10233F]">
+                  <h4 className="font-serif font-bold text-sm sm:text-base text-gray-900 dark:text-white">
                     {tx.remarks}
                   </h4>
-                  <p className="text-xs text-[#526174]">
-                    Mode: <strong>{tx.mode}</strong> • System Ref: {tx.id}
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Mode: <strong className="text-gray-700 dark:text-gray-200">{tx.mode}</strong> • System Ref: {tx.id}
                   </p>
                 </div>
 
                 <div className="flex items-center space-x-4 flex-shrink-0">
                   <div className="text-right">
-                    <span className="text-[10px] text-[#526174] uppercase block">Amount Paid</span>
-                    <span className="font-serif text-lg font-bold text-[#10233F]">
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase block">Amount Paid</span>
+                    <span className="font-serif text-lg font-bold text-gray-900 dark:text-white">
                       ₹{tx.amount.toLocaleString('en-IN')}
                     </span>
                   </div>
 
                   <button
                     onClick={() => onViewReceipt(tx)}
-                    className="px-4 py-2.5 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs font-bold flex items-center space-x-1.5 transition-colors shadow-xs cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl bg-linear-to-r from-[#89190E] to-[#B22222] hover:opacity-95 text-white text-xs font-bold flex items-center space-x-1.5 transition-all shadow-md shadow-[#89190E]/20 cursor-pointer"
                   >
                     <Printer className="w-3.5 h-3.5 text-[#EFC988]" />
                     <span>View Official Receipt</span>
@@ -506,7 +507,7 @@ export default function StudentFeesTab({
             ))}
           </div>
         )}
-      </div>
+      </GlassCard>
     </div>
   );
 }

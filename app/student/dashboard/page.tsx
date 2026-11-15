@@ -468,7 +468,7 @@ export default function StudentDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF9EF] flex flex-col selection:bg-[#EFC988] selection:text-[#89190E]">
+    <div className="min-h-screen dashboard-bg flex flex-col selection:bg-indigo-500/30 selection:text-indigo-600 dark:selection:text-indigo-300 transition-colors duration-300">
       {/* 1. Top Navbar Header */}
       <StudentHeader
         student={student}

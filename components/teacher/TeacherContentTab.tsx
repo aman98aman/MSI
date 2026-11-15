@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { TeacherContentItem, TeacherCourse } from './data/teacherMockData';
 import { MSICourse } from '@/lib/lmsStore';
+import GlassCard from '../glass/GlassCard';
 
 interface TeacherContentTabProps {
   content: TeacherContentItem[];
@@ -67,16 +68,16 @@ export default function TeacherContentTab({
   return (
     <div className="space-y-6">
       {/* 1. Header with Publish/Unpublish Explanation */}
-      <div className="p-6 sm:p-7 rounded-3xl bg-white border border-[#E8DCCB] shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#E8DCCB]">
+      <GlassCard variant="elevated" className="p-6 sm:p-7">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-gray-200/50 dark:border-white/10">
           <div>
             <div className="flex items-center space-x-2">
-              <FolderOpen className="w-5 h-5 text-[#89190E]" />
-              <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#10233F]">
+              <FolderOpen className="w-5 h-5 text-[#89190E] dark:text-[#EFC988]" />
+              <h2 className="font-serif text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 Course Content & Resource Management
               </h2>
             </div>
-            <p className="text-xs sm:text-sm text-[#526174] mt-1">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
               Upload, annotate, and manage student accessibility for Videos, Lecture Notes, PYQs, and Assignments.
             </p>
           </div>
@@ -90,7 +91,7 @@ export default function TeacherContentTab({
                   alert('Please select an assigned course to upload lecture materials.');
                 }
               }}
-              className="px-4 py-2.5 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs font-bold flex items-center space-x-1.5 shadow-md shadow-[#89190E]/20 transition-all cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-linear-to-r from-[#89190E] to-[#B22222] hover:opacity-95 text-white text-xs font-bold flex items-center space-x-1.5 shadow-md shadow-[#89190E]/20 transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>+ Add Video Lecture / Material</span>
@@ -106,10 +107,10 @@ export default function TeacherContentTab({
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   selectedCategory === cat
-                    ? 'bg-[#10233F] text-white shadow-xs'
-                    : 'bg-[#FFF9EF] text-[#526174] hover:text-[#10233F]'
+                    ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-950 shadow-xs'
+                    : 'bg-white/60 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-200/60 dark:border-white/10'
                 }`}
               >
                 {cat === 'All'
@@ -129,11 +130,11 @@ export default function TeacherContentTab({
 
           {/* Course Filter */}
           <div className="flex items-center space-x-2">
-            <Filter className="w-3.5 h-3.5 text-[#526174]" />
+            <Filter className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
             <select
               value={selectedCourseFilter}
               onChange={(e) => setSelectedCourseFilter(e.target.value)}
-              className="p-1.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF] text-xs font-semibold text-[#10233F] focus:outline-none"
+              className="p-1.5 px-2.5 rounded-xl border border-gray-200/80 dark:border-white/10 bg-white/70 dark:bg-white/5 text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-none"
             >
               <option value="All">All Assigned Courses</option>
               {courses.map((c) => (
@@ -144,22 +145,22 @@ export default function TeacherContentTab({
             </select>
           </div>
         </div>
-      </div>
+      </GlassCard>
 
       {/* 2. Content Table with Publish / Unpublish Interactive Switcher */}
-      <div className="p-6 sm:p-7 rounded-3xl bg-white border border-[#E8DCCB] shadow-xs">
-        <div className="flex items-center justify-between pb-4 border-b border-[#E8DCCB]">
-          <h3 className="font-serif text-base sm:text-lg font-bold text-[#10233F]">
+      <GlassCard variant="elevated" className="p-6 sm:p-7">
+        <div className="flex items-center justify-between pb-4 border-b border-gray-200/50 dark:border-white/10">
+          <h3 className="font-serif text-base sm:text-lg font-bold text-gray-900 dark:text-white">
             Curriculum Asset Roster ({filteredContent.length})
           </h3>
-          <span className="text-xs text-[#526174]">
-            Role Stream: <strong>{stream}</strong>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            Role Stream: <strong className="text-gray-700 dark:text-gray-200">{stream}</strong>
           </span>
         </div>
 
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#FFF9EF] text-[#10233F] border-b border-[#E8DCCB]">
+            <thead className="bg-gray-100/60 dark:bg-white/5 text-gray-700 dark:text-gray-300 border-b border-gray-200/50 dark:border-white/10">
               <tr>
                 <th className="p-3 font-serif font-bold">Asset Title & Type</th>
                 <th className="p-3 font-serif font-bold">Course Code</th>
@@ -168,12 +169,12 @@ export default function TeacherContentTab({
                 <th className="p-3 font-serif font-bold text-right">Publication Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E8DCCB]/60">
+            <tbody className="divide-y divide-gray-200/40 dark:divide-white/10">
               {filteredContent.map((item) => (
-                <tr key={item.id} className="hover:bg-[#FFF9EF]/40 transition-colors">
+                <tr key={item.id} className="hover:bg-white/40 dark:hover:bg-white/5 transition-colors">
                   <td className="p-3">
                     <div className="flex items-start space-x-3">
-                      <div className="p-2 rounded-xl bg-[#FFF3DD] text-[#89190E] flex-shrink-0">
+                      <div className="p-2 rounded-xl bg-[#89190E]/10 dark:bg-white/10 text-[#89190E] dark:text-[#EFC988] flex-shrink-0">
                         {item.category === 'Video' && <Video className="w-4 h-4" />}
                         {item.category === 'Notes' && <FileText className="w-4 h-4" />}
                         {item.category === 'PYQ' && <HelpCircle className="w-4 h-4" />}
@@ -181,28 +182,28 @@ export default function TeacherContentTab({
                         {item.category === 'Reference' && <FolderOpen className="w-4 h-4" />}
                       </div>
                       <div>
-                        <span className="text-[10px] font-mono font-bold uppercase text-[#89190E] block">
+                        <span className="text-[10px] font-mono font-bold uppercase text-[#89190E] dark:text-[#EFC988] block">
                           {item.category}
                         </span>
-                        <h4 className="font-serif font-bold text-sm text-[#10233F] mt-0.5">
+                        <h4 className="font-serif font-bold text-sm text-gray-900 dark:text-white mt-0.5">
                           {item.title}
                         </h4>
-                        <span className="text-[10px] text-[#526174]">
+                        <span className="text-[10px] text-gray-500 dark:text-gray-400">
                           Uploaded {item.uploadDate}
                         </span>
                       </div>
                     </div>
                   </td>
 
-                  <td className="p-3 font-mono font-bold text-[#10233F]">
+                  <td className="p-3 font-mono font-bold text-gray-800 dark:text-gray-200">
                     {item.courseCode}
                   </td>
 
-                  <td className="p-3 text-[#526174] font-medium">
+                  <td className="p-3 text-gray-500 dark:text-gray-400 font-medium">
                     {item.sizeOrDuration}
                   </td>
 
-                  <td className="p-3 font-mono text-[#526174]">
+                  <td className="p-3 font-mono text-gray-500 dark:text-gray-400">
                     {item.downloadCount} Hits
                   </td>
 
@@ -210,21 +211,21 @@ export default function TeacherContentTab({
                   <td className="p-3 text-right">
                     <button
                       onClick={() => onTogglePublish(item.id)}
-                      className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         item.isPublished
-                          ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                          : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+                          ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20'
+                          : 'bg-gray-200/80 dark:bg-white/10 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-white/10 hover:bg-gray-300 dark:hover:bg-white/20'
                       }`}
                       title="Click to toggle publish or unpublish state"
                     >
                       {item.isPublished ? (
                         <>
-                          <Eye className="w-3.5 h-3.5 text-emerald-700" />
+                          <Eye className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                           <span>Published</span>
                         </>
                       ) : (
                         <>
-                          <EyeOff className="w-3.5 h-3.5 text-neutral-600" />
+                          <EyeOff className="w-3.5 h-3.5" />
                           <span>Hidden (Draft)</span>
                         </>
                       )}
@@ -235,7 +236,7 @@ export default function TeacherContentTab({
             </tbody>
           </table>
         </div>
-      </div>
+      </GlassCard>
     </div>
   );
 }

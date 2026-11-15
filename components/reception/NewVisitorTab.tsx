@@ -202,45 +202,46 @@ export default function NewVisitorTab({
   return (
     <div className="space-y-6">
       {/* Step Guide Banner */}
-      <div className="bg-gradient-to-r from-[#10233F] to-[#1C3A66] rounded-3xl p-5 sm:p-6 text-white shadow-xl relative overflow-hidden">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 text-white shadow-xl border border-white/10">
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2 text-[#EFC988] text-xs font-mono font-bold uppercase tracking-wider mb-1">
-              <Sparkles className="w-4 h-4" />
+            <div className="flex items-center space-x-2 text-indigo-300 text-xs font-mono font-bold uppercase tracking-wider mb-1">
+              <Sparkles className="w-4 h-4 text-indigo-400" />
               <span>Standard Security Procedure</span>
             </div>
-            <h2 className="font-serif text-xl sm:text-2xl font-bold">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
               New Visitor Registration Desk
             </h2>
-            <p className="text-xs text-white/80 mt-1 max-w-xl">
-              Complete the visitor identity dossier, capture the badge photo via live webcam or file upload, and issue the official MSI pass.
+            <p className="text-xs text-slate-300 mt-1 max-w-xl">
+              Complete the visitor identity dossier, capture badge photo via live webcam or file upload, and issue the official MSI pass.
             </p>
           </div>
         </div>
 
         {/* Multi-step breadcrumb indicators */}
         <div className="mt-5 pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-          <div className="flex items-center space-x-2 text-[#EFC988]">
-            <span className="w-5 h-5 rounded-full bg-[#EFC988] text-[#10233F] font-bold flex items-center justify-center text-[10px]">
+          <div className="flex items-center space-x-2 text-indigo-300">
+            <span className="w-5 h-5 rounded-full bg-indigo-500 text-white font-bold flex items-center justify-center text-[10px] shadow-sm">
               1
             </span>
-            <span className="font-semibold">Visitor Details</span>
+            <span className="font-semibold text-white">Visitor Details</span>
           </div>
-          <div className="flex items-center space-x-2 text-[#EFC988]">
-            <span className="w-5 h-5 rounded-full bg-[#EFC988] text-[#10233F] font-bold flex items-center justify-center text-[10px]">
+          <div className="flex items-center space-x-2 text-indigo-300">
+            <span className="w-5 h-5 rounded-full bg-indigo-500 text-white font-bold flex items-center justify-center text-[10px] shadow-sm">
               2
             </span>
-            <span className="font-semibold">Host &amp; Purpose</span>
+            <span className="font-semibold text-white">Host &amp; Purpose</span>
           </div>
-          <div className={`flex items-center space-x-2 ${photoUrl ? 'text-emerald-400' : 'text-white/60'}`}>
+          <div className={`flex items-center space-x-2 ${photoUrl ? 'text-emerald-400' : 'text-slate-400'}`}>
             <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
               photoUrl ? 'bg-emerald-500 text-white' : 'bg-white/20 text-white'
             }`}>
               3
             </span>
-            <span>Badge Photo</span>
+            <span className={photoUrl ? 'font-semibold text-emerald-300' : ''}>Badge Photo</span>
           </div>
-          <div className="flex items-center space-x-2 text-white/60">
+          <div className="flex items-center space-x-2 text-slate-400">
             <span className="w-5 h-5 rounded-full bg-white/20 text-white font-bold flex items-center justify-center text-[10px]">
               4
             </span>
@@ -251,19 +252,19 @@ export default function NewVisitorTab({
 
       {/* Repeat Visitor Alert if detected */}
       {repeatNotice.found && repeatNotice.pastVisitor && (
-        <div className="p-4 rounded-2xl bg-[#FFF3DD] border-2 border-[#EFC988] shadow-sm animate-fadeIn flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 backdrop-blur-md shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-[#89190E] text-white flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-900 flex items-center justify-center font-bold text-sm shadow-sm">
               {repeatNotice.visitCount}x
             </div>
             <div>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#89190E]">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                 Repeat Visitor Identified in MSI Archive
               </span>
-              <h4 className="font-serif text-sm font-bold text-[#10233F]">
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white">
                 {repeatNotice.pastVisitor.name} ({repeatNotice.pastVisitor.visitorType})
               </h4>
-              <p className="text-[11px] text-[#526174]">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Previously visited on {repeatNotice.pastVisitor.entryTime} for {repeatNotice.pastVisitor.purpose}.
               </p>
             </div>
@@ -272,21 +273,21 @@ export default function NewVisitorTab({
           <button
             type="button"
             onClick={handleApplyRepeatData}
-            className="px-4 py-2 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs font-bold transition-all shadow-xs flex-shrink-0 cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md flex-shrink-0 cursor-pointer"
           >
-            Auto-Fill Past Dossier & Photo
+            Auto-Fill Past Dossier &amp; Photo
           </button>
         </div>
       )}
 
       {/* Main Registration Form Container */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-3xl border border-[#E8DCCB] p-6 sm:p-8 shadow-sm">
+      <form onSubmit={handleSubmit} className="glass-card rounded-3xl p-6 sm:p-8 shadow-sm">
         
         {/* Section 1: Personal & Contact */}
         <div>
-          <div className="flex items-center space-x-2 text-[#89190E] pb-3 border-b border-[#E8DCCB] mb-5">
+          <div className="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400 pb-3 border-b border-slate-200 dark:border-white/10 mb-5">
             <User className="w-4 h-4" />
-            <h3 className="font-serif font-bold text-base text-[#10233F]">
+            <h3 className="font-bold text-base text-slate-900 dark:text-white">
               1. Visitor Identity &amp; Contact Details
             </h3>
           </div>
@@ -294,8 +295,8 @@ export default function NewVisitorTab({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Full Name */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1.5">
-                Visitor Full Name <span className="text-rose-600">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Visitor Full Name <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
@@ -303,17 +304,17 @@ export default function NewVisitorTab({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Rajinder Kumar Bansal"
-                className="w-full px-4 py-2.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs sm:text-sm text-[#10233F] focus:outline-none focus:border-[#89190E] focus:ring-1 focus:ring-[#89190E] font-medium"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-medium transition-all"
               />
             </div>
 
             {/* Mobile Number without OTP Verification */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1.5">
-                Primary Mobile (10-Digit) <span className="text-rose-600">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Primary Mobile (10-Digit) <span className="text-rose-500">*</span>
               </label>
               <div className="relative flex items-center">
-                <div className="absolute left-3 text-xs font-bold text-[#526174]">
+                <div className="absolute left-3 text-xs font-bold text-slate-400">
                   +91
                 </div>
                 <input
@@ -323,14 +324,14 @@ export default function NewVisitorTab({
                   value={mobile}
                   onChange={(e) => handleMobileChange(e.target.value)}
                   placeholder="9876543210"
-                  className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs sm:text-sm text-[#10233F] focus:outline-none focus:border-[#89190E] focus:ring-1 focus:ring-[#89190E] font-mono font-medium"
+                  className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-mono font-medium transition-all"
                 />
               </div>
             </div>
 
             {/* Email (Optional) */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Email Address (Optional)
               </label>
               <input
@@ -338,31 +339,31 @@ export default function NewVisitorTab({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="visitor.name@domain.com"
-                className="w-full px-4 py-2.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs sm:text-sm text-[#10233F] focus:outline-none focus:border-[#89190E] focus:ring-1 focus:ring-[#89190E]"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
               />
             </div>
           </div>
         </div>
 
         {/* Section 2: Purpose & Host Department */}
-        <div className="mt-8 pt-6 border-t border-[#E8DCCB]">
-          <div className="flex items-center space-x-2 text-[#89190E] pb-3 border-b border-[#E8DCCB] mb-5">
+        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10">
+          <div className="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400 pb-3 border-b border-slate-200 dark:border-white/10 mb-5">
             <Building2 className="w-4 h-4" />
-            <h3 className="font-serif font-bold text-base text-[#10233F]">
-              2. Visit Classification, Host Department & Purpose
+            <h3 className="font-bold text-base text-slate-900 dark:text-white">
+              2. Visit Classification, Host Department &amp; Purpose
             </h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Visitor Type */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1.5">
-                Visitor Classification <span className="text-rose-600">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Visitor Classification <span className="text-rose-500">*</span>
               </label>
               <select
                 value={visitorType}
                 onChange={(e) => setVisitorType(e.target.value as VisitorType)}
-                className="w-full px-4 py-2.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs sm:text-sm text-[#10233F] focus:outline-none focus:border-[#89190E] font-medium"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 font-medium transition-all"
               >
                 <option value="Parent">Parent / Guardian</option>
                 <option value="Guest Faculty">Guest Faculty / Speaker</option>
@@ -376,13 +377,13 @@ export default function NewVisitorTab({
 
             {/* Department */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1.5">
-                Destination Department <span className="text-rose-600">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Destination Department <span className="text-rose-500">*</span>
               </label>
               <select
                 value={department}
                 onChange={(e) => handleDepartmentChange(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs sm:text-sm text-[#10233F] focus:outline-none focus:border-[#89190E] font-medium"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 font-medium transition-all"
               >
                 {MSI_DEPARTMENTS.map((dept) => (
                   <option key={dept.department} value={dept.department}>
@@ -394,13 +395,13 @@ export default function NewVisitorTab({
 
             {/* Host Person */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1.5">
-                Host Officer / Faculty Member <span className="text-rose-600">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Host Officer / Faculty Member <span className="text-rose-500">*</span>
               </label>
               <select
                 value={hostPerson}
                 onChange={(e) => setHostPerson(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs sm:text-sm text-[#10233F] focus:outline-none focus:border-[#89190E] font-medium"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 font-medium transition-all"
               >
                 {availableHosts.map((host) => (
                   <option key={host.name} value={host.name}>
@@ -412,13 +413,13 @@ export default function NewVisitorTab({
 
             {/* Purpose */}
             <div className="md:col-span-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1.5">
-                Purpose of Institute Visit <span className="text-rose-600">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Purpose of Institute Visit <span className="text-rose-500">*</span>
               </label>
               <select
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs sm:text-sm text-[#10233F] focus:outline-none focus:border-[#89190E] font-medium"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 font-medium transition-all"
               >
                 {VISITOR_PURPOSES.map((p) => (
                   <option key={p} value={p}>
@@ -431,13 +432,13 @@ export default function NewVisitorTab({
 
             {/* Gate Number */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Entry Checkpoint / Gate
               </label>
               <select
                 value={gateNumber}
                 onChange={(e) => setGateNumber(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs sm:text-sm text-[#10233F] focus:outline-none focus:border-[#89190E]"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all"
               >
                 <option value="Gate 1 (Main Gate)">Gate 1 (Main Entrance)</option>
                 <option value="Gate 2 (Service Gate)">Gate 2 (Service / Logistics)</option>
@@ -448,41 +449,41 @@ export default function NewVisitorTab({
         </div>
 
         {/* Section 3: Photo Capture & Identification */}
-        <div className="mt-8 pt-6 border-t border-[#E8DCCB]">
-          <div className="flex items-center space-x-2 text-[#89190E] pb-3 border-b border-[#E8DCCB] mb-5">
+        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10">
+          <div className="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400 pb-3 border-b border-slate-200 dark:border-white/10 mb-5">
             <Camera className="w-4 h-4" />
-            <h3 className="font-serif font-bold text-base text-[#10233F]">
-              3. Photo Capture & Physical Security Credentials
+            <h3 className="font-bold text-base text-slate-900 dark:text-white">
+              3. Photo Capture &amp; Physical Security Credentials
             </h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
             {/* Webcam / Photo Card */}
-            <div className="p-4 rounded-2xl bg-[#FFF9EF] border border-[#E8DCCB] flex items-center space-x-4">
-              <div className="relative w-20 h-24 rounded-xl overflow-hidden border-2 border-[#10233F] bg-stone-200 flex-shrink-0">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center space-x-4">
+              <div className="relative w-20 h-24 rounded-xl overflow-hidden border-2 border-indigo-500/50 bg-slate-200 dark:bg-slate-800 flex-shrink-0 shadow-sm">
                 {photoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={photoUrl} alt="Visitor" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-[#526174] p-1 text-center">
-                    <Camera className="w-6 h-6 text-[#89190E] mb-1" />
+                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 p-1 text-center">
+                    <Camera className="w-6 h-6 text-indigo-500 mb-1" />
                     <span className="text-[9px] font-mono leading-none">No Photo</span>
                   </div>
                 )}
               </div>
 
               <div className="flex-1 min-w-0">
-                <span className="text-xs font-bold text-[#10233F] block">
+                <span className="text-xs font-bold text-slate-900 dark:text-white block">
                   Badge Photo Status
                 </span>
-                <span className="text-[11px] text-[#526174] block mb-2">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 block mb-2">
                   {photoUrl ? 'Photo captured & ready' : 'Webcam snap or file upload'}
                 </span>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => setIsCameraOpen(true)}
-                    className="px-3 py-1.5 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
                   >
                     <Camera className="w-3.5 h-3.5" />
                     <span>{photoUrl ? 'Retake' : 'Webcam'}</span>
@@ -491,9 +492,9 @@ export default function NewVisitorTab({
                   <button
                     type="button"
                     onClick={() => tabFileInputRef.current?.click()}
-                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#FFF9EF] border border-[#E8DCCB] text-[#10233F] text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-white dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
                   >
-                    <Upload className="w-3.5 h-3.5 text-[#89190E]" />
+                    <Upload className="w-3.5 h-3.5 text-indigo-500" />
                     <span>Upload</span>
                   </button>
 
@@ -510,13 +511,13 @@ export default function NewVisitorTab({
 
             {/* Govt ID Type & Last 4 digits */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Government ID Type
               </label>
               <select
                 value={govtIdType}
                 onChange={(e) => setGovtIdType(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs sm:text-sm text-[#10233F] focus:outline-none focus:border-[#89190E]"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 font-medium transition-all"
               >
                 {GOVT_ID_TYPES.map((g) => (
                   <option key={g} value={g}>
@@ -530,28 +531,28 @@ export default function NewVisitorTab({
                 value={govtIdNumber}
                 onChange={(e) => setGovtIdNumber(e.target.value)}
                 placeholder="ID Number / Last 4 Digits"
-                className="w-full mt-2 px-4 py-2 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs text-[#10233F] focus:outline-none focus:border-[#89190E] font-mono"
+                className="w-full mt-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 font-mono transition-all"
               />
             </div>
 
             {/* Vehicle Number & Entry Timestamp */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#10233F] mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Vehicle Plate Number (If Any)
               </label>
               <div className="relative">
-                <Car className="w-4 h-4 text-[#526174] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Car className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={vehicleNo}
                   onChange={(e) => setVehicleNo(e.target.value.toUpperCase())}
                   placeholder="e.g. PB-65-AK-4122"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#E8DCCB] bg-[#FFF9EF]/40 text-xs sm:text-sm text-[#10233F] focus:outline-none focus:border-[#89190E] font-mono uppercase"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 font-mono uppercase transition-all"
                 />
               </div>
 
-              <div className="mt-2 text-[11px] text-[#526174] flex items-center space-x-1.5">
-                <Clock className="w-3.5 h-3.5 text-[#89190E]" />
+              <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
+                <Clock className="w-3.5 h-3.5 text-indigo-500" />
                 <span>Entry timestamp auto-logged upon submission</span>
               </div>
             </div>
@@ -559,17 +560,17 @@ export default function NewVisitorTab({
         </div>
 
         {/* Submit Bar */}
-        <div className="mt-8 pt-6 border-t border-[#E8DCCB] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-xs text-[#526174] flex items-center space-x-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-            <span>Pass syncs with Gate 1 & Gate 2 physical security turnstiles</span>
+        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center space-x-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+            <span>Pass syncs with Gate 1 &amp; Gate 2 physical security turnstiles</span>
           </div>
 
           <button
             type="submit"
-            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-[#89190E] hover:bg-[#65130D] text-white font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center space-x-2 transition-all shadow-lg shadow-[#89190E]/30 btn-chamfered cursor-pointer"
+            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center space-x-2 transition-all shadow-lg shadow-indigo-500/25 cursor-pointer"
           >
-            <span>Save & Generate Visitor Pass</span>
+            <span>Save &amp; Generate Visitor Pass</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

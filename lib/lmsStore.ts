@@ -1560,6 +1560,7 @@ export function deleteTeacherAction(teacherId: string, email?: string, phone?: s
   markTeacherDeletedLocally(teacherId, email, phone);
   const cleanId = teacherId.trim().toLowerCase();
   const cleanEmail = (email || '').trim().toLowerCase();
+  const cleanPhone = (phone || '').replace(/\D/g, '').slice(-10);
 
   const teachers = getStoredTeachers();
   const updatedTeachers = teachers.filter((t) => {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   getBlogsAsync,
+  getBlogBySlugAsync,
   addBlogAsync,
   updateBlogAsync,
   deleteBlogAsync,
@@ -12,8 +13,17 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
-    const includeUnpublished = url.searchParams.get('all') === 'true';
+    const slug = url.searchParams.get('slug');
 
+    if (slug) {
+      const blog = await getBlogBySlugAsync(slug);
+      if (!blog) {
+        return NextResponse.json({ success: false, message: 'Article not found' }, { status: 404 });
+      }
+      return NextResponse.json({ success: true, blog });
+    }
+
+    const includeUnpublished = url.searchParams.get('all') === 'true';
     const blogs = await getBlogsAsync(includeUnpublished);
     return NextResponse.json({ success: true, blogs });
   } catch (err: any) {
@@ -28,7 +38,22 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { title, excerpt, content, category, categoryLabel, author, authorRole, coverImage, readTime, isPublished } = body;
+    const {
+      title,
+      excerpt,
+      content,
+      category,
+      categoryLabel,
+      author,
+      authorRole,
+      coverImage,
+      readTime,
+      isPublished,
+      metaTitle,
+      metaDescription,
+      urlRewrite,
+      canonicalUrl,
+    } = body;
 
     if (!title || !title.trim()) {
       return NextResponse.json(
@@ -49,6 +74,10 @@ export async function POST(req: NextRequest) {
       coverImage: coverImage || '',
       readTime: readTime || '5 min read',
       isPublished: isPublished !== false,
+      metaTitle: metaTitle || title,
+      metaDescription: metaDescription || excerpt || '',
+      urlRewrite: urlRewrite || '',
+      canonicalUrl: canonicalUrl || '',
     });
 
     const updatedList = await getBlogsAsync(true);
@@ -70,7 +99,23 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    const { id, title, excerpt, content, category, categoryLabel, author, authorRole, coverImage, readTime, isPublished } = body;
+    const {
+      id,
+      title,
+      excerpt,
+      content,
+      category,
+      categoryLabel,
+      author,
+      authorRole,
+      coverImage,
+      readTime,
+      isPublished,
+      metaTitle,
+      metaDescription,
+      urlRewrite,
+      canonicalUrl,
+    } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -93,6 +138,10 @@ export async function PUT(req: NextRequest) {
     if (coverImage !== undefined) updates.coverImage = coverImage;
     if (readTime !== undefined) updates.readTime = readTime;
     if (isPublished !== undefined) updates.isPublished = Boolean(isPublished);
+    if (metaTitle !== undefined) updates.metaTitle = metaTitle.trim();
+    if (metaDescription !== undefined) updates.metaDescription = metaDescription.trim();
+    if (urlRewrite !== undefined) updates.urlRewrite = urlRewrite.trim();
+    if (canonicalUrl !== undefined) updates.canonicalUrl = canonicalUrl.trim();
 
     const updated = await updateBlogAsync(id, updates);
     if (!updated) {

@@ -238,11 +238,9 @@ export function markTeacherDeletedOnDisk(record: { id?: string; email?: string; 
     const exists = current.some((d) => {
       const dId = (d.id || '').trim().toLowerCase();
       const dEmail = (d.email || '').trim().toLowerCase();
-      const dPhone = (d.phone || '').replace(/\D/g, '').slice(-10);
       return (
         (cleanId && dId === cleanId) ||
-        (cleanEmail && dEmail === cleanEmail) ||
-        (cleanPhone.length >= 10 && dPhone === cleanPhone)
+        (cleanEmail && dEmail === cleanEmail)
       );
     });
 
@@ -267,17 +265,13 @@ export function markTeacherDeletedOnDisk(record: { id?: string; email?: string; 
 export function isTeacherDeleted(identifier: string): boolean {
   if (!identifier) return false;
   const clean = identifier.trim().toLowerCase();
-  const cleanPhone = identifier.replace(/\D/g, '').slice(-10);
   const deleted = readDeletedTeachersFromDisk();
 
   return deleted.some((d) => {
     const dId = (d.id || '').trim().toLowerCase();
     const dEmail = (d.email || '').trim().toLowerCase();
-    const dPhone = (d.phone || '').replace(/\D/g, '').slice(-10);
-    const dName = (d.name || '').trim().toLowerCase();
 
-    if (clean && (dId === clean || dEmail === clean || dName === clean)) return true;
-    if (cleanPhone.length >= 10 && dPhone === cleanPhone) return true;
+    if (clean && (dId === clean || dEmail === clean)) return true;
     return false;
   });
 }
@@ -295,15 +289,12 @@ export function readTeachersFromDisk(): TeacherApprovalRecord[] {
     const isDeleted = (t: Partial<TeacherApprovalRecord>) => {
       const tId = (t.id || '').trim().toLowerCase();
       const tEmail = (t.email || '').trim().toLowerCase();
-      const tPhone = (t.phone || '').replace(/\D/g, '').slice(-10);
       return deletedList.some((d) => {
         const dId = (d.id || '').trim().toLowerCase();
         const dEmail = (d.email || '').trim().toLowerCase();
-        const dPhone = (d.phone || '').replace(/\D/g, '').slice(-10);
         return (
           (tId && dId && tId === dId) ||
-          (tEmail && dEmail && tEmail === dEmail) ||
-          (tPhone.length >= 10 && dPhone.length >= 10 && tPhone === dPhone)
+          (tEmail && dEmail && tEmail === dEmail)
         );
       });
     };
@@ -319,21 +310,18 @@ export function readTeachersFromDisk(): TeacherApprovalRecord[] {
       }
     }
 
-    // Merge any non-deleted seed teachers (e.g. Dr. Ekta Gahlawat, Harshit Singh) if not yet on disk
+    // Merge any non-deleted seed teachers (e.g. Dr. Ekta Gahlawat, Ankit) if not yet on disk
     let diskChanged = false;
     for (const seed of SEED_TEACHERS) {
       if (isDeleted(seed)) continue;
       const alreadyExists = activeDisk.some((t) => {
         const tId = (t.id || '').trim().toLowerCase();
         const tEmail = (t.email || '').trim().toLowerCase();
-        const tPhone = (t.phone || '').replace(/\D/g, '').slice(-10);
         const sId = (seed.id || '').trim().toLowerCase();
         const sEmail = (seed.email || '').trim().toLowerCase();
-        const sPhone = (seed.phone || '').replace(/\D/g, '').slice(-10);
         return (
           (sId && tId === sId) ||
-          (sEmail && tEmail === sEmail) ||
-          (sPhone.length >= 10 && tPhone === sPhone)
+          (sEmail && tEmail === sEmail)
         );
       });
       if (!alreadyExists) {
@@ -487,18 +475,15 @@ export function deleteTeacherFromDisk(
   const teachers = readTeachersFromDisk();
   const cleanId = id.trim().toLowerCase();
   const cleanEmail = (email || '').trim().toLowerCase();
-  const cleanPhone = (phone || id).replace(/\D/g, '').slice(-10);
 
   // Find target teacher before filtering to capture all identifiers
   const target = teachers.find((t) => {
     const tId = (t.id || '').trim().toLowerCase();
     const tEmail = (t.email || '').trim().toLowerCase();
-    const tPhone = (t.phone || '').replace(/\D/g, '').slice(-10);
     return (
       (cleanId && tId === cleanId) ||
       (cleanEmail && tEmail === cleanEmail) ||
-      (cleanId.includes('@') && tEmail === cleanId) ||
-      (cleanPhone.length >= 10 && tPhone === cleanPhone)
+      (cleanId.includes('@') && tEmail === cleanId)
     );
   });
 
@@ -513,20 +498,18 @@ export function deleteTeacherFromDisk(
     markTeacherDeletedOnDisk({
       id: cleanId,
       email: cleanEmail || (cleanId.includes('@') ? cleanId : undefined),
-      phone: cleanPhone.length >= 10 ? cleanPhone : undefined,
+      phone: phone || undefined,
     });
   }
 
   const filtered = teachers.filter((t) => {
     const tId = (t.id || '').trim().toLowerCase();
     const tEmail = (t.email || '').trim().toLowerCase();
-    const tPhone = (t.phone || '').replace(/\D/g, '').slice(-10);
     const matchId = cleanId && tId === cleanId;
     const matchEmail =
       (cleanEmail && tEmail === cleanEmail) ||
       (cleanId.includes('@') && tEmail === cleanId);
-    const matchPhone = cleanPhone.length >= 10 && tPhone === cleanPhone;
-    return !matchId && !matchEmail && !matchPhone;
+    return !matchId && !matchEmail;
   });
 
   const deletedCount = teachers.length - filtered.length;
@@ -797,9 +780,8 @@ export async function getTeachersAsync(): Promise<{ teachers: TeacherApprovalRec
         const deletedCol = db.collection('deleted_teachers');
 
         const deletedDocs = await deletedCol.find({}).toArray();
-        const deletedIds = deletedDocs.map((d: any) => String(d.id || '').toLowerCase().trim());
+        const deletedIds = deletedDocs.map((d: any) => String(d.id || '').toLowerCase().trim()).filter(Boolean);
         const deletedEmails = deletedDocs.map((d: any) => String(d.email || '').toLowerCase().trim()).filter(Boolean);
-        const deletedPhones = deletedDocs.map((d: any) => String(d.phone || '').replace(/\D/g, '').slice(-10)).filter((p) => p.length >= 10);
 
         const count = await teachersCol.countDocuments();
         if (count === 0) {
@@ -818,12 +800,10 @@ export async function getTeachersAsync(): Promise<{ teachers: TeacherApprovalRec
           .filter((t) => {
             const tId = String(t.id || '').toLowerCase().trim();
             const tEmail = String(t.email || '').toLowerCase().trim();
-            const tPhone = String(t.phone || '').replace(/\D/g, '').slice(-10);
 
             return (
-              !deletedIds.includes(tId) &&
-              (!tEmail || !deletedEmails.includes(tEmail)) &&
-              (tPhone.length < 10 || !deletedPhones.includes(tPhone))
+              (!tId || !deletedIds.includes(tId)) &&
+              (!tEmail || !deletedEmails.includes(tEmail))
             );
           });
 
@@ -931,7 +911,6 @@ export async function addTeacherAsync(record: Partial<TeacherApprovalRecord> & {
 export async function deleteTeacherAsync(identifier: string, email?: string, phone?: string) {
   const cleanTarget = identifier.toLowerCase().trim();
   const cleanEmail = (email || '').toLowerCase().trim();
-  const cleanPhone = (phone || '').replace(/\D/g, '').slice(-10);
 
   if (isMongoConfigured()) {
     try {
@@ -946,27 +925,25 @@ export async function deleteTeacherAsync(identifier: string, email?: string, pho
             $or: [
               { id: cleanTarget },
               ...(cleanEmail ? [{ email: cleanEmail }] : []),
-              ...(cleanPhone.length >= 10 ? [{ phone: cleanPhone }] : []),
             ],
           },
           {
             $set: {
               id: cleanTarget,
               email: cleanEmail || undefined,
-              phone: cleanPhone.length >= 10 ? cleanPhone : undefined,
+              phone: phone || undefined,
               deletedAt: new Date().toISOString(),
             },
           },
           { upsert: true }
         );
 
-        // 2. Remove from teachers collection
+        // 2. Remove from teachers collection strictly by id or email
         const deleteResult = await teachersCol.deleteMany({
           $or: [
             { id: cleanTarget },
             { id: identifier },
             ...(cleanEmail ? [{ email: cleanEmail }] : []),
-            ...(cleanPhone.length >= 10 ? [{ phone: cleanPhone }] : []),
           ],
         });
 

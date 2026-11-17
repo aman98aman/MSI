@@ -33,6 +33,12 @@ import {
   BookOpen,
   ArrowUpRight,
   TrendingUp,
+  Upload,
+  Image as ImageIcon,
+  Link2,
+  Globe,
+  X,
+  FileCode,
 } from 'lucide-react';
 import { GazetteArticle } from '@/lib/blogStore';
 import { Lead } from '@/components/reception/data/leadsMockData';
@@ -86,6 +92,7 @@ export default function MarketingDashboardPage() {
   // ── Blog Modals State ───────────────────────────────────────────────────────
   const [showBlogModal, setShowBlogModal] = useState(false);
   const [editingBlog, setEditingBlog] = useState<GazetteArticle | null>(null);
+  const [activeBlogTab, setActiveBlogTab] = useState<'content' | 'media' | 'seo'>('content');
   const [blogFormTitle, setBlogFormTitle] = useState('');
   const [blogFormCategory, setBlogFormCategory] = useState('judiciary');
   const [blogFormAuthor, setBlogFormAuthor] = useState('MSI Academic Faculty');
@@ -95,6 +102,12 @@ export default function MarketingDashboardPage() {
   const [blogFormContent, setBlogFormContent] = useState('');
   const [blogFormCoverImage, setBlogFormCoverImage] = useState('');
   const [blogFormPublished, setBlogFormPublished] = useState(true);
+  const [blogFormMetaTitle, setBlogFormMetaTitle] = useState('');
+  const [blogFormMetaDescription, setBlogFormMetaDescription] = useState('');
+  const [blogFormUrlRewrite, setBlogFormUrlRewrite] = useState('');
+  const [blogFormCanonicalUrl, setBlogFormCanonicalUrl] = useState('');
+  const [isUrlRewriteManual, setIsUrlRewriteManual] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isSavingBlog, setIsSavingBlog] = useState(false);
 
   // ── Blog Delete Modal State ─────────────────────────────────────────────────
@@ -210,8 +223,71 @@ export default function MarketingDashboardPage() {
   };
 
   // ── Blog Handlers ───────────────────────────────────────────────────────────
+  const handleTitleChange = (newTitle: string) => {
+    setBlogFormTitle(newTitle);
+    if (!isUrlRewriteManual) {
+      const generatedSlug = newTitle
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+      setBlogFormUrlRewrite(generatedSlug);
+      if (!blogFormCanonicalUrl || blogFormCanonicalUrl.includes('/blog/')) {
+        setBlogFormCanonicalUrl(`https://www.msiinstitutes.com/blog/${generatedSlug}`);
+      }
+    }
+    if (!blogFormMetaTitle || blogFormMetaTitle === blogFormTitle) {
+      setBlogFormMetaTitle(newTitle);
+    }
+  };
+
+  const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file (PNG, JPG, WebP)');
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('Image file size must be under 8MB');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.success && data.url) {
+        setBlogFormCoverImage(data.url);
+        showToast('Image uploaded successfully!');
+      } else {
+        showToast(data.message || 'Image upload failed');
+      }
+    } catch (err) {
+      showToast('Network error uploading image');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const insertContentSnippet = (prefix: string, placeholder: string = '', suffix: string = '') => {
+    setBlogFormContent((prev) => {
+      const addition = `${prefix}${placeholder}${suffix}`;
+      return prev ? `${prev}\n\n${addition}` : addition;
+    });
+  };
+
   const openCreateBlogModal = () => {
     setEditingBlog(null);
+    setActiveBlogTab('content');
     setBlogFormTitle('');
     setBlogFormCategory('judiciary');
     setBlogFormAuthor(currentUser?.name || 'MSI Academic Faculty');
@@ -220,20 +296,31 @@ export default function MarketingDashboardPage() {
     setBlogFormExcerpt('');
     setBlogFormContent('');
     setBlogFormCoverImage('');
+    setBlogFormMetaTitle('');
+    setBlogFormMetaDescription('');
+    setBlogFormUrlRewrite('');
+    setBlogFormCanonicalUrl('');
+    setIsUrlRewriteManual(false);
     setBlogFormPublished(true);
     setShowBlogModal(true);
   };
 
   const openEditBlogModal = (blog: GazetteArticle) => {
     setEditingBlog(blog);
-    setBlogFormTitle(blog.title);
-    setBlogFormCategory(blog.category);
+    setActiveBlogTab('content');
+    setBlogFormTitle(blog.title || '');
+    setBlogFormCategory(blog.category || 'judiciary');
     setBlogFormAuthor(blog.author || 'MSI Faculty');
     setBlogFormAuthorRole(blog.authorRole || 'Faculty of Law');
     setBlogFormReadTime(blog.readTime || '5 min read');
     setBlogFormExcerpt(blog.excerpt || '');
     setBlogFormContent(blog.content || blog.fullSummary || '');
     setBlogFormCoverImage(blog.coverImage || '');
+    setBlogFormMetaTitle(blog.metaTitle || blog.title || '');
+    setBlogFormMetaDescription(blog.metaDescription || blog.excerpt || '');
+    setBlogFormUrlRewrite(blog.urlRewrite || blog.slug || '');
+    setBlogFormCanonicalUrl(blog.canonicalUrl || `https://www.msiinstitutes.com/blog/${blog.slug}`);
+    setIsUrlRewriteManual(true);
     setBlogFormPublished(blog.isPublished !== false);
     setShowBlogModal(true);
   };
@@ -247,6 +334,18 @@ export default function MarketingDashboardPage() {
 
     setIsSavingBlog(true);
     try {
+      const cleanSlug = blogFormUrlRewrite.trim()
+        ? blogFormUrlRewrite
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9-_]+/g, '-')
+            .replace(/(^-|-$)/g, '')
+        : blogFormTitle
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '');
+
       const payload = {
         id: editingBlog?.id,
         title: blogFormTitle.trim(),
@@ -266,6 +365,10 @@ export default function MarketingDashboardPage() {
         content: blogFormContent.trim(),
         coverImage: blogFormCoverImage.trim(),
         isPublished: blogFormPublished,
+        metaTitle: blogFormMetaTitle.trim() || blogFormTitle.trim(),
+        metaDescription: blogFormMetaDescription.trim() || blogFormExcerpt.trim(),
+        urlRewrite: cleanSlug,
+        canonicalUrl: blogFormCanonicalUrl.trim() || `https://www.msiinstitutes.com/blog/${cleanSlug}`,
       };
 
       const res = await fetch('/api/blogs', {
@@ -702,7 +805,7 @@ export default function MarketingDashboardPage() {
                           <td className="py-3.5 px-4 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end space-x-1.5">
                               <Link
-                                href={`/blog#${blog.slug}`}
+                                href={`/blog/${blog.slug}`}
                                 target="_blank"
                                 className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors"
                                 title="View on site"
@@ -1170,118 +1273,570 @@ export default function MarketingDashboardPage() {
       {/* MODAL 1: CREATE / EDIT BLOG POST                                     */}
       {/* ==================================================================== */}
       {showBlogModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 border border-[#EFC988]/50 shadow-2xl relative animate-scale-in">
-            <h3 className="text-lg font-serif font-black text-[#10233F] mb-1">
-              {editingBlog ? 'Edit Blog Article' : 'Create & Publish New Blog Article'}
-            </h3>
-            <p className="text-xs text-slate-500 mb-5">
-              Articles published here appear in real-time on the public /blog page and homepage Gazette section.
-            </p>
-
-            <form onSubmit={handleSaveBlog} className="space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-3xl w-full p-5 sm:p-6 border border-[#EFC988]/50 shadow-2xl relative animate-scale-in my-6 max-h-[92vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-start justify-between pb-3 border-b border-slate-100 shrink-0">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Article Title *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Cracking Judicial Services Exam 2026: Strategy & Judgment Writing"
-                  value={blogFormTitle}
-                  onChange={(e) => setBlogFormTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#89190E]/30"
-                />
+                <h3 className="text-lg font-serif font-black text-[#10233F]">
+                  {editingBlog ? 'Edit Blog Article' : 'Create & Publish New Blog Article'}
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Publishes instantly to <code className="bg-slate-100 text-[#89190E] px-1 py-0.5 rounded text-[11px] font-mono">/blog/{blogFormUrlRewrite || 'slug'}</code> (clean dynamic route without #)
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowBlogModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Category *
-                  </label>
-                  <select
-                    value={blogFormCategory}
-                    onChange={(e) => setBlogFormCategory(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none bg-white"
-                  >
-                    <option value="judiciary">Judicial Services</option>
-                    <option value="clat">CLAT & NLUs</option>
-                    <option value="pu-law">PU Law Entrance</option>
-                    <option value="jurisprudence">Legal Jurisprudence</option>
-                  </select>
+            {/* Modal Tabs */}
+            <div className="flex items-center space-x-1 sm:space-x-2 pt-3 pb-3 border-b border-slate-100 shrink-0 overflow-x-auto">
+              <button
+                type="button"
+                onClick={() => setActiveBlogTab('content')}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  activeBlogTab === 'content'
+                    ? 'bg-[#89190E] text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>1. Article & Full Content</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveBlogTab('media')}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap relative ${
+                  activeBlogTab === 'media'
+                    ? 'bg-[#89190E] text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span>2. Image Upload</span>
+                {blogFormCoverImage && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" title="Image attached" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveBlogTab('seo')}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  activeBlogTab === 'seo'
+                    ? 'bg-[#89190E] text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span>3. SEO & Permalinks</span>
+              </button>
+            </div>
+
+            {/* Form Body - Scrollable */}
+            <form onSubmit={handleSaveBlog} className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
+              {/* TAB 1: ARTICLE & FULL CONTENT */}
+              {activeBlogTab === 'content' && (
+                <div className="space-y-4 animate-fade-in">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Article Title *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Cracking Judicial Services Exam 2026: Strategy & Judgment Writing"
+                      value={blogFormTitle}
+                      onChange={(e) => handleTitleChange(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#89190E]/30"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        Category *
+                      </label>
+                      <select
+                        value={blogFormCategory}
+                        onChange={(e) => setBlogFormCategory(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none bg-white"
+                      >
+                        <option value="judiciary">Judicial Services</option>
+                        <option value="clat">CLAT & NLUs</option>
+                        <option value="pu-law">PU Law Entrance</option>
+                        <option value="jurisprudence">Legal Jurisprudence</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        Estimated Read Time
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 5 min read"
+                        value={blogFormReadTime}
+                        onChange={(e) => setBlogFormReadTime(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        Author Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Adv. Rajesh Kumar"
+                        value={blogFormAuthor}
+                        onChange={(e) => setBlogFormAuthor(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        Author Designation / Role
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Head — Judiciary Division"
+                        value={blogFormAuthorRole}
+                        onChange={(e) => setBlogFormAuthorRole(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Short Excerpt / Summary (Card Preview) *
+                    </label>
+                    <textarea
+                      rows={2}
+                      required
+                      placeholder="Brief synopsis summarizing the key takeaway of this article..."
+                      value={blogFormExcerpt}
+                      onChange={(e) => {
+                        setBlogFormExcerpt(e.target.value);
+                        if (!blogFormMetaDescription || blogFormMetaDescription === blogFormExcerpt) {
+                          setBlogFormMetaDescription(e.target.value);
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#89190E]/30"
+                    />
+                  </div>
+
+                  {/* 5. FULL CONTENT OPTION WITH RICH FORMATTING TOOLBAR */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Full Content (Detailed Article Body) *
+                      </label>
+                      <span className="text-[11px] text-slate-400">
+                        Supports Headings (##), Bullet points (-), Quotes (&gt;)
+                      </span>
+                    </div>
+
+                    {/* Quick Formatting Toolbar */}
+                    <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-50 border border-slate-200 rounded-t-xl text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => insertContentSnippet('## ', 'Section Heading')}
+                        className="px-2 py-1 rounded bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 cursor-pointer"
+                        title="Add H2 Heading"
+                      >
+                        + H2 Heading
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertContentSnippet('### ', 'Key Takeaway Subheading')}
+                        className="px-2 py-1 rounded bg-white hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 cursor-pointer"
+                        title="Add H3 Subheading"
+                      >
+                        + H3 Subheading
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertContentSnippet('**', 'Bold Legal Precedent', '**')}
+                        className="px-2 py-1 rounded bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 cursor-pointer"
+                        title="Add Bold Text"
+                      >
+                        B Bold
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertContentSnippet('- ', 'Key Examination Point or Strategy')}
+                        className="px-2 py-1 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 cursor-pointer"
+                        title="Add Bullet Point"
+                      >
+                        • Bullet List
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertContentSnippet('> Legal Ratio: ', 'Citation or landmark judgment ratio here...')}
+                        className="px-2 py-1 rounded bg-white hover:bg-slate-100 text-[#89190E] font-medium border border-slate-200 cursor-pointer"
+                        title="Add Quote / Citation"
+                      >
+                        &ldquo; Legal Quote / Ratio
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertContentSnippet('\n---\n')}
+                        className="px-2 py-1 rounded bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 cursor-pointer"
+                        title="Add Section Divider"
+                      >
+                        ― Divider
+                      </button>
+                    </div>
+
+                    <textarea
+                      rows={8}
+                      required
+                      placeholder={`Write the full article body here...\n\n## Examination Strategy & Analysis\nBreak down procedural aspects, relevant statutes (BNSS, CPC, BSA, Constitution), and legal arguments.\n\n> Key Legal Ratio: Insert important case citations or statutory mandates here.\n\n- Crucial point for Mains judgment writing\n- Time management and syllabus prioritization`}
+                      value={blogFormContent}
+                      onChange={(e) => setBlogFormContent(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-b-xl border border-slate-200 border-t-0 text-xs focus:outline-none focus:ring-2 focus:ring-[#89190E]/30 font-mono leading-relaxed bg-white"
+                    />
+                  </div>
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Estimated Read Time
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 5 min read"
-                    value={blogFormReadTime}
-                    onChange={(e) => setBlogFormReadTime(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none"
-                  />
+              {/* TAB 2: IMAGE UPLOAD OPTION */}
+              {activeBlogTab === 'media' && (
+                <div className="space-y-4 animate-fade-in">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Featured Cover Image Upload *
+                    </label>
+                    <p className="text-xs text-slate-500 mb-3">
+                      Upload an image file directly from your computer or provide an image link. Displayed on public blog cards and article header.
+                    </p>
+
+                    {/* Drag-and-drop / Click file upload zone */}
+                    <div className="relative border-2 border-dashed border-slate-300 hover:border-[#89190E]/60 rounded-2xl p-6 text-center transition-all bg-slate-50/50 hover:bg-slate-50">
+                      <input
+                        type="file"
+                        accept="image/png, image/jpeg, image/jpg, image/webp"
+                        onChange={handleImageFileUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        disabled={isUploadingImage}
+                      />
+                      <div className="flex flex-col items-center justify-center space-y-2 pointer-events-none">
+                        <div className="w-12 h-12 rounded-full bg-[#89190E]/10 text-[#89190E] flex items-center justify-center">
+                          {isUploadingImage ? (
+                            <RefreshCw className="w-6 h-6 animate-spin text-[#89190E]" />
+                          ) : (
+                            <Upload className="w-6 h-6 text-[#89190E]" />
+                          )}
+                        </div>
+                        <div className="text-xs font-bold text-[#10233F]">
+                          {isUploadingImage ? 'Uploading image to server...' : 'Click to Browse or Drag & Drop Cover Image'}
+                        </div>
+                        <div className="text-[11px] text-slate-400">
+                          Supports PNG, JPG, WebP (Recommended: 1200 &times; 630 px, max 8MB)
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Live Image Preview if uploaded or provided */}
+                  {blogFormCoverImage && (
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-slate-700 flex items-center space-x-1.5">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span>Cover Image Preview</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setBlogFormCoverImage('')}
+                          className="text-xs font-bold text-red-600 hover:text-red-700 cursor-pointer flex items-center space-x-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Remove Image</span>
+                        </button>
+                      </div>
+
+                      <div className="relative h-44 w-full rounded-lg overflow-hidden border border-slate-200 bg-slate-900/10">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={blogFormCoverImage}
+                          alt="Article Cover Preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1200';
+                          }}
+                        />
+                      </div>
+                      <div className="text-[11px] text-slate-500 font-mono mt-1.5 truncate">
+                        URL: {blogFormCoverImage}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Secondary direct URL input */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Or Paste Image Direct URL
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <div className="relative flex-1">
+                        <Link2 className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+                        <input
+                          type="url"
+                          placeholder="https://images.unsplash.com/... or /uploads/blogs/..."
+                          value={blogFormCoverImage}
+                          onChange={(e) => setBlogFormCoverImage(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none"
+                        />
+                      </div>
+                      {blogFormCoverImage && (
+                        <button
+                          type="button"
+                          onClick={() => setBlogFormCoverImage('')}
+                          className="px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-600 hover:bg-slate-100 cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Quick Legal Stock Image Presets */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                      Quick Legal Presets (1-Click Apply)
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {[
+                        {
+                          name: 'Judiciary Gavel',
+                          url: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1000',
+                        },
+                        {
+                          name: 'Law Library',
+                          url: 'https://images.unsplash.com/photo-1453733197781-7917208d13a9?auto=format&fit=crop&q=80&w=1000',
+                        },
+                        {
+                          name: 'Moot Court',
+                          url: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=1000',
+                        },
+                        {
+                          name: 'Constitutional Bench',
+                          url: 'https://images.unsplash.com/photo-1479142506502-19b3a3b7ff33?auto=format&fit=crop&q=80&w=1000',
+                        },
+                      ].map((preset, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setBlogFormCoverImage(preset.url)}
+                          className="text-left p-2 rounded-lg border border-slate-200 hover:border-[#89190E] hover:bg-slate-50 transition-all cursor-pointer text-[11px] font-bold text-slate-700 truncate"
+                        >
+                          {preset.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Author Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Adv. Rajesh Kumar"
-                    value={blogFormAuthor}
-                    onChange={(e) => setBlogFormAuthor(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none"
-                  />
+              {/* TAB 3: SEO & PERMALINKS (Meta title, Meta description, URL rewrite, Canonical Tag) */}
+              {activeBlogTab === 'seo' && (
+                <div className="space-y-4 animate-fade-in">
+                  {/* 3. URL REWRITE (NO '#' - CLEAN DYNAMIC PERMALINK) */}
+                  <div className="p-3.5 bg-amber-50/60 rounded-xl border border-amber-200/80">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center space-x-1.5">
+                        <Link2 className="w-3.5 h-3.5 text-[#89190E]" />
+                        <span>3. URL Rewrite / Permalink (No &ldquo;#&rdquo;) *</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const generatedSlug = blogFormTitle
+                            .toLowerCase()
+                            .replace(/[^a-z0-9]+/g, '-')
+                            .replace(/(^-|-$)/g, '');
+                          setBlogFormUrlRewrite(generatedSlug);
+                          setBlogFormCanonicalUrl(`https://www.msiinstitutes.com/blog/${generatedSlug}`);
+                          setIsUrlRewriteManual(false);
+                        }}
+                        className="text-[11px] font-bold text-[#89190E] hover:underline cursor-pointer"
+                      >
+                        Auto-generate from Title
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-slate-600 mb-2">
+                      Clean SEO URL path. Previous <code className="text-red-700 font-mono font-bold">#hash</code> fragment removed & replaced with direct dynamic route <code className="text-emerald-700 font-mono font-bold">/blog/[slug]</code>.
+                    </p>
+                    <div className="flex items-center rounded-xl border border-slate-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-[#89190E]/30">
+                      <span className="px-3 py-2 bg-slate-100 border-r border-slate-200 text-xs font-mono text-slate-500 whitespace-nowrap">
+                        https://www.msiinstitutes.com/blog/
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="mastering-clat-passage-based-reasoning-gk"
+                        value={blogFormUrlRewrite}
+                        onChange={(e) => {
+                          setIsUrlRewriteManual(true);
+                          setBlogFormUrlRewrite(e.target.value);
+                          setBlogFormCanonicalUrl(
+                            `https://www.msiinstitutes.com/blog/${e.target.value
+                              .toLowerCase()
+                              .replace(/[^a-z0-9-_]+/g, '-')
+                              .replace(/(^-|-$)/g, '')}`
+                          );
+                        }}
+                        className="w-full px-3 py-2 text-xs font-mono text-[#10233F] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 1. META TITLE */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        1. SEO Meta Title *
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <span
+                          className={`text-[11px] font-mono font-bold ${
+                            blogFormMetaTitle.length > 60 ? 'text-amber-600' : 'text-emerald-600'
+                          }`}
+                        >
+                          {blogFormMetaTitle.length}/60 chars
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setBlogFormMetaTitle(blogFormTitle)}
+                          className="text-[11px] text-[#89190E] hover:underline cursor-pointer"
+                        >
+                          Use Title
+                        </button>
+                      </div>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="e.g. Mastering CLAT Passage Reasoning | MSI Institute"
+                      value={blogFormMetaTitle}
+                      onChange={(e) => setBlogFormMetaTitle(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#89190E]/30"
+                    />
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">
+                      Appears in browser tab and search engine results snippet (50-60 characters recommended).
+                    </span>
+                  </div>
+
+                  {/* 2. META DESCRIPTION */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        2. SEO Meta Description *
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <span
+                          className={`text-[11px] font-mono font-bold ${
+                            blogFormMetaDescription.length > 160 ? 'text-amber-600' : 'text-emerald-600'
+                          }`}
+                        >
+                          {blogFormMetaDescription.length}/160 chars
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setBlogFormMetaDescription(blogFormExcerpt)}
+                          className="text-[11px] text-[#89190E] hover:underline cursor-pointer"
+                        >
+                          Use Excerpt
+                        </button>
+                      </div>
+                    </div>
+                    <textarea
+                      rows={2}
+                      placeholder="Concise overview summarizing law examination strategies, statutory references, and MSI classroom insights..."
+                      value={blogFormMetaDescription}
+                      onChange={(e) => setBlogFormMetaDescription(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#89190E]/30"
+                    />
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">
+                      Appears under the blue title in search engine results (140-160 characters recommended).
+                    </span>
+                  </div>
+
+                  {/* 4. CANONICAL TAG */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        4. Canonical Tag (rel=&quot;canonical&quot;)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const slug = blogFormUrlRewrite || 'article';
+                          setBlogFormCanonicalUrl(`https://www.msiinstitutes.com/blog/${slug}`);
+                        }}
+                        className="text-[11px] text-[#89190E] hover:underline cursor-pointer"
+                      >
+                        Set Default Canonical
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="url"
+                        placeholder="https://www.msiinstitutes.com/blog/..."
+                        value={blogFormCanonicalUrl}
+                        onChange={(e) => setBlogFormCanonicalUrl(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#89190E]/30"
+                      />
+                    </div>
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">
+                      Prevents duplicate content penalties by declaring the authoritative URL version to Google crawlers.
+                    </span>
+                  </div>
+
+                  {/* LIVE GOOGLE SEARCH SERP SNIPPET PREVIEW */}
+                  <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                    <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center space-x-1.5">
+                      <Globe className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Google Search (SERP) Live Snippet Preview</span>
+                    </div>
+
+                    <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs space-y-1">
+                      <div className="flex items-center space-x-1.5 text-[11px] text-[#202124]">
+                        <div className="w-4 h-4 rounded-full bg-[#89190E] flex items-center justify-center text-[9px] text-white font-bold">
+                          M
+                        </div>
+                        <span className="font-medium">MSI Institutes</span>
+                        <span className="text-slate-400">&rsaquo;</span>
+                        <span className="text-slate-500 font-mono text-[10px]">
+                          blog &rsaquo; {blogFormUrlRewrite || 'mastering-clat-passage-based-reasoning-gk'}
+                        </span>
+                      </div>
+                      <div className="text-sm font-medium text-[#1a0dab] hover:underline cursor-pointer line-clamp-1">
+                        {blogFormMetaTitle || blogFormTitle || 'Article Title | MSI Institutes Law Academy'}
+                      </div>
+                      <div className="text-xs text-[#4d5156] line-clamp-2">
+                        {blogFormMetaDescription ||
+                          blogFormExcerpt ||
+                          'Comprehensive analysis, case law references, and structured preparation roadmap for Judicial Services and National Law Universities...'}
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Author Designation / Role
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Head — Judiciary Division"
-                    value={blogFormAuthorRole}
-                    onChange={(e) => setBlogFormAuthorRole(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Short Excerpt / Summary (Appears in Card Preview) *
-                </label>
-                <textarea
-                  rows={2}
-                  required
-                  placeholder="Brief synopsis summarizing the key takeaway of this article..."
-                  value={blogFormExcerpt}
-                  onChange={(e) => setBlogFormExcerpt(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#89190E]/30"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Full Article Body / Content *
-                </label>
-                <textarea
-                  rows={5}
-                  required
-                  placeholder="Detailed article paragraphs, analysis, statutory references..."
-                  value={blogFormContent}
-                  onChange={(e) => setBlogFormContent(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#89190E]/30 font-mono"
-                />
-              </div>
-
-              <div className="flex items-center space-x-2 pt-1">
+              {/* Bottom publish checkbox */}
+              <div className="flex items-center space-x-2 pt-2 border-t border-slate-100">
                 <input
                   type="checkbox"
                   id="publishToggle"
@@ -1294,21 +1849,34 @@ export default function MarketingDashboardPage() {
                 </label>
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setShowBlogModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSavingBlog}
-                  className="px-5 py-2 rounded-xl bg-[#89190E] hover:bg-[#70140B] text-white text-xs font-bold shadow-md shadow-[#89190E]/20 transition-all cursor-pointer disabled:opacity-50"
-                >
-                  {isSavingBlog ? 'Publishing...' : editingBlog ? 'Update Article' : 'Publish Article'}
-                </button>
+              {/* Modal Actions */}
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100 shrink-0">
+                <div className="text-[11px] text-slate-400">
+                  {editingBlog ? `Editing ID: #${editingBlog.id}` : 'Draft will be saved on server'}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowBlogModal(false)}
+                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingBlog || isUploadingImage}
+                    className="px-5 py-2 rounded-xl bg-[#89190E] hover:bg-[#70140B] text-white text-xs font-bold shadow-md shadow-[#89190E]/20 transition-all cursor-pointer disabled:opacity-50 flex items-center space-x-1.5"
+                  >
+                    {isSavingBlog ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <span>{editingBlog ? 'Update Article' : 'Publish Article'}</span>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

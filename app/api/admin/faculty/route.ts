@@ -89,15 +89,15 @@ export async function DELETE(req: NextRequest) {
       } catch (_) {}
     }
 
-    const target = id || email || phone;
+    const target = id || email;
     if (!target || !target.trim()) {
       return NextResponse.json(
-        { success: false, message: 'Faculty ID, email, or mobile number is required for deletion.' },
+        { success: false, message: 'Faculty ID or email is required for deletion.' },
         { status: 400 }
       );
     }
 
-    const result = await deleteTeacherAsync(target.trim(), email || undefined, phone || undefined);
+    const result = await deleteTeacherAsync(target.trim(), (email || (target.includes('@') ? target : undefined)), phone || undefined);
     return NextResponse.json({
       success: true,
       message: `Faculty member (${target}) deleted successfully.`,

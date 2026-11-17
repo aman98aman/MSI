@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/footer/Footer';
 import EnquiryModal from '@/components/modals/EnquiryModal';
@@ -12,6 +13,7 @@ import { ArrowRight, Clock, Calendar, Mail, BookOpen, Send, CheckCircle2 } from 
 
 interface Article {
   id: number;
+  slug: string;
   title: string;
   category: 'judiciary' | 'clat' | 'pu-law' | 'legal-insights';
   categoryLabel: string;
@@ -33,6 +35,7 @@ export default function BlogPage() {
 const INITIAL_ARTICLES: Article[] = [
     {
       id: 1,
+      slug: 'cracking-pcs-judicial-services-strategy',
       title: 'Cracking PCS (Judicial Services): Strategy, Judgment Writing & High Court Precedents',
       category: 'judiciary',
       categoryLabel: 'Judicial Services',
@@ -46,6 +49,7 @@ const INITIAL_ARTICLES: Article[] = [
     },
     {
       id: 2,
+      slug: 'national-moot-court-victory-msi-law-delegation',
       title: 'National Moot Court Victory: MSI Law Delegation Triumphs on Constitutional Rights',
       category: 'legal-insights',
       categoryLabel: 'Legal Jurisprudence',
@@ -58,6 +62,7 @@ const INITIAL_ARTICLES: Article[] = [
     },
     {
       id: 3,
+      slug: 'mastering-clat-passage-based-reasoning-gk',
       title: 'Mastering CLAT & Law Entrance: Tackling Passage-Based Reasoning & High-Yield Legal GK',
       category: 'clat',
       categoryLabel: 'CLAT & NLUs',
@@ -70,6 +75,7 @@ const INITIAL_ARTICLES: Article[] = [
     },
     {
       id: 4,
+      slug: 'panjab-university-pu-law-entrance-breakdown',
       title: 'Panjab University (PU) Law Entrance: 10-Year Paper Breakdown & High-Yield Strategy',
       category: 'pu-law',
       categoryLabel: 'PU Law Entrance',
@@ -82,6 +88,7 @@ const INITIAL_ARTICLES: Article[] = [
     },
     {
       id: 5,
+      slug: 'the-new-criminal-laws-bns-bnss-bsa-2023',
       title: 'The New Criminal Laws (BNS, BNSS, BSA 2023): What Judicial & CLAT Aspirants Must Master',
       category: 'judiciary',
       categoryLabel: 'Judicial Services',
@@ -94,6 +101,7 @@ const INITIAL_ARTICLES: Article[] = [
     },
     {
       id: 6,
+      slug: 'how-to-approach-reading-comprehension-in-clat',
       title: 'How to Approach Reading Comprehension in CLAT: Speed Mapping & Contextual Vocabulary',
       category: 'clat',
       categoryLabel: 'CLAT & NLUs',
@@ -115,6 +123,7 @@ const INITIAL_ARTICLES: Article[] = [
         if (data.success && Array.isArray(data.blogs) && data.blogs.length > 0) {
           const mapped: Article[] = data.blogs.map((b: any, idx: number) => ({
             id: typeof b.id === 'number' ? b.id : idx + 1,
+            slug: b.slug || b.urlRewrite || `article-${b.id || idx + 1}`,
             title: b.title,
             category: (b.category || 'judiciary') as any,
             categoryLabel: b.categoryLabel || 'Judicial Services',
@@ -207,13 +216,13 @@ const INITIAL_ARTICLES: Article[] = [
                         <span className="text-[10px] text-white/50">{featuredArticle.date}</span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => setIsEnquiryOpen(true)}
-                      className="h-10 px-5 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white font-bold text-xs flex items-center space-x-1.5 transition-all"
+                    <Link
+                      href={`/blog/${featuredArticle.slug}`}
+                      className="h-10 px-5 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white font-bold text-xs flex items-center space-x-1.5 transition-all shadow-md shadow-[#89190E]/20"
                     >
                       <span>Read Full Article</span>
                       <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
+                    </Link>
                   </div>
                 </div>
 
@@ -252,9 +261,9 @@ const INITIAL_ARTICLES: Article[] = [
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
             {filteredArticles.map((article, idx) => (
               <Reveal key={article.id} direction="up" delay={idx * 70}>
-                <article
-                  className="bg-white rounded-3xl p-8 border border-[#E8DCCB] shadow-sm hover:shadow-2xl transition-all duration-400 hover:-translate-y-2 flex flex-col justify-between group cursor-pointer"
-                  onClick={() => setIsEnquiryOpen(true)}
+                <Link
+                  href={`/blog/${article.slug}`}
+                  className="bg-white rounded-3xl p-8 border border-[#E8DCCB] shadow-sm hover:shadow-2xl transition-all duration-400 hover:-translate-y-2 flex flex-col justify-between group cursor-pointer h-full"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4">
@@ -291,7 +300,7 @@ const INITIAL_ARTICLES: Article[] = [
                       <ArrowRight className="w-3.5 h-3.5" />
                     </span>
                   </div>
-                </article>
+                </Link>
               </Reveal>
             ))}
           </div>

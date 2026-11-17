@@ -114,6 +114,8 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* Google Search Console Verification */}
+        <meta name="google-site-verification" content="rwFKFx2I04J9e9hy-886CPLt1pvqgObbIa4386AfYBg" />
         {/* Google Tag Manager (GTM-TPNLF9HQ) */}
         <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-TPNLF9HQ" />
         <script
@@ -133,11 +135,6 @@ gtag('js', new Date());`,
           }}
         />
       </head>
-      <body className="min-h-screen flex flex-col font-sans bg-[#FFF9EF] text-[#10233F] antialiased selection:bg-[#EFC988] selection:text-[#89190E]">
-        <SplashScreen />
-        <CustomCursor />
-        {children}
-        <FloatingActionDock />
       <body className="min-h-screen flex flex-col font-sans bg-[#FFF9EF] dark:bg-[#0B1020] text-[#10233F] dark:text-[#F8FAFC] antialiased selection:bg-[#EFC988] selection:text-[#89190E]">
         <ThemeProvider>
           <SplashScreen />

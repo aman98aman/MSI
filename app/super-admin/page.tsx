@@ -1712,41 +1712,65 @@ export default function SuperAdminMasterDashboard() {
 
   const handleDeleteTeacher = async () => {
     if (!teacherToDelete) return;
+    const target = teacherToDelete;
+    const targetId = target.id;
+    const targetEmail = (target.email || '').trim().toLowerCase();
+    const targetName = target.name;
+    const targetPhone = target.phone || '';
+
+    // 1. Optimistic removal: IMMEDIATELY filter out only the target teacher from state
+    setTeachers((prev) =>
+      prev.filter((t) => {
+        const tId = t.id;
+        const tEmail = (t.email || '').trim().toLowerCase();
+        if (targetId && tId === targetId) return false;
+        if (targetEmail && tEmail === targetEmail) return false;
+        return true;
+      })
+    );
+    setTeacherToDelete(null);
     setIsDeletingTeacher(true);
+
     try {
-      const idParam = encodeURIComponent(teacherToDelete.id || '');
-      const emailParam = encodeURIComponent(teacherToDelete.email || '');
-      const phoneParam = encodeURIComponent(teacherToDelete.phone || '');
-      const res = await fetch(`/api/admin/faculty?id=${idParam}&email=${emailParam}&phone=${phoneParam}`, {
+      const idParam = encodeURIComponent(targetId || '');
+      const emailParam = encodeURIComponent(targetEmail || '');
+      const res = await fetch(`/api/admin/faculty?id=${idParam}&email=${emailParam}`, {
         method: 'DELETE',
       });
       const data = await res.json();
+
+      markTeacherDeletedLocally(targetId, targetEmail, targetPhone);
+      const remaining = deleteTeacherAction(targetId, targetEmail, targetPhone);
+
       if (data.success) {
-        markTeacherDeletedLocally(teacherToDelete.id, teacherToDelete.email, teacherToDelete.phone);
-        const remaining = deleteTeacherAction(teacherToDelete.id, teacherToDelete.email, teacherToDelete.phone);
-        const finalList = data.teachers || remaining;
-        setTeachers(finalList);
-        saveStoredTeachers(finalList, false);
+        if (Array.isArray(data.teachers) && data.teachers.length > 0) {
+          setTeachers(data.teachers);
+          saveStoredTeachers(data.teachers, false);
+        } else {
+          setTeachers(remaining);
+          saveStoredTeachers(remaining, false);
+        }
 
         if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
           const bc = new BroadcastChannel('msi_sync_channel');
           bc.postMessage({
             type: 'FACULTY_DELETED',
-            teacherId: teacherToDelete.id,
-            teacherEmail: teacherToDelete.email,
-            teacherPhone: teacherToDelete.phone,
-            teacherName: teacherToDelete.name,
+            teacherId: targetId,
+            teacherEmail: targetEmail,
+            teacherPhone: targetPhone,
+            teacherName: targetName,
           });
           bc.close();
         }
 
-        showToast(`Faculty member (${teacherToDelete.name}) permanently removed from disk and session revoked.`);
-        setTeacherToDelete(null);
+        showToast(`Faculty member (${targetName}) permanently removed and session revoked.`);
       } else {
         showToast(data.message || 'Failed to delete faculty member.');
+        fetchFaculty();
       }
     } catch (err) {
       showToast('Network error while deleting faculty member.');
+      fetchFaculty();
     } finally {
       setIsDeletingTeacher(false);
     }

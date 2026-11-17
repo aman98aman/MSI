@@ -283,7 +283,7 @@ export default function BlogPreview() {
     e.preventDefault();
     e.stopPropagation();
     if (typeof window !== 'undefined') {
-      const shareUrl = `${window.location.origin}/blog#${article.slug}`;
+      const shareUrl = `${window.location.origin}/blog/${article.slug}`;
       if (navigator.clipboard) {
         navigator.clipboard.writeText(shareUrl);
         setCopiedId(article.id);
@@ -1111,11 +1111,11 @@ export default function BlogPreview() {
               </div>
 
               <Link
-                href="/blog"
+                href={`/blog/${selectedArticleForModal.slug}`}
                 onClick={() => setSelectedArticleForModal(null)}
                 className="px-4 py-2.5 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white text-xs font-bold flex items-center space-x-1.5 shadow-md shadow-[#89190E]/20 transition-all cursor-pointer"
               >
-                <span>Read Full Manuscript in Blog</span>
+                <span>Read Full Manuscript</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </Link>
             </div>

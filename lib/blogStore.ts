@@ -25,6 +25,10 @@ export interface GazetteArticle {
   isPublished?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  urlRewrite?: string;
+  canonicalUrl?: string;
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -249,6 +253,10 @@ export async function getBlogsAsync(includeUnpublished = false): Promise<Gazette
           isPublished: doc.isPublished !== false,
           createdAt: doc.createdAt,
           updatedAt: doc.updatedAt,
+          metaTitle: doc.metaTitle || doc.title,
+          metaDescription: doc.metaDescription || doc.excerpt,
+          urlRewrite: doc.urlRewrite || doc.slug,
+          canonicalUrl: doc.canonicalUrl || `https://www.msiinstitutes.com/blog/${doc.slug}`,
         }));
 
         const filtered = mapped.filter(
@@ -274,12 +282,21 @@ export async function addBlogAsync(
 ): Promise<GazetteArticle> {
   const newId = Date.now();
   const rawTitle = article.title?.trim() || 'Untitled Article';
+  const rawUrlRewrite = article.urlRewrite?.trim() || article.slug?.trim() || '';
   const slug =
-    article.slug?.trim() ||
-    rawTitle
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
+    rawUrlRewrite
+      ? rawUrlRewrite
+          .toLowerCase()
+          .replace(/[^a-z0-9-_]+/g, '-')
+          .replace(/(^-|-$)/g, '')
+      : rawTitle
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+
+  const metaTitle = article.metaTitle?.trim() || rawTitle;
+  const metaDescription = article.metaDescription?.trim() || article.excerpt?.trim() || '';
+  const canonicalUrl = article.canonicalUrl?.trim() || `https://www.msiinstitutes.com/blog/${slug}`;
 
   const newArticle: GazetteArticle = {
     id: newId,
@@ -302,6 +319,10 @@ export async function addBlogAsync(
     content: article.content?.trim() || article.fullSummary?.trim() || '',
     coverImage: article.coverImage,
     isPublished: article.isPublished !== false,
+    metaTitle,
+    metaDescription,
+    urlRewrite: slug,
+    canonicalUrl,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -334,10 +355,33 @@ export async function updateBlogAsync(
   if (idx === -1) return null;
 
   const current = blogs[idx];
+
+  let updatedSlug = current.slug;
+  if (updates.urlRewrite !== undefined && updates.urlRewrite.trim()) {
+    updatedSlug = updates.urlRewrite
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+  } else if (updates.slug !== undefined && updates.slug.trim()) {
+    updatedSlug = updates.slug
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+  }
+
   const updated: GazetteArticle = {
     ...current,
     ...updates,
     id: current.id,
+    slug: updatedSlug,
+    urlRewrite: updatedSlug,
+    metaTitle: updates.metaTitle !== undefined ? updates.metaTitle.trim() : (current.metaTitle || current.title),
+    metaDescription: updates.metaDescription !== undefined ? updates.metaDescription.trim() : (current.metaDescription || current.excerpt),
+    canonicalUrl: updates.canonicalUrl !== undefined && updates.canonicalUrl.trim()
+      ? updates.canonicalUrl.trim()
+      : (current.canonicalUrl || `https://www.msiinstitutes.com/blog/${updatedSlug}`),
     updatedAt: new Date().toISOString(),
   };
 
@@ -359,6 +403,21 @@ export async function updateBlogAsync(
   }
 
   return updated;
+}
+
+export async function getBlogBySlugAsync(slugOrId: string): Promise<GazetteArticle | null> {
+  const blogs = await getBlogsAsync(true);
+  const clean = String(slugOrId).toLowerCase().trim().replace(/^#/, '');
+  const deletedIds = readDeletedBlogsFromDisk();
+  if (deletedIds.includes(clean)) return null;
+
+  const found = blogs.find(
+    (b) =>
+      String(b.slug).toLowerCase().trim() === clean ||
+      String(b.id).toLowerCase().trim() === clean ||
+      (b.urlRewrite && String(b.urlRewrite).toLowerCase().trim() === clean)
+  );
+  return found || null;
 }
 
 export async function deleteBlogAsync(identifier: number | string): Promise<boolean> {

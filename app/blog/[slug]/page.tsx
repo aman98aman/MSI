@@ -92,12 +92,21 @@ export default async function BlogPostPage({ params }: Props) {
   const fullUrl =
     article.canonicalUrl || `https://www.msiinstitutes.com/blog/${article.slug}`;
 
-  // Content formatting helper
-  const rawContent = article.content || article.fullSummary || article.excerpt;
-  const paragraphs = rawContent
-    .split(/\n\n+/)
-    .map((p) => p.trim())
-    .filter(Boolean);
+  // Content formatting helper — strip any raw HTML h1 tags from content
+  // (the page template already renders article.title as <h1>)
+  const rawContent = (article.content || article.fullSummary || article.excerpt)
+    .replace(/<h1[^>]*>.*?<\/h1>/gi, '')
+    .trim();
+
+  // Check if the content is primarily HTML (contains tags like <p>, <h2>, <strong>, <a>, etc.)
+  const isHtmlContent = /<(?:p|h[2-6]|div|ul|ol|li|strong|em|a|br|img|blockquote|table|span)\b/i.test(rawContent);
+
+  const paragraphs = isHtmlContent
+    ? [] // Don't split HTML content into paragraphs
+    : rawContent
+        .split(/\n\n+/)
+        .map((p) => p.trim())
+        .filter(Boolean);
 
   return (
     <div className="min-h-screen bg-[#FFF9EF] text-[#10233F] flex flex-col selection:bg-[#EFC988] selection:text-[#89190E]">
@@ -230,9 +239,15 @@ export default async function BlogPostPage({ params }: Props) {
             </div>
           )}
 
-          {/* Main Content Paragraphs with clean typography */}
+          {/* Main Content — HTML or Markdown paragraphs */}
           <div className="space-y-6 text-sm sm:text-base text-[#2C3E50] leading-relaxed font-sans">
-            {paragraphs.map((p, idx) => {
+            {isHtmlContent ? (
+              <div
+                className="blog-html-content max-w-none"
+                dangerouslySetInnerHTML={{ __html: rawContent }}
+              />
+            ) : (
+              paragraphs.map((p, idx) => {
               if (p.startsWith('## ') || p.startsWith('### ')) {
                 const headingText = p.replace(/^#+\s*/, '');
                 return (
@@ -269,7 +284,8 @@ export default async function BlogPostPage({ params }: Props) {
                   {p}
                 </p>
               );
-            })}
+              })
+            )}
           </div>
 
           {/* Statutes Cited Pills */}

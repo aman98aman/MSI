@@ -5292,6 +5292,7 @@ export default function SuperAdminMasterDashboard() {
                 <FeeReceiptModal
                   transaction={selectedTxnForReceipt}
                   allowEdit={true}
+                  availableCourses={courses}
                   onSave={(savedInvoice) => handleUpdateTransactionInvoice(selectedTxnForReceipt, savedInvoice)}
                   onClose={() => setSelectedTxnForReceipt(null)}
                 />
@@ -5302,6 +5303,7 @@ export default function SuperAdminMasterDashboard() {
                 <FeeReceiptModal
                   isCreateMode={true}
                   allowEdit={true}
+                  availableCourses={courses}
                   prefillStudent={manualInvoiceSelectedStudent}
                   availableStudents={students}
                   onSave={handleSaveManualInvoice}

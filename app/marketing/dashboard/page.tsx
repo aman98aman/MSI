@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -109,6 +109,21 @@ export default function MarketingDashboardPage() {
   const [isUrlRewriteManual, setIsUrlRewriteManual] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isSavingBlog, setIsSavingBlog] = useState(false);
+
+  // ── Floating Selection Toolbar State ────────────────────────────────────────
+  const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const floatingToolbarRef = useRef<HTMLDivElement>(null);
+  const [selectionToolbar, setSelectionToolbar] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    start: number;
+    end: number;
+    selectedText: string;
+  }>({ visible: false, x: 0, y: 0, start: 0, end: 0, selectedText: '' });
+  const [showFontDropdown, setShowFontDropdown] = useState(false);
+  const [showTextColorPicker, setShowTextColorPicker] = useState(false);
+  const [showBgColorPicker, setShowBgColorPicker] = useState(false);
 
   // ── Blog Delete Modal State ─────────────────────────────────────────────────
   const [blogToDelete, setBlogToDelete] = useState<GazetteArticle | null>(null);
@@ -284,6 +299,107 @@ export default function MarketingDashboardPage() {
       return prev ? `${prev}\n\n${addition}` : addition;
     });
   };
+
+  // ── Floating Toolbar Helpers ─────────────────────────────────────────────────
+  const handleTextareaSelect = () => {
+    const ta = contentTextareaRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    if (start === end) {
+      setSelectionToolbar((p) => ({ ...p, visible: false }));
+      return;
+    }
+    const selectedText = ta.value.substring(start, end);
+    // Position toolbar above the cursor using textarea bounding rect
+    const rect = ta.getBoundingClientRect();
+    // Approximate caret position using character offset
+    const lines = ta.value.substring(0, end).split('\n');
+    const lineCount = lines.length;
+    const lineHeight = 18; // approx px per line in mono font
+    const topOffset = Math.min((lineCount - 1) * lineHeight + 4, ta.clientHeight - 60);
+    setSelectionToolbar({
+      visible: true,
+      x: rect.left + rect.width / 2,
+      y: rect.top + topOffset + window.scrollY,
+      start,
+      end,
+      selectedText,
+    });
+    setShowFontDropdown(false);
+    setShowTextColorPicker(false);
+    setShowBgColorPicker(false);
+  };
+
+  const applyFormatToSelection = (prefix: string, suffix: string = '') => {
+    const ta = contentTextareaRef.current;
+    if (!ta) return;
+    const { start, end, selectedText } = selectionToolbar;
+    const before = blogFormContent.substring(0, start);
+    const after = blogFormContent.substring(end);
+    const formatted = `${prefix}${selectedText}${suffix}`;
+    const newContent = before + formatted + after;
+    setBlogFormContent(newContent);
+    setSelectionToolbar((p) => ({ ...p, visible: false }));
+    // Restore focus
+    setTimeout(() => {
+      ta.focus();
+      ta.setSelectionRange(start + prefix.length, start + prefix.length + selectedText.length);
+    }, 10);
+  };
+
+  const applyHeadingToSelection = (level: '## ' | '### ') => {
+    const ta = contentTextareaRef.current;
+    if (!ta) return;
+    const { start, selectedText } = selectionToolbar;
+    // Find start of line
+    const textBefore = blogFormContent.substring(0, start);
+    const lineStart = textBefore.lastIndexOf('\n') + 1;
+    const before = blogFormContent.substring(0, lineStart);
+    const after = blogFormContent.substring(lineStart);
+    // Remove any existing heading prefix
+    const cleaned = after.replace(/^#{1,6}\s*/, '');
+    const newContent = before + level + cleaned;
+    setBlogFormContent(newContent);
+    setSelectionToolbar((p) => ({ ...p, visible: false }));
+    setTimeout(() => ta.focus(), 10);
+  };
+
+  const applyFontStyleToSelection = (fontTag: string) => {
+    // We store as HTML-comment hint for font: <!--font:fontTag-->text<!--/font-->
+    // But simpler: wrap in a custom markdown-ish token
+    applyFormatToSelection(`[font:${fontTag}]`, `[/font]`);
+    setShowFontDropdown(false);
+  };
+
+  const applyTextColorToSelection = (color: string) => {
+    applyFormatToSelection(`[color:${color}]`, `[/color]`);
+    setShowTextColorPicker(false);
+  };
+
+  const applyBgColorToSelection = (color: string) => {
+    applyFormatToSelection(`[bg:${color}]`, `[/bg]`);
+    setShowBgColorPicker(false);
+  };
+
+  // Close toolbar on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        floatingToolbarRef.current &&
+        !floatingToolbarRef.current.contains(e.target as Node) &&
+        contentTextareaRef.current &&
+        !contentTextareaRef.current.contains(e.target as Node)
+      ) {
+        setSelectionToolbar((p) => ({ ...p, visible: false }));
+        setShowFontDropdown(false);
+        setShowTextColorPicker(false);
+        setShowBgColorPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const openCreateBlogModal = () => {
     setEditingBlog(null);
@@ -1436,18 +1552,18 @@ export default function MarketingDashboardPage() {
                     />
                   </div>
 
-                  {/* 5. FULL CONTENT OPTION WITH RICH FORMATTING TOOLBAR */}
-                  <div>
+                  {/* 5. FULL CONTENT WITH MS WORD-LIKE FLOATING SELECTION TOOLBAR */}
+                  <div className="relative">
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                         Full Content (Detailed Article Body) *
                       </label>
                       <span className="text-[11px] text-slate-400">
-                        Supports Headings (##), Bullet points (-), Quotes (&gt;)
+                        Select text → floating toolbar appears
                       </span>
                     </div>
 
-                    {/* Quick Formatting Toolbar */}
+                    {/* Quick Formatting Toolbar (top static buttons) */}
                     <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-50 border border-slate-200 rounded-t-xl text-[11px]">
                       <button
                         type="button"
@@ -1500,13 +1616,236 @@ export default function MarketingDashboardPage() {
                     </div>
 
                     <textarea
+                      ref={contentTextareaRef}
                       rows={8}
                       required
                       placeholder={`Write the full article body here...\n\n## Examination Strategy & Analysis\nBreak down procedural aspects, relevant statutes (BNSS, CPC, BSA, Constitution), and legal arguments.\n\n> Key Legal Ratio: Insert important case citations or statutory mandates here.\n\n- Crucial point for Mains judgment writing\n- Time management and syllabus prioritization`}
                       value={blogFormContent}
                       onChange={(e) => setBlogFormContent(e.target.value)}
+                      onMouseUp={handleTextareaSelect}
+                      onKeyUp={handleTextareaSelect}
                       className="w-full px-3 py-2.5 rounded-b-xl border border-slate-200 border-t-0 text-xs focus:outline-none focus:ring-2 focus:ring-[#89190E]/30 font-mono leading-relaxed bg-white"
                     />
+
+                    {/* ── MS Word-Style Floating Selection Toolbar ───────────────── */}
+                    {selectionToolbar.visible && (
+                      <div
+                        ref={floatingToolbarRef}
+                        style={{
+                          position: 'fixed',
+                          left: `${selectionToolbar.x}px`,
+                          top: `${selectionToolbar.y - 52}px`,
+                          transform: 'translateX(-50%)',
+                          zIndex: 9999,
+                        }}
+                        className="flex items-center gap-0.5 bg-[#1a1a2e] border border-white/10 shadow-2xl rounded-xl px-2 py-1.5 animate-scale-in"
+                        onMouseDown={(e) => e.preventDefault()}
+                      >
+                        {/* Arrow pointer */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            bottom: '-6px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            width: 0,
+                            height: 0,
+                            borderLeft: '6px solid transparent',
+                            borderRight: '6px solid transparent',
+                            borderTop: '6px solid #1a1a2e',
+                          }}
+                        />
+
+                        {/* Bold Button */}
+                        <button
+                          type="button"
+                          title="Bold"
+                          onClick={() => applyFormatToSelection('**', '**')}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/15 text-white font-black text-sm transition-all cursor-pointer"
+                        >
+                          B
+                        </button>
+
+                        {/* Italic Button */}
+                        <button
+                          type="button"
+                          title="Italic"
+                          onClick={() => applyFormatToSelection('*', '*')}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/15 text-white italic font-semibold text-sm transition-all cursor-pointer"
+                        >
+                          I
+                        </button>
+
+                        {/* Divider */}
+                        <div className="w-px h-5 bg-white/20 mx-0.5" />
+
+                        {/* H2 Heading */}
+                        <button
+                          type="button"
+                          title="H2 Heading"
+                          onClick={() => applyHeadingToSelection('## ')}
+                          className="px-1.5 h-7 flex items-center justify-center rounded-lg hover:bg-white/15 text-[#EFC988] font-black text-[11px] transition-all cursor-pointer whitespace-nowrap"
+                        >
+                          H2
+                        </button>
+
+                        {/* H3 Heading */}
+                        <button
+                          type="button"
+                          title="H3 Subheading"
+                          onClick={() => applyHeadingToSelection('### ')}
+                          className="px-1.5 h-7 flex items-center justify-center rounded-lg hover:bg-white/15 text-[#EFC988]/70 font-bold text-[11px] transition-all cursor-pointer whitespace-nowrap"
+                        >
+                          H3
+                        </button>
+
+                        {/* Divider */}
+                        <div className="w-px h-5 bg-white/20 mx-0.5" />
+
+                        {/* Font Style Dropdown */}
+                        <div className="relative">
+                          <button
+                            type="button"
+                            title="Font Style"
+                            onClick={() => {
+                              setShowFontDropdown((p) => !p);
+                              setShowTextColorPicker(false);
+                              setShowBgColorPicker(false);
+                            }}
+                            className="px-2 h-7 flex items-center gap-1 rounded-lg hover:bg-white/15 text-white text-[11px] font-medium transition-all cursor-pointer whitespace-nowrap"
+                          >
+                            <span style={{ fontFamily: 'serif' }}>Aa</span>
+                            <svg width="8" height="5" viewBox="0 0 8 5" fill="none"><path d="M1 1l3 3 3-3" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                          </button>
+                          {showFontDropdown && (
+                            <div className="absolute top-9 left-1/2 -translate-x-1/2 bg-white border border-slate-200 rounded-xl shadow-2xl py-1 min-w-[150px] z-50">
+                              {[
+                                { label: 'Serif (Classic)', value: 'georgia', style: { fontFamily: 'Georgia, serif' } },
+                                { label: 'Sans-Serif', value: 'sans-serif', style: { fontFamily: 'Arial, sans-serif' } },
+                                { label: 'Monospace', value: 'monospace', style: { fontFamily: 'Courier New, monospace' } },
+                                { label: 'Playfair', value: 'playfair', style: { fontFamily: '"Playfair Display", serif' } },
+                                { label: 'Modern (Inter)', value: 'inter', style: { fontFamily: 'Inter, sans-serif' } },
+                              ].map((font) => (
+                                <button
+                                  key={font.value}
+                                  type="button"
+                                  onClick={() => applyFontStyleToSelection(font.value)}
+                                  className="w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 text-slate-700 cursor-pointer transition-colors"
+                                  style={font.style}
+                                >
+                                  {font.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Divider */}
+                        <div className="w-px h-5 bg-white/20 mx-0.5" />
+
+                        {/* Text Color */}
+                        <div className="relative">
+                          <button
+                            type="button"
+                            title="Text Color"
+                            onClick={() => {
+                              setShowTextColorPicker((p) => !p);
+                              setShowFontDropdown(false);
+                              setShowBgColorPicker(false);
+                            }}
+                            className="w-7 h-7 flex flex-col items-center justify-center rounded-lg hover:bg-white/15 transition-all cursor-pointer"
+                          >
+                            <span className="text-white font-bold text-[11px] leading-none">A</span>
+                            <div className="w-4 h-1 rounded-full mt-0.5" style={{ background: 'linear-gradient(90deg,#ef4444,#f59e0b,#22c55e,#3b82f6,#8b5cf6)' }} />
+                          </button>
+                          {showTextColorPicker && (
+                            <div className="absolute top-9 left-1/2 -translate-x-1/2 bg-white border border-slate-200 rounded-xl shadow-2xl p-2.5 z-50 w-[160px]">
+                              <div className="text-[10px] font-bold text-slate-500 uppercase mb-1.5">Text Color</div>
+                              <div className="grid grid-cols-6 gap-1">
+                                {[
+                                  '#000000','#374151','#6b7280','#ef4444','#dc2626','#b91c1c',
+                                  '#f59e0b','#d97706','#92400e','#22c55e','#16a34a','#166534',
+                                  '#3b82f6','#2563eb','#1d4ed8','#8b5cf6','#7c3aed','#6d28d9',
+                                  '#ec4899','#db2777','#be185d','#06b6d4','#0891b2','#89190E',
+                                ].map((color) => (
+                                  <button
+                                    key={color}
+                                    type="button"
+                                    title={color}
+                                    onClick={() => applyTextColorToSelection(color)}
+                                    className="w-5 h-5 rounded-md border border-white/50 hover:scale-110 transition-transform cursor-pointer shadow-sm"
+                                    style={{ backgroundColor: color }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Background Color */}
+                        <div className="relative">
+                          <button
+                            type="button"
+                            title="Highlight / Background Color"
+                            onClick={() => {
+                              setShowBgColorPicker((p) => !p);
+                              setShowFontDropdown(false);
+                              setShowTextColorPicker(false);
+                            }}
+                            className="w-7 h-7 flex flex-col items-center justify-center rounded-lg hover:bg-white/15 transition-all cursor-pointer"
+                          >
+                            <span className="text-[9px] font-black text-white leading-none">BG</span>
+                            <div className="w-4 h-1 rounded-full mt-0.5" style={{ background: 'linear-gradient(90deg,#fef08a,#bbf7d0,#bfdbfe,#fce7f3)' }} />
+                          </button>
+                          {showBgColorPicker && (
+                            <div className="absolute top-9 left-1/2 -translate-x-1/2 bg-white border border-slate-200 rounded-xl shadow-2xl p-2.5 z-50 w-[160px]">
+                              <div className="text-[10px] font-bold text-slate-500 uppercase mb-1.5">Highlight Color</div>
+                              <div className="grid grid-cols-6 gap-1">
+                                {[
+                                  '#fef08a','#fde68a','#fbbf24','#bbf7d0','#86efac','#4ade80',
+                                  '#bfdbfe','#93c5fd','#60a5fa','#fce7f3','#f9a8d4','#f472b6',
+                                  '#e9d5ff','#d8b4fe','#c084fc','#fed7aa','#fdba74','#fb923c',
+                                  '#ffffff','#f1f5f9','#e2e8f0','#cbd5e1','#94a3b8','#64748b',
+                                ].map((color) => (
+                                  <button
+                                    key={color}
+                                    type="button"
+                                    title={color}
+                                    onClick={() => applyBgColorToSelection(color)}
+                                    className="w-5 h-5 rounded-md border border-slate-200 hover:scale-110 transition-transform cursor-pointer shadow-sm"
+                                    style={{ backgroundColor: color }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Divider */}
+                        <div className="w-px h-5 bg-white/20 mx-0.5" />
+
+                        {/* Strikethrough */}
+                        <button
+                          type="button"
+                          title="Strikethrough"
+                          onClick={() => applyFormatToSelection('~~', '~~')}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/15 text-white text-sm transition-all cursor-pointer line-through"
+                        >
+                          S
+                        </button>
+
+                        {/* Dismiss */}
+                        <div className="w-px h-5 bg-white/20 mx-0.5" />
+                        <button
+                          type="button"
+                          title="Dismiss toolbar"
+                          onClick={() => setSelectionToolbar((p) => ({ ...p, visible: false }))}
+                          className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-red-500/30 text-white/50 hover:text-white text-xs transition-all cursor-pointer"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

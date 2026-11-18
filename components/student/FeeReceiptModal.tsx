@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { X, Printer, Edit3, Eye, Check, RotateCcw, Plus, Trash2, Calculator, Download } from 'lucide-react';
+import { X, Printer, Edit3, Eye, Check, RotateCcw, Plus, Trash2, Calculator, Download, Upload, CalendarDays, Wallet } from 'lucide-react';
 import { StudentProfile } from './data/studentMockData';
 
 // --------------------------------------------------------------------------
@@ -114,6 +114,20 @@ export interface GSTInvoiceData {
   bankName: string;
   bankAccount: string;
   bankIfsc: string;
+  // Enhanced Billing Fields
+  studentPhoto: string;
+  paymentMode: string;
+  amountReceived: string;
+  balanceDue: string;
+  courseMRP: string;
+  selectedCourseId: string;
+  installmentCount: number;
+  installments: Array<{
+    installmentNo: number;
+    amount: string;
+    dueDate: string;
+    status: 'Pending' | 'Paid' | 'Overdue';
+  }>;
 }
 
 export interface FeeReceiptModalProps {
@@ -121,6 +135,7 @@ export interface FeeReceiptModalProps {
   student?: Partial<StudentProfile> | any;
   prefillStudent?: any;
   availableStudents?: Array<any>;
+  availableCourses?: Array<any>;
   allowEdit?: boolean;
   isCreateMode?: boolean;
   onClose: () => void;
@@ -132,6 +147,7 @@ export default function FeeReceiptModal({
   student,
   prefillStudent,
   availableStudents,
+  availableCourses,
   allowEdit = false,
   isCreateMode = false,
   onClose,
@@ -255,6 +271,15 @@ export default function FeeReceiptModal({
       bankName: 'AXIS BANK',
       bankAccount: '925020020559054',
       bankIfsc: 'UTIB00004866',
+      // Enhanced Billing Fields
+      studentPhoto: transaction?.invoiceData?.studentPhoto || '',
+      paymentMode: transaction?.invoiceData?.paymentMode || transaction?.paymentMethod || transaction?.mode || 'CASH',
+      amountReceived: transaction?.invoiceData?.amountReceived || rawAmt.toFixed(2),
+      balanceDue: transaction?.invoiceData?.balanceDue || '0.00',
+      courseMRP: transaction?.invoiceData?.courseMRP || '0.00',
+      selectedCourseId: transaction?.invoiceData?.selectedCourseId || '',
+      installmentCount: transaction?.invoiceData?.installmentCount || 1,
+      installments: transaction?.invoiceData?.installments || [],
     };
   };
 
@@ -264,11 +289,29 @@ export default function FeeReceiptModal({
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [selectedStudentPicker, setSelectedStudentPicker] = useState<string>('');
   const printAreaRef = useRef<HTMLDivElement>(null);
+  const [fetchedCourses, setFetchedCourses] = useState<any[]>([]);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const canEdit = Boolean(allowEdit || isCreateMode) && isEditMode;
 
   useEffect(() => {
     setInvoice(calculateDefaults());
   }, [transaction, student, prefillStudent]);
+
+  // Fetch courses on mount (fallback to availableCourses prop)
+  useEffect(() => {
+    if (availableCourses && availableCourses.length > 0) {
+      setFetchedCourses(availableCourses);
+      return;
+    }
+    fetch('/api/courses', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.courses)) {
+          setFetchedCourses(data.courses);
+        }
+      })
+      .catch(() => {});
+  }, [availableCourses]);
 
   const handleSaveInvoice = async () => {
     setIsSaving(true);
@@ -346,6 +389,8 @@ export default function FeeReceiptModal({
     const taxableNum = Number((net / 1.18).toFixed(2));
     const gstTotal = Number((net - taxableNum).toFixed(2));
     const halfGst = Number((gstTotal / 2).toFixed(2));
+    const received = Number(invoice.amountReceived) || 0;
+    const balance = Math.max(0, net - received);
 
     const updatedItems = invoice.items.map((item, idx) => {
       if (idx === 0) {
@@ -369,6 +414,73 @@ export default function FeeReceiptModal({
       taxCgst: halfGst.toFixed(2),
       inWords: numberToWords(net),
       netAmount: net.toFixed(2),
+      balanceDue: balance.toFixed(2),
+    }));
+  };
+
+  // Handle course selection — auto-fill MRP & description
+  const handleCourseSelect = (courseId: string) => {
+    const course = fetchedCourses.find((c: any) => c.id === courseId);
+    if (!course) return;
+    const mrp = Number(course.originalPrice || course.price || 0);
+    const courseName = (course.title || '').toUpperCase();
+    setInvoice((prev) => ({
+      ...prev,
+      selectedCourseId: courseId,
+      courseMRP: mrp.toFixed(2),
+      items: prev.items.map((item, idx) =>
+        idx === 0
+          ? { ...item, mrp: mrp.toFixed(2), description: courseName }
+          : item
+      ),
+    }));
+  };
+
+  // Handle student photo upload → Base64
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const b64 = evt.target?.result as string;
+      setInvoice((prev) => ({ ...prev, studentPhoto: b64 }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Handle installment count change — auto-split net amount equally
+  const handleInstallmentCountChange = (count: number) => {
+    const net = Number(invoice.netAmount) || 0;
+    const perInstall = count > 0 ? Number((net / count).toFixed(2)) : 0;
+    const installs = Array.from({ length: count }, (_, i) => ({
+      installmentNo: i + 1,
+      amount: perInstall.toFixed(2),
+      dueDate: '',
+      status: 'Pending' as const,
+    }));
+    setInvoice((prev) => ({
+      ...prev,
+      installmentCount: count,
+      installments: installs,
+    }));
+  };
+
+  // Handle individual installment field change
+  const handleInstallmentChange = (idx: number, field: 'amount' | 'dueDate' | 'status', value: string) => {
+    const updated = [...invoice.installments];
+    updated[idx] = { ...updated[idx], [field]: value };
+    setInvoice((prev) => ({ ...prev, installments: updated }));
+  };
+
+  // Handle amount received change → auto-compute balance
+  const handleAmountReceivedChange = (val: string) => {
+    const received = Number(val) || 0;
+    const net = Number(invoice.netAmount) || 0;
+    const balance = Math.max(0, net - received);
+    setInvoice((prev) => ({
+      ...prev,
+      amountReceived: val,
+      balanceDue: balance.toFixed(2),
     }));
   };
 
@@ -442,6 +554,83 @@ export default function FeeReceiptModal({
       .map((t) => `<li style="margin-bottom:1px;">${t}</li>`)
       .join('');
 
+    const installmentsHtml = invoice.installments.length > 1
+      ? invoice.installments.map((inst) => {
+          const statusColor = inst.status === 'Paid' ? '#16a34a' : inst.status === 'Overdue' ? '#dc2626' : '#92400e';
+          return `<tr style="font-size:10px; font-weight:bold;">
+            <td style="border:1px solid #000; padding:4px 6px; text-align:center;">${inst.installmentNo}</td>
+            <td style="border:1px solid #000; padding:4px 6px; text-align:right; font-family:monospace;">₹${Number(inst.amount).toLocaleString('en-IN')}</td>
+            <td style="border:1px solid #000; padding:4px 6px; text-align:center;">${inst.dueDate || '—'}</td>
+            <td style="border:1px solid #000; padding:4px 6px; text-align:center; color:${statusColor};">${inst.status}</td>
+          </tr>`;
+        }).join('')
+      : '';
+
+    const photoHtml = invoice.studentPhoto
+      ? `<div style="width:60px; height:72px; flex-shrink:0; margin-left:8px; border:1.5px solid #ccc; overflow:hidden;">
+          <img src="${invoice.studentPhoto}" alt="Student" style="width:100%; height:100%; object-fit:cover;" />
+        </div>`
+      : '';
+
+    const paymentSummaryHtml = `
+      <div style="display:flex; justify-content:flex-end; gap:16px; padding:3px 6px; font-size:9.5px; font-weight:bold; background:#f5f5f5; border-top:1px solid #000;">
+        <span>PAYMENT MODE: <strong>${invoice.paymentMode || invoice.modeOfSupply || 'CASH'}</strong></span>
+        <span>RECEIVED: <strong style="color:#166534;">₹${Number(invoice.amountReceived || 0).toLocaleString('en-IN')}</strong></span>
+        <span>BALANCE DUE: <strong style="color:${Number(invoice.balanceDue || 0) > 0 ? '#dc2626' : '#166534'};">₹${Number(invoice.balanceDue || 0).toLocaleString('en-IN')}</strong></span>
+      </div>`;
+
+    const installmentPageHtml = installmentsHtml ? `
+      <div style="page-break-before:always; margin-top:0; padding-top:0;">
+        <div class="invoice-card" style="margin-top:4mm;">
+          <div style="display:flex; align-items:center; padding:4px 8px; border-bottom:1px solid #000;">
+            <div style="width:50px; height:50px; flex-shrink:0; margin-right:8px;">
+              <img src="${logoUrl}" alt="MSI Seal" style="width:100%; height:100%; object-fit:contain;" />
+            </div>
+            <div style="flex:1; text-align:center;">
+              <div style="font-family:Georgia,serif; font-size:16px; font-weight:900; color:#89190E; text-transform:uppercase;">${invoice.instituteName}</div>
+              <div style="font-size:9px; font-weight:bold; color:#1a1a1a; text-transform:uppercase;">${invoice.instituteAddress}</div>
+            </div>
+            ${invoice.studentPhoto ? `<div style="width:52px;height:64px;flex-shrink:0;border:1.5px solid #ccc;overflow:hidden;margin-left:8px;"><img src="${invoice.studentPhoto}" style="width:100%;height:100%;object-fit:cover;" /></div>` : ''}
+          </div>
+          <div style="padding:4px 8px; border-bottom:1px solid #000; font-size:10px; font-weight:bold; background:#fafafa;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div style="font-size:11px; text-transform:uppercase;">FEE INSTALLMENT SCHEDULE</div>
+                <div style="font-size:9px; color:#555; margin-top:1px;">INVOICE NO: ${invoice.invoiceNo} &nbsp;|&nbsp; DATE: ${invoice.invoiceDate}</div>
+              </div>
+              <div style="text-align:right; font-size:9.5px;">
+                <div>STUDENT: ${invoice.soldToName}</div>
+                <div>PHONE: ${invoice.buyerPhone}</div>
+              </div>
+            </div>
+          </div>
+          <table style="width:100%; border-collapse:collapse; font-size:10px;">
+            <thead>
+              <tr style="background:#fafafa; border-bottom:1px solid #000; font-weight:bold; text-align:center; font-size:9.5px; text-transform:uppercase;">
+                <th style="border:1px solid #000; padding:4px 6px; width:40px;">S.No</th>
+                <th style="border:1px solid #000; padding:4px 6px;">Installment Amount</th>
+                <th style="border:1px solid #000; padding:4px 6px;">Due Date</th>
+                <th style="border:1px solid #000; padding:4px 6px;">Status</th>
+              </tr>
+            </thead>
+            <tbody>${installmentsHtml}</tbody>
+            <tfoot>
+              <tr style="border-top:1px solid #000; font-size:10px; font-weight:bold; background:#fafafa;">
+                <td style="border:1px solid #000; padding:4px 6px; text-align:center; text-transform:uppercase;" colspan="1">TOTAL</td>
+                <td style="border:1px solid #000; padding:4px 6px; text-align:right; font-family:monospace;">₹${Number(invoice.netAmount || 0).toLocaleString('en-IN')}</td>
+                <td colspan="2" style="border:1px solid #000; padding:4px 6px; text-align:center; font-size:9px;">
+                  Received: ₹${Number(invoice.amountReceived || 0).toLocaleString('en-IN')} &nbsp;|&nbsp; Balance: ₹${Number(invoice.balanceDue || 0).toLocaleString('en-IN')}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+          <div style="display:flex; justify-content:space-between; padding:6px 8px; font-size:9px; font-weight:bold; border-top:1px solid #000; margin-top:12px;">
+            <div>Student Signature: _______________________</div>
+            <div>Authorised Signatory: _______________________</div>
+          </div>
+        </div>
+      </div>` : '';
+
     const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -494,12 +683,12 @@ export default function FeeReceiptModal({
       <div style="text-align:right;">PAN NO: <span style="font-family:monospace;">${invoice.pan}</span></div>
     </div>
 
-    <!-- INSTITUTE HEADER WITH LOGO -->
+    <!-- INSTITUTE HEADER WITH LOGO + STUDENT PHOTO -->
     <div style="display:flex; align-items:center; padding:4px 8px; border-bottom:1px solid #000;">
       <div style="width:62px; height:62px; flex-shrink:0; margin-right:10px;">
         <img src="${logoUrl}" alt="MSI Seal" style="width:100%; height:100%; object-fit:contain;" />
       </div>
-      <div style="flex:1; text-align:center; padding-right:50px;">
+      <div style="flex:1; text-align:center; padding-right:10px;">
         <div style="font-family:Georgia, serif; font-size:20px; font-weight:900; color:#89190E; letter-spacing:0.5px; text-transform:uppercase;">
           ${invoice.instituteName}
         </div>
@@ -510,6 +699,7 @@ export default function FeeReceiptModal({
           CONTACT: ${invoice.contact}
         </div>
       </div>
+      ${photoHtml}
     </div>
 
     <!-- SOLD TO & INVOICE DETAILS -->
@@ -546,7 +736,7 @@ export default function FeeReceiptModal({
         </div>
         <div style="display:flex; justify-content:space-between;">
           <span>MODE OF SUPPLY:</span>
-          <span>${invoice.modeOfSupply}</span>
+          <span>${invoice.paymentMode || invoice.modeOfSupply}</span>
         </div>
       </div>
     </div>
@@ -687,6 +877,9 @@ export default function FeeReceiptModal({
       </div>
     </div>
 
+    <!-- PAYMENT SUMMARY ROW -->
+    ${paymentSummaryHtml}
+
     <!-- FOOTER: TERMS, BANK, SIGNATURE -->
     <div style="display:flex; min-height:80px;">
       <!-- Terms -->
@@ -717,9 +910,11 @@ export default function FeeReceiptModal({
     </div>
 
   </div>
+
+  ${installmentPageHtml}
+
 </body>
 </html>`;
-
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
     iframe.style.right = '0';
@@ -838,39 +1033,250 @@ export default function FeeReceiptModal({
           </div>
         </div>
 
-        {/* Quick Auto-Fill Bar for Registered Students */}
-        {canEdit && availableStudents && availableStudents.length > 0 && (
-          <div className="print:hidden bg-[#0A182B] px-4 sm:px-6 py-2.5 border-b border-[#EFC988]/20 flex flex-wrap items-center justify-between gap-2.5 text-xs">
-            <div className="flex items-center gap-2 text-gray-300">
-              <span className="text-[#EFC988] font-bold">Auto-Fill:</span>
-              <span className="text-gray-300">Quickly fill invoice from registered student records:</span>
+        {/* ===== ENHANCED BILLING CONTROL PANEL ===== */}
+        {canEdit && (
+          <div className="print:hidden bg-[#0A182B] border-b border-[#EFC988]/20 text-xs">
+
+            {/* Row 1: Student Picker + Course Selector */}
+            <div className="px-4 sm:px-6 py-3 flex flex-wrap items-end gap-3 border-b border-white/5">
+              <div className="flex items-center gap-1.5 text-[#EFC988] font-bold uppercase tracking-wider text-[10px] mr-1">
+                <span>⚡</span> Quick Fill
+              </div>
+
+              {/* Student Auto-Fill */}
+              {availableStudents && availableStudents.length > 0 && (
+                <div className="flex flex-col gap-0.5">
+                  <label className="text-gray-400 text-[9px] uppercase font-bold">Student</label>
+                  <select
+                    value={selectedStudentPicker}
+                    onChange={(e) => {
+                      setSelectedStudentPicker(e.target.value);
+                      handlePickStudent(e.target.value);
+                    }}
+                    className="bg-[#10233F] text-white border border-[#EFC988]/40 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#EFC988] font-medium min-w-[180px]"
+                  >
+                    <option value="">— Select Student —</option>
+                    {availableStudents.map((st: any) => (
+                      <option key={st.phone || st.id} value={st.phone || st.id}>
+                        {st.name} (+91 {st.phone})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Course Dropdown → MRP Auto-fill */}
+              <div className="flex flex-col gap-0.5">
+                <label className="text-gray-400 text-[9px] uppercase font-bold">Course (MRP Auto-Fill)</label>
+                <select
+                  value={invoice.selectedCourseId}
+                  onChange={(e) => handleCourseSelect(e.target.value)}
+                  className="bg-[#10233F] text-white border border-[#EFC988]/40 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#EFC988] font-medium min-w-[200px]"
+                >
+                  <option value="">— Select Course —</option>
+                  {fetchedCourses.map((c: any) => (
+                    <option key={c.id} value={c.id}>
+                      {c.title} {c.originalPrice ? `• MRP ₹${Number(c.originalPrice).toLocaleString('en-IN')}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Course MRP (editable) */}
+              <div className="flex flex-col gap-0.5">
+                <label className="text-gray-400 text-[9px] uppercase font-bold">Course MRP (₹)</label>
+                <input
+                  type="number"
+                  value={invoice.courseMRP}
+                  onChange={(e) => setInvoice((prev) => ({ ...prev, courseMRP: e.target.value }))}
+                  placeholder="e.g. 100000"
+                  className="bg-[#10233F] text-[#EFC988] border border-[#EFC988]/40 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#EFC988] font-mono font-bold w-28"
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <select
-                value={selectedStudentPicker}
-                onChange={(e) => {
-                  setSelectedStudentPicker(e.target.value);
-                  handlePickStudent(e.target.value);
-                }}
-                className="bg-[#10233F] text-white border border-[#EFC988]/40 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-[#EFC988] font-medium"
-              >
-                <option value="">— Select Student to Auto-Populate —</option>
-                {availableStudents.map((st: any) => (
-                  <option key={st.phone || st.id} value={st.phone || st.id}>
-                    {st.name} ({st.stream || 'Course'} • +91 {st.phone})
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => handleAutoCalculateFromNet()}
-                className="px-2.5 py-1 rounded bg-[#EFC988]/20 hover:bg-[#EFC988]/30 text-[#EFC988] text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-                title="Recalculate 18% GST and words from net amount"
-              >
-                <Calculator className="w-3 h-3" />
-                <span>Recalculate GST</span>
-              </button>
+
+            {/* Row 2: Net Amount + GST + Payment Mode + Amount Received + Balance */}
+            <div className="px-4 sm:px-6 py-3 flex flex-wrap items-end gap-3 border-b border-white/5">
+              <div className="flex items-center gap-1.5 text-emerald-400 font-bold uppercase tracking-wider text-[10px] mr-1">
+                <Wallet className="w-3 h-3" /> Fee Billing
+              </div>
+
+              {/* Net Amount (with GST) */}
+              <div className="flex flex-col gap-0.5">
+                <label className="text-gray-400 text-[9px] uppercase font-bold">Net Amount Charged (₹) — GST Auto-Calc</label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    value={invoice.netAmount}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setInvoice((prev) => ({ ...prev, netAmount: val }));
+                      const num = parseFloat(val);
+                      if (!isNaN(num) && num > 0) handleAutoCalculateFromNet(num);
+                    }}
+                    placeholder="e.g. 60000"
+                    className="bg-[#10233F] text-white border border-emerald-500/50 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-emerald-400 font-mono font-bold w-28"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAutoCalculateFromNet()}
+                    className="px-2 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-bold flex items-center gap-1 cursor-pointer"
+                    title="Auto-calculate 18% GST"
+                  >
+                    <Calculator className="w-3 h-3" />
+                    <span>18% GST</span>
+                  </button>
+                </div>
+                {Number(invoice.netAmount) > 0 && (
+                  <span className="text-emerald-400/80 text-[9px] font-mono">
+                    Taxable: ₹{(Number(invoice.netAmount) / 1.18).toFixed(2)} · SGST+CGST: ₹{(Number(invoice.netAmount) - Number(invoice.netAmount) / 1.18).toFixed(2)}
+                  </span>
+                )}
+              </div>
+
+              {/* Payment Mode */}
+              <div className="flex flex-col gap-0.5">
+                <label className="text-gray-400 text-[9px] uppercase font-bold">Payment Mode</label>
+                <select
+                  value={invoice.paymentMode}
+                  onChange={(e) => setInvoice((prev) => ({
+                    ...prev,
+                    paymentMode: e.target.value,
+                    modeOfSupply: e.target.value,
+                  }))}
+                  className="bg-[#10233F] text-white border border-[#EFC988]/40 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#EFC988] font-medium min-w-[160px]"
+                >
+                  <option value="CASH">💵 Cash (Counter)</option>
+                  <option value="ONLINE / UPI">📱 Online / UPI</option>
+                  <option value="BANK TRANSFER (NEFT/RTGS)">🏦 Bank Transfer (NEFT/RTGS)</option>
+                  <option value="CHEQUE / DD">📝 Cheque / Demand Draft</option>
+                  <option value="CARD (POS Machine)">💳 Card (POS Machine)</option>
+                </select>
+              </div>
+
+              {/* Amount Received */}
+              <div className="flex flex-col gap-0.5">
+                <label className="text-gray-400 text-[9px] uppercase font-bold">Amount Received (₹)</label>
+                <input
+                  type="number"
+                  value={invoice.amountReceived}
+                  onChange={(e) => handleAmountReceivedChange(e.target.value)}
+                  placeholder="e.g. 30000"
+                  className="bg-[#10233F] text-white border border-blue-400/50 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-400 font-mono font-bold w-28"
+                />
+              </div>
+
+              {/* Balance Due (auto) */}
+              <div className="flex flex-col gap-0.5">
+                <label className="text-gray-400 text-[9px] uppercase font-bold">Balance Due (₹)</label>
+                <div className={`px-3 py-1.5 rounded-lg border font-mono font-bold text-xs ${Number(invoice.balanceDue) > 0 ? 'bg-red-900/30 border-red-500/50 text-red-400' : 'bg-emerald-900/20 border-emerald-500/30 text-emerald-400'}`}>
+                  ₹{Number(invoice.balanceDue || 0).toLocaleString('en-IN')}
+                  {Number(invoice.balanceDue) === 0 && <span className="ml-1 text-[9px]">✓ Cleared</span>}
+                </div>
+              </div>
             </div>
+
+            {/* Row 3: Installment Schedule */}
+            <div className="px-4 sm:px-6 py-3 flex flex-wrap items-start gap-4 border-b border-white/5">
+              <div className="flex items-center gap-1.5 text-amber-400 font-bold uppercase tracking-wider text-[10px] mr-1 mt-1">
+                <CalendarDays className="w-3 h-3" /> Installments
+              </div>
+
+              {/* Number of installments */}
+              <div className="flex flex-col gap-0.5">
+                <label className="text-gray-400 text-[9px] uppercase font-bold">No. of Installments</label>
+                <select
+                  value={invoice.installmentCount}
+                  onChange={(e) => handleInstallmentCountChange(Number(e.target.value))}
+                  className="bg-[#10233F] text-white border border-amber-400/40 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-amber-400 font-medium"
+                >
+                  <option value={1}>1 — Full Payment</option>
+                  <option value={2}>2 Installments</option>
+                  <option value={3}>3 Installments</option>
+                  <option value={4}>4 Installments</option>
+                  <option value={5}>5 Installments</option>
+                  <option value={6}>6 Installments</option>
+                </select>
+              </div>
+
+              {/* Installment rows */}
+              {invoice.installments.length > 1 && (
+                <div className="flex flex-wrap gap-2">
+                  {invoice.installments.map((inst, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5 bg-[#10233F] border border-amber-400/20 rounded-lg px-2 py-1.5">
+                      <span className="text-amber-400 font-bold text-[10px] w-14 shrink-0">EMI {inst.installmentNo}</span>
+                      <input
+                        type="number"
+                        value={inst.amount}
+                        onChange={(e) => handleInstallmentChange(idx, 'amount', e.target.value)}
+                        className="bg-transparent text-white border border-white/20 rounded px-1.5 py-0.5 text-[10px] font-mono w-20"
+                        placeholder="Amount"
+                      />
+                      <input
+                        type="date"
+                        value={inst.dueDate}
+                        onChange={(e) => handleInstallmentChange(idx, 'dueDate', e.target.value)}
+                        className="bg-transparent text-gray-300 border border-white/20 rounded px-1.5 py-0.5 text-[10px] w-28"
+                      />
+                      <select
+                        value={inst.status}
+                        onChange={(e) => handleInstallmentChange(idx, 'status', e.target.value)}
+                        className="bg-[#0A182B] text-gray-300 border border-white/20 rounded px-1 py-0.5 text-[10px]"
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Paid">Paid ✓</option>
+                        <option value="Overdue">Overdue ⚠</option>
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Row 4: Student Photo Upload */}
+            <div className="px-4 sm:px-6 py-2.5 flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-1.5 text-purple-400 font-bold uppercase tracking-wider text-[10px] mr-1">
+                <Upload className="w-3 h-3" /> Student Photo
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  className="px-3 py-1.5 rounded-lg border border-purple-400/40 bg-purple-900/20 text-purple-300 text-[10px] font-bold flex items-center gap-1.5 hover:bg-purple-800/30 cursor-pointer transition-colors"
+                >
+                  <Upload className="w-3 h-3" />
+                  {invoice.studentPhoto ? 'Change Photo' : 'Upload Photo'}
+                </button>
+                {invoice.studentPhoto && (
+                  <div className="flex items-center gap-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={invoice.studentPhoto}
+                      alt="Student"
+                      className="w-10 h-10 rounded-lg object-cover border-2 border-purple-400/50"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setInvoice((prev) => ({ ...prev, studentPhoto: '' }))}
+                      className="text-red-400 hover:text-red-300 text-[10px] cursor-pointer"
+                    >
+                      ✕ Remove
+                    </button>
+                  </div>
+                )}
+                {!invoice.studentPhoto && (
+                  <span className="text-gray-500 text-[10px]">No photo uploaded · will not appear in invoice</span>
+                )}
+              </div>
+            </div>
+
           </div>
         )}
 

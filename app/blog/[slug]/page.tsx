@@ -101,6 +101,44 @@ export default async function BlogPostPage({ params }: Props) {
   // Check if the content is primarily HTML (contains tags like <p>, <h2>, <strong>, <a>, etc.)
   const isHtmlContent = /<(?:p|h[2-6]|div|ul|ol|li|strong|em|a|br|img|blockquote|table|span)\b/i.test(rawContent);
 
+  /**
+   * parseInlineMarkdown — converts inline tokens to safe HTML strings:
+   * **bold**, *italic*, ~~strikethrough~~
+   * [color:#hex]text[/color], [bg:#hex]text[/bg], [font:name]text[/font]
+   */
+  function parseInlineMarkdown(text: string): string {
+    return text
+      // Font style: [font:georgia]text[/font]
+      .replace(
+        /\[font:([\w,\- "]+)\]([\s\S]+?)\[\/font\]/g,
+        (_, fontVal, inner) =>
+          `<span style="font-family:${fontVal}">${inner}</span>`
+      )
+      // Text color: [color:#hex]text[/color]
+      .replace(
+        /\[color:(#[0-9a-fA-F]{3,8}|[a-z]+)\]([\s\S]+?)\[\/color\]/g,
+        (_, colorVal, inner) =>
+          `<span style="color:${colorVal}">${inner}</span>`
+      )
+      // Background/highlight: [bg:#hex]text[/bg]
+      .replace(
+        /\[bg:(#[0-9a-fA-F]{3,8}|[a-z]+)\]([\s\S]+?)\[\/bg\]/g,
+        (_, bgVal, inner) =>
+          `<mark style="background-color:${bgVal};padding:1px 3px;border-radius:3px">${inner}</mark>`
+      )
+      // Bold: **text**
+      .replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>')
+      // Italic: *text*
+      .replace(/\*([^*\n]+?)\*/g, '<em>$1</em>')
+      // Strikethrough: ~~text~~
+      .replace(/~~([\s\S]+?)~~/g, '<del>$1</del>')
+      // Inline code: `text`
+      .replace(
+        /`([^`]+?)`/g,
+        '<code style="background:#f1f5f9;padding:1px 5px;border-radius:4px;font-size:0.85em;font-family:monospace">$1</code>'
+      );
+  }
+
   const paragraphs = isHtmlContent
     ? [] // Don't split HTML content into paragraphs
     : rawContent
@@ -248,41 +286,77 @@ export default async function BlogPostPage({ params }: Props) {
               />
             ) : (
               paragraphs.map((p, idx) => {
-              if (p.startsWith('## ') || p.startsWith('### ')) {
-                const headingText = p.replace(/^#+\s*/, '');
+              // H3 Subheading
+              if (p.startsWith('### ')) {
+                const headingText = p.replace(/^###\s*/, '');
+                return (
+                  <h3
+                    key={idx}
+                    className="font-serif text-xl sm:text-2xl font-bold text-[#10233F] pt-5 pb-1"
+                    dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(headingText) }}
+                  />
+                );
+              }
+              // H2 Heading
+              if (p.startsWith('## ')) {
+                const headingText = p.replace(/^##\s*/, '');
                 return (
                   <h2
                     key={idx}
                     className="font-serif text-2xl sm:text-3xl font-bold text-[#10233F] pt-6 pb-2 border-b border-[#E8DCCB]/60"
-                  >
-                    {headingText}
-                  </h2>
+                    dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(headingText) }}
+                  />
                 );
               }
+              // Blockquote
               if (p.startsWith('> ')) {
                 return (
                   <blockquote
                     key={idx}
                     className="my-6 pl-5 border-l-4 border-[#89190E] bg-white p-4 rounded-r-2xl italic text-[#10233F] font-serif shadow-2xs"
-                  >
-                    {p.replace(/^>\s*/, '')}
-                  </blockquote>
+                    dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(p.replace(/^>\s*/, '')) }}
+                  />
                 );
               }
+              // Horizontal rule
+              if (p === '---' || p === '***' || p === '___') {
+                return <hr key={idx} className="my-6 border-[#E8DCCB]" />;
+              }
+              // Bullet / unordered list
               if (p.startsWith('- ') || p.startsWith('* ')) {
-                const items = p.split('\n').map((line) => line.replace(/^[-*]\s*/, ''));
+                const items = p.split('\n').filter(Boolean).map((line) => line.replace(/^[-*]\s*/, ''));
                 return (
-                  <ul key={idx} className="space-y-2 my-4 pl-4 list-disc marker:text-[#89190E]">
+                  <ul key={idx} className="space-y-2 my-4 pl-5 list-disc marker:text-[#89190E]">
                     {items.map((it, i) => (
-                      <li key={i}>{it}</li>
+                      <li
+                        key={i}
+                        dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(it) }}
+                      />
                     ))}
                   </ul>
                 );
               }
+              // Numbered list
+              if (/^\d+\.\s/.test(p)) {
+                const items = p.split('\n').filter(Boolean).map((line) => line.replace(/^\d+\.\s*/, ''));
+                return (
+                  <ol key={idx} className="space-y-2 my-4 pl-5 list-decimal marker:text-[#89190E]">
+                    {items.map((it, i) => (
+                      <li
+                        key={i}
+                        dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(it) }}
+                      />
+                    ))}
+                  </ol>
+                );
+              }
+              // Regular paragraph with inline formatting
               return (
-                <p key={idx} className="text-justify sm:text-left leading-relaxed">
-                  {p}
-                </p>
+                <p
+                  key={idx}
+                  className="text-justify sm:text-left leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(p) }}
+                />
               );
               })
             )}

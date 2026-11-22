@@ -167,6 +167,13 @@ export default function SuperAdminMasterDashboard() {
   const [newStudentTotalFee, setNewStudentTotalFee] = useState('50000');
   const [newStudentPaidFee, setNewStudentPaidFee] = useState('0');
   const [newStudentNextDueDate, setNewStudentNextDueDate] = useState('');
+  const [newStudentCourseIds, setNewStudentCourseIds] = useState<string[]>([]);
+
+  // Advanced Lead Filters State (Requirement 5)
+  const [leadStatusFilter, setLeadStatusFilter] = useState<'All' | 'New' | 'Converted' | 'Dead' | 'Follow-up'>('All');
+  const [leadSearchInput, setLeadSearchInput] = useState('');
+  const [leadDateFilter, setLeadDateFilter] = useState('');
+  const [leadSourceFilter, setLeadSourceFilter] = useState('All');
 
   const [editStudentTotalFee, setEditStudentTotalFee] = useState('0');
   const [editStudentPaidFee, setEditStudentPaidFee] = useState('0');
@@ -740,10 +747,27 @@ export default function SuperAdminMasterDashboard() {
           pass: assignedPassword,
         });
         showToast(`Student ${newStudentName} registered successfully and synced to database.`);
+        if (newStudentCourseIds.length > 0) {
+          for (const cid of newStudentCourseIds) {
+            const matchedCrs = courses.find((c) => c.id === cid);
+            await enrollStudentAction({
+              studentPhone: newStudentPhone.trim(),
+              studentName: newStudentName.trim(),
+              courseId: cid,
+              courseTitle: matchedCrs?.title || newStudentStream,
+              assignedBy: 'super-admin',
+              assignedByName: 'MSI Super Admin',
+              progressPercentage: 0,
+              completedLectureIds: [],
+            });
+          }
+          setEnrollments(getStoredEnrollments());
+        }
         setShowAddStudentModal(false);
         setNewStudentName('');
         setNewStudentPhone('');
         setNewStudentEmail('');
+        setNewStudentCourseIds([]);
         if (Array.isArray(data.students)) {
           setStudents(data.students);
         } else {
@@ -2521,16 +2545,47 @@ export default function SuperAdminMasterDashboard() {
     );
   }, [students, searchQuery]);
 
+  const leadCounts = useMemo(() => {
+    return {
+      All: leads.length,
+      New: leads.filter((l) => l.status === 'New').length,
+      Converted: leads.filter((l) => l.status === 'Converted').length,
+      Dead: leads.filter((l) => l.status === 'Dead').length,
+      'Follow-up': leads.filter((l) => l.status === 'Follow-up').length,
+    };
+  }, [leads]);
+
   const filteredLeads = useMemo(() => {
-    if (!searchQuery.trim()) return leads;
-    const q = searchQuery.toLowerCase();
-    return leads.filter(
-      (l) =>
-        l.name.toLowerCase().includes(q) ||
-        l.mobile.includes(q) ||
-        l.targetCourse.toLowerCase().includes(q)
-    );
-  }, [leads, searchQuery]);
+    return leads.filter((l) => {
+      if (leadStatusFilter !== 'All' && l.status !== leadStatusFilter) {
+        return false;
+      }
+      const effectiveSearch = leadSearchInput.trim() || searchQuery.trim();
+      if (effectiveSearch) {
+        const q = effectiveSearch.toLowerCase();
+        const nameMatch = l.name?.toLowerCase().includes(q);
+        const mobileMatch = l.mobile?.includes(q);
+        const emailMatch = (l as any).email?.toLowerCase().includes(q);
+        const courseMatch = l.targetCourse?.toLowerCase().includes(q);
+        const locMatch = l.location?.toLowerCase().includes(q);
+        if (!nameMatch && !mobileMatch && !emailMatch && !courseMatch && !locMatch) {
+          return false;
+        }
+      }
+      if (leadDateFilter.trim()) {
+        const rec = (l.receivedDate || '').toLowerCase();
+        if (!rec.includes(leadDateFilter.trim().toLowerCase())) {
+          return false;
+        }
+      }
+      if (leadSourceFilter !== 'All') {
+        if (l.source !== leadSourceFilter) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [leads, leadStatusFilter, leadSearchInput, searchQuery, leadDateFilter, leadSourceFilter]);
 
   // ── 2a. Bulk Student Deletion Handlers ─────────────────────────────────────
   const isAllFilteredStudentsSelected =
@@ -3954,8 +4009,21 @@ export default function SuperAdminMasterDashboard() {
                             <td className="py-3.5 px-4 font-mono font-semibold text-slate-700 dark:text-slate-300">
                               +91 {stu.phone.slice(0, 5)} {stu.phone.slice(5)}
                             </td>
-                            <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 font-medium max-w-xs truncate">
-                              {stu.stream}
+                            <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 font-medium max-w-xs">
+                              <div className="truncate">{stu.stream}</div>
+                              {(() => {
+                                const studentEnrs = enrollments.filter(
+                                  (e) => e.studentPhone === stu.phone || e.studentId === stu.id
+                                );
+                                return (
+                                  <div className="flex items-center gap-1.5 mt-1">
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200/50">
+                                      <BookOpen className="w-2.5 h-2.5" />
+                                      {studentEnrs.length} {studentEnrs.length === 1 ? 'LMS Course' : 'LMS Courses'}
+                                    </span>
+                                  </div>
+                                );
+                              })()}
                             </td>
                             <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">
                               ₹{(stu.totalFee || 0).toLocaleString('en-IN')}
@@ -4156,6 +4224,103 @@ export default function SuperAdminMasterDashboard() {
                     <Plus className="w-4 h-4" />
                     <span>+ Generate Single Lead</span>
                   </button>
+                </div>
+              </div>
+
+              {/* Requirement 5: Interactive Lead Status Filter Tabs with Counts */}
+              <div className="flex flex-wrap items-center justify-between gap-3 p-2.5 bg-slate-100/70 dark:bg-white/5 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {(
+                    [
+                      { id: 'All', label: 'All Leads', count: leadCounts.All, bgActive: 'bg-[#89190E]' },
+                      { id: 'New', label: 'New', count: leadCounts.New, bgActive: 'bg-indigo-600' },
+                      { id: 'Converted', label: 'Converted', count: leadCounts.Converted, bgActive: 'bg-emerald-600' },
+                      { id: 'Dead', label: 'Dead', count: leadCounts.Dead, bgActive: 'bg-rose-600' },
+                      { id: 'Follow-up', label: 'Follow-up', count: leadCounts['Follow-up'], bgActive: 'bg-amber-600' },
+                    ] as const
+                  ).map((tab) => {
+                    const isActive = leadStatusFilter === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setLeadStatusFilter(tab.id as any)}
+                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          isActive
+                            ? `${tab.bgActive} text-white shadow-md shadow-black/10 scale-102`
+                            : 'bg-white dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/15 border border-slate-200 dark:border-white/10'
+                        }`}
+                      >
+                        <span>{tab.label}</span>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                            isActive
+                              ? 'bg-white/25 text-white'
+                              : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300'
+                          }`}
+                        >
+                          {tab.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Requirement 5: Search, Date-wise & Source Filter Controls */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 glass-card rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs">
+                <div className="relative">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={leadSearchInput}
+                    onChange={(e) => setLeadSearchInput(e.target.value)}
+                    placeholder="Search candidate name, mobile, email..."
+                    className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-white/5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#89190E]"
+                  />
+                </div>
+
+                <div className="relative">
+                  <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={leadDateFilter}
+                    onChange={(e) => setLeadDateFilter(e.target.value)}
+                    placeholder="Filter by date (e.g. Today, Jan 2026)..."
+                    className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-white/5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#89190E]"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-slate-400 shrink-0" />
+                  <select
+                    value={leadSourceFilter}
+                    onChange={(e) => setLeadSourceFilter(e.target.value)}
+                    className="w-full p-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-white/5 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none"
+                  >
+                    <option value="All">All Lead Sources</option>
+                    <option value="Super Admin (#2410)">Super Admin (#2410)</option>
+                    <option value="Meta Ads (Facebook/Instagram)">Meta Ads (Facebook/Instagram)</option>
+                    <option value="Google Ads">Google Ads</option>
+                    <option value="Website Form">Website Form</option>
+                    <option value="Walk-in Desk">Walk-in Desk</option>
+                    <option value="Phone Enquiry">Phone Enquiry</option>
+                    <option value="Alumni Referral">Alumni Referral</option>
+                  </select>
+                  {(leadStatusFilter !== 'All' || leadSearchInput || leadDateFilter || leadSourceFilter !== 'All') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLeadStatusFilter('All');
+                        setLeadSearchInput('');
+                        setLeadDateFilter('');
+                        setLeadSourceFilter('All');
+                      }}
+                      className="px-2.5 py-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 underline whitespace-nowrap cursor-pointer"
+                    >
+                      Reset
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -5595,6 +5760,53 @@ export default function SuperAdminMasterDashboard() {
 
               <div>
                 <label className="block text-xs font-bold uppercase text-[#10233F] mb-1">
+                  Assign LMS Courses (Optional)
+                </label>
+                <div className="max-h-36 overflow-y-auto rounded-xl border border-[#E8DCCB] p-2 space-y-1.5 bg-slate-50/50">
+                  {courses.length === 0 ? (
+                    <p className="text-[11px] text-gray-500 italic p-1">No LMS courses found</p>
+                  ) : (
+                    courses.map((crs) => {
+                      const isChecked = newStudentCourseIds.includes(crs.id);
+                      return (
+                        <label
+                          key={crs.id}
+                          className={`flex items-center gap-2 p-2 rounded-lg text-xs cursor-pointer transition-colors ${
+                            isChecked
+                              ? 'bg-indigo-50 border border-indigo-200 text-indigo-900 font-semibold'
+                              : 'hover:bg-gray-100 text-slate-700'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setNewStudentCourseIds((prev) => [...prev, crs.id]);
+                              } else {
+                                setNewStudentCourseIds((prev) => prev.filter((id) => id !== crs.id));
+                              }
+                            }}
+                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <div className="flex-1 truncate">
+                            <span className="truncate">{crs.title}</span>
+                            {crs.category && (
+                              <span className="ml-1.5 text-[10px] text-gray-400 font-mono">({crs.category})</span>
+                            )}
+                          </div>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1">
+                  Selected courses will be instantly accessible in the student LMS portal upon account creation.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase text-[#10233F] mb-1">
                   Email ID (Optional)
                 </label>
                 <input
@@ -5763,6 +5975,60 @@ export default function SuperAdminMasterDashboard() {
                 <span className="font-semibold text-[#89190E]">
                   {selectedStudentForView.profile?.batch || selectedStudentForView.stream}
                 </span>
+              </div>
+            </div>
+
+            {/* Enrolled Courses */}
+            <div className="mt-4 pt-3 border-t border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase text-[#10233F] flex items-center gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
+                  Enrolled LMS Courses
+                </span>
+                <span className="text-[10px] font-mono font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">
+                  {
+                    enrollments.filter(
+                      (e) =>
+                        e.studentPhone === selectedStudentForView.phone ||
+                        e.studentId === selectedStudentForView.id
+                    ).length
+                  }{' '}
+                  Active
+                </span>
+              </div>
+              <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                {(() => {
+                  const studentEnrs = enrollments.filter(
+                    (e) =>
+                      e.studentPhone === selectedStudentForView.phone ||
+                      e.studentId === selectedStudentForView.id
+                  );
+                  if (studentEnrs.length === 0) {
+                    return (
+                      <p className="text-xs text-gray-400 italic p-2 bg-slate-50 rounded-xl text-center">
+                        No courses currently enrolled. Click "+ Assign Course" below.
+                      </p>
+                    );
+                  }
+                  return studentEnrs.map((enr, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-xs"
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        <span className="font-semibold text-slate-800 truncate">
+                          {enr.courseTitle || enr.courseId}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono text-slate-400 shrink-0 ml-2">
+                        {enr.enrolledAt
+                          ? new Date(enr.enrolledAt).toLocaleDateString('en-IN')
+                          : 'Active'}
+                      </span>
+                    </div>
+                  ));
+                })()}
               </div>
             </div>
 

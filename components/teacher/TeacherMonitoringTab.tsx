@@ -298,12 +298,19 @@ export default function TeacherMonitoringTab({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200/40 dark:divide-white/10">
-              {filteredStudents.map((stu) => (
-                <tr
-                  key={stu.id}
-                  onClick={() => setSelectedStudent(stu)}
-                  className="hover:bg-white/40 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                >
+              {filteredStudents.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-10 text-gray-400 font-sans text-xs">
+                    No active student monitoring logs recorded yet for this batch. Enrolled students will appear here as they attend classes and submit assignments.
+                  </td>
+                </tr>
+              ) : (
+                filteredStudents.map((stu) => (
+                  <tr
+                    key={stu.id}
+                    onClick={() => setSelectedStudent(stu)}
+                    className="hover:bg-white/40 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  >
                   <td className="p-3">
                     <span className="font-bold text-gray-900 dark:text-white block">{stu.name}</span>
                     <span className="font-mono text-[10px] text-gray-500 dark:text-gray-400">{stu.rollNo}</span>
@@ -343,7 +350,7 @@ export default function TeacherMonitoringTab({
                     </span>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

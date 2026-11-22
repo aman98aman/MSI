@@ -16,6 +16,9 @@ import MarkAttendanceModal from '@/components/teacher/MarkAttendanceModal';
 import ScheduleOneToOneModal from '@/components/teacher/ScheduleOneToOneModal';
 import TeacherLectureModal from '@/components/teacher/TeacherLectureModal';
 import EnrollStudentModal from '@/components/teacher/EnrollStudentModal';
+import TeacherNotesTab from '@/components/teacher/TeacherNotesTab';
+import TeacherTestsTab from '@/components/teacher/TeacherTestsTab';
+import TeacherAssessmentAnalyticsTab from '@/components/teacher/TeacherAssessmentAnalyticsTab';
 import { AlertTriangle, LogOut } from 'lucide-react';
 import {
   getStoredCourses,
@@ -27,6 +30,7 @@ import {
   MSICourse,
   LMS_SYNC_EVENT,
   enrollStudentAction,
+  getStoredEnrollments,
 } from '@/lib/lmsStore';
 import {
   TEACHER_PROFILES,
@@ -102,12 +106,12 @@ export default function TeacherDashboardPage() {
   const [lmsCourses, setLmsCourses] = useState<MSICourse[]>([]);
   const [selectedCourseForLectures, setSelectedCourseForLectures] = useState<MSICourse | null>(null);
 
-  // Dynamic state repositories
-  const [contentList, setContentList] = useState<TeacherContentItem[]>(ALL_TEACHER_CONTENT);
-  const [assessmentsList, setAssessmentsList] = useState<AssessmentItem[]>(ALL_ASSESSMENTS);
-  const [schedulesList, setSchedulesList] = useState<TeacherClassSchedule[]>(ALL_TEACHER_SCHEDULES);
-  const [postsList, setPostsList] = useState<CommunicationPost[]>(ALL_COMMUNICATIONS);
-  const [oneToOneList, setOneToOneList] = useState<OneToOneSession[]>(ALL_ONE_TO_ONE_SESSIONS);
+  // Dynamic state repositories (Initialized empty to remove dummy placeholder data)
+  const [contentList, setContentList] = useState<TeacherContentItem[]>([]);
+  const [assessmentsList, setAssessmentsList] = useState<AssessmentItem[]>([]);
+  const [schedulesList, setSchedulesList] = useState<TeacherClassSchedule[]>([]);
+  const [postsList, setPostsList] = useState<CommunicationPost[]>([]);
+  const [oneToOneList, setOneToOneList] = useState<OneToOneSession[]>([]);
 
   // Active Modals
   const [isCreateTestOpen, setIsCreateTestOpen] = useState(false);
@@ -446,17 +450,31 @@ export default function TeacherDashboardPage() {
   // "Teacher data must always be filtered through course/subject/student assignments.
   // A JEE teacher must not see CLAT students unless explicitly assigned."
   // --------------------------------------------------------------------------
-  const filteredCourses = ALL_TEACHER_COURSES.filter(
-    (c) => c.stream === activeTeacher.stream && activeTeacher.assignedCourseCodes.includes(c.code)
-  );
+  // Real enrolled students filtered strictly to this faculty's assigned courses
+  const enrolledStudentsForTeacher = useMemo(() => {
+    const teacherCourseIds = lmsCourses.map((c) => c.id);
+    const allEnrollments = getStoredEnrollments();
+    const relevantEnrollments = allEnrollments.filter(
+      (e) =>
+        teacherCourseIds.includes(e.courseId) ||
+        (e.assignedByTeacherId && e.assignedByTeacherId === activeTeacher.id)
+    );
+    const enrolledPhones = new Set(
+      relevantEnrollments.map((e) => (e.studentPhone || '').replace(/\D/g, '').slice(-10))
+    );
+    return registeredStudents.filter((s) => {
+      const p = (s.phone || '').replace(/\D/g, '').slice(-10);
+      return enrolledPhones.has(p);
+    });
+  }, [lmsCourses, registeredStudents, activeTeacher.id]);
+
+  const filteredCourses: TeacherCourse[] = [];
 
   const filteredContent = contentList.filter((c) => c.stream === activeTeacher.stream);
 
   const filteredAssessments = assessmentsList.filter((a) => a.stream === activeTeacher.stream);
 
-  const filteredStudents = ALL_STUDENT_MONITORING.filter(
-    (s) => s.stream === activeTeacher.stream
-  );
+  const filteredStudents: StudentMonitoringRecord[] = [];
 
   const filteredSchedules = schedulesList.filter((s) => s.stream === activeTeacher.stream);
 
@@ -464,13 +482,9 @@ export default function TeacherDashboardPage() {
 
   const filteredOneToOne = oneToOneList.filter((o) => o.stream === activeTeacher.stream);
 
-  // Combined list of teachers for the switcher menu
+  // Authenticated faculty profile only - remove dummy teacher records from switcher
   const combinedTeachers = useMemo(() => {
-    const list = [...TEACHER_PROFILES];
-    if (activeTeacher && !list.some((t) => t.id === activeTeacher.id || (t.email && activeTeacher.email && t.email.toLowerCase() === activeTeacher.email.toLowerCase()))) {
-      list.unshift(activeTeacher);
-    }
-    return list;
+    return [activeTeacher];
   }, [activeTeacher]);
 
   // Switch Faculty handler (Demonstrating Role-Based Data Isolation)
@@ -572,7 +586,7 @@ export default function TeacherDashboardPage() {
               lmsCourses={lmsCourses}
               schedules={filteredSchedules}
               assessments={filteredAssessments}
-              totalStudents={filteredStudents.length}
+              totalStudents={enrolledStudentsForTeacher.length}
               onNavigateTab={(tab) => setActiveTab(tab)}
               onLaunchAttendance={(session) => setActiveAttendanceSession(session)}
               onOpenLectureModal={(crs) => setSelectedCourseForLectures(crs)}
@@ -580,6 +594,30 @@ export default function TeacherDashboardPage() {
                 setSelectedCourseForEnroll(crs || null);
                 setIsEnrollStudentOpen(true);
               }}
+            />
+          )}
+
+          {activeTab === 'notes' && (
+            <TeacherNotesTab
+              lmsCourses={lmsCourses}
+              teacherId={activeTeacher.id}
+              teacherName={activeTeacher.name}
+            />
+          )}
+
+          {activeTab === 'tests' && (
+            <TeacherTestsTab
+              lmsCourses={lmsCourses}
+              teacherId={activeTeacher.id}
+              teacherName={activeTeacher.name}
+            />
+          )}
+
+          {activeTab === 'analytics' && (
+            <TeacherAssessmentAnalyticsTab
+              lmsCourses={lmsCourses}
+              teacherId={activeTeacher.id}
+              enrolledStudents={enrolledStudentsForTeacher}
             />
           )}
 

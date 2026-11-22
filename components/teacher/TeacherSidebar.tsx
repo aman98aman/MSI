@@ -13,12 +13,18 @@ import {
   GraduationCap,
   Sparkles,
   X,
+  FileText,
+  ClipboardList,
+  BarChart2,
 } from 'lucide-react';
 import { TeacherProfile } from './data/teacherMockData';
 
 export type TeacherModuleTab =
   | 'dashboard'
   | 'content'
+  | 'notes'
+  | 'tests'
+  | 'analytics'
   | 'assessment'
   | 'monitoring'
   | 'classes'
@@ -54,25 +60,37 @@ export default function TeacherSidebar({
       icon: LayoutDashboard,
     },
     {
-      id: 'content',
-      label: 'Content Hub',
-      description: 'Videos, PDFs & Publish/Hide',
-      icon: FolderOpen,
-      badge: 'Active',
+      id: 'notes',
+      label: 'Notes Management',
+      description: 'Upload course PDFs & reading material',
+      icon: FileText,
+      badge: 'PDF',
       badgeColor: 'blue',
     },
     {
-      id: 'assessment',
-      label: 'Assessment',
-      description: 'Create tests & question bank',
-      icon: FileCheck,
-      badge: 'New',
+      id: 'tests',
+      label: 'Test Management',
+      description: 'Question banks & randomized exams',
+      icon: ClipboardList,
+      badge: 'LMS',
       badgeColor: 'amber',
     },
     {
+      id: 'analytics',
+      label: 'Assessment Analytics',
+      description: 'Scores, participation & proctoring logs',
+      icon: BarChart2,
+    },
+    {
+      id: 'content',
+      label: 'Content Hub',
+      description: 'Videos, lectures & curriculum',
+      icon: FolderOpen,
+    },
+    {
       id: 'monitoring',
-      label: 'Monitoring',
-      description: 'Attendance & student scores',
+      label: 'Enrolled Students',
+      description: 'Role-isolated student roster',
       icon: Activity,
     },
     {

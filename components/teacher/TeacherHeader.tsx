@@ -81,50 +81,11 @@ export default function TeacherHeader({
 
       {/* Right: Switch Stream, Theme Toggle, Notifications, User Menu */}
       <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
-        {/* Switch Faculty Demonstration Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setShowSwitchMenu(!showSwitchMenu)}
-            className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-indigo-200/80 dark:border-indigo-500/30 bg-indigo-50/60 dark:bg-indigo-950/40 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/60 text-[11px] sm:text-xs font-bold text-indigo-600 dark:text-indigo-400 transition-all shadow-xs"
-            title="Demonstrate Faculty Stream Data Isolation Rule"
-          >
-            <ArrowRightLeft className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="hidden md:inline">Stream:</span>
-            <span className="underline">{teacher.stream}</span>
-            <ChevronDown className="w-3 h-3 flex-shrink-0" />
-          </button>
-
-          {showSwitchMenu && (
-            <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-72 max-w-sm bg-white/95 dark:bg-[#121A2B]/95 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 rounded-2xl shadow-2xl p-3 z-50 animate-slideDown">
-              <div className="px-2 py-1.5 text-[10px] font-mono uppercase font-bold text-indigo-600 dark:text-indigo-400 border-b border-slate-200/60 dark:border-white/5">
-                Role-Based Stream Isolation Test
-              </div>
-              <div className="space-y-1 mt-2">
-                {allTeachers.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => {
-                      onSwitchTeacher(t.id);
-                      setShowSwitchMenu(false);
-                    }}
-                    className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-colors ${
-                      t.id === teacher.id
-                        ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold border border-indigo-200 dark:border-indigo-500/30'
-                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <div>
-                      <p className="text-xs font-bold">{t.name}</p>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400">{t.stream} • {t.title}</p>
-                    </div>
-                    {t.id === teacher.id && (
-                      <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold">Active</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+        {/* Faculty Stream Status Badge */}
+        <div className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-indigo-200/80 dark:border-indigo-500/30 bg-indigo-50/60 dark:bg-indigo-950/40 text-[11px] sm:text-xs font-bold text-indigo-600 dark:text-indigo-400 shadow-xs">
+          <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
+          <span className="hidden md:inline">Faculty:</span>
+          <span>{teacher.stream} Division</span>
         </div>
 
         {/* Theme Toggle */}

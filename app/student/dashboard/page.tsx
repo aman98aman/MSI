@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, LogOut } from 'lucide-react';
 import StudentHeader from '@/components/student/StudentHeader';
@@ -17,6 +17,9 @@ import FeeReceiptModal from '@/components/student/FeeReceiptModal';
 import SubmitAssignmentModal from '@/components/student/SubmitAssignmentModal';
 import MSIPlayerModal from '@/components/student/MSIPlayerModal';
 import RazorpayCheckoutModal, { RazorpayPaymentSuccessInfo } from '@/components/payments/RazorpayCheckoutModal';
+import StudentNotesTab from '@/components/student/StudentNotesTab';
+import StudentOnlineTestTab from '@/components/student/StudentOnlineTestTab';
+import StudentResultsTab from '@/components/student/StudentResultsTab';
 import {
   INITIAL_STUDENT_PROFILE,
   ACTIVE_COURSES,
@@ -38,7 +41,7 @@ import {
   FeeBreakdownItem,
   AssignmentItem,
 } from '@/components/student/data/studentMockData';
-import { MSICourse, syncEnrollmentsFromServer } from '@/lib/lmsStore';
+import { MSICourse, syncEnrollmentsFromServer, getStoredEnrollments } from '@/lib/lmsStore';
 
 export default function StudentDashboardPage() {
   const router = useRouter();
@@ -50,6 +53,16 @@ export default function StudentDashboardPage() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [revocationModalOpen, setRevocationModalOpen] = useState(false);
   const [revocationCountdown, setRevocationCountdown] = useState(4);
+
+  // Compute student's real enrolled courses from LMS registry
+  const enrolledCourseIds = useMemo(() => {
+    const cleanPhone = (student.phone || '').replace(/\D/g, '').slice(-10);
+    const allEnrollments = getStoredEnrollments();
+    const ids = allEnrollments
+      .filter((e) => (e.studentPhone || '').replace(/\D/g, '').slice(-10) === cleanPhone)
+      .map((e) => e.courseId);
+    return ids;
+  }, [student.phone]);
 
   const triggerInstantRevocation = useCallback(() => {
     setRevocationModalOpen(true);
@@ -511,6 +524,27 @@ export default function StudentDashboardPage() {
             <StudentProfileTab
               student={student}
               onUpdateProfile={handleUpdateProfile}
+            />
+          )}
+
+          {activeTab === 'notes' && (
+            <StudentNotesTab
+              studentPhone={student.phone}
+              enrolledCourseIds={enrolledCourseIds}
+            />
+          )}
+
+          {activeTab === 'online-tests' && (
+            <StudentOnlineTestTab
+              studentPhone={student.phone}
+              studentName={student.name}
+              enrolledCourseIds={enrolledCourseIds}
+            />
+          )}
+
+          {activeTab === 'results' && (
+            <StudentResultsTab
+              studentPhone={student.phone}
             />
           )}
 

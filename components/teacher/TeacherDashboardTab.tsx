@@ -178,12 +178,12 @@ export default function TeacherDashboardTab({
 
             <div className="p-4 rounded-2xl bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/15 text-center min-w-0 shadow-inner">
               <span className="text-[10px] font-mono tracking-wider uppercase text-white/70 block">
-                Average Score
+                Active Courses
               </span>
               <span className="font-serif text-2xl sm:text-3xl font-bold text-white mt-0.5 block">
-                81.2%
+                {lmsCourses.length}
               </span>
-              <span className="text-[10px] text-[#EFC988] font-semibold block truncate">Term Diagnostics</span>
+              <span className="text-[10px] text-[#EFC988] font-semibold block truncate">LMS Assigned</span>
             </div>
           </div>
         </div>
@@ -193,21 +193,21 @@ export default function TeacherDashboardTab({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <GlassStatCard
           title="Assigned Courses"
-          value={courses.length}
-          trend={{ value: `${courses.length} Active`, isPositive: true }}
+          value={lmsCourses.length}
+          trend={{ value: `${lmsCourses.length} Active`, isPositive: true }}
           icon={<BookOpen className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />}
-          sparklineData={[4, 5, 5, 6, 7, 7, courses.length]}
-          description={courses.map((c) => c.code).join(', ')}
+          sparklineData={[1, 2, 2, 3, 3, lmsCourses.length]}
+          description={lmsCourses.map((c) => c.title.split(':')[0]).join(', ') || 'No active courses'}
           onClick={() => onNavigateTab('content')}
         />
 
         <GlassStatCard
           title="Teaching Papers"
-          value={teacher.assignedSubjects.length}
+          value={lmsCourses.length}
           trend={{ value: 'Full Syllabus', isPositive: true }}
           icon={<GraduationCap className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
-          sparklineData={[1, 2, 2, 3, 3, teacher.assignedSubjects.length]}
-          description={teacher.assignedSubjects[0] || 'Core Curriculum'}
+          sparklineData={[1, 2, 2, 3, 3, lmsCourses.length]}
+          description={lmsCourses[0]?.title || 'Core Curriculum'}
           onClick={() => onNavigateTab('content')}
         />
 
@@ -216,7 +216,7 @@ export default function TeacherDashboardTab({
           value={totalStudents}
           trend={{ value: `${teacher.stream} Stream`, isPositive: true }}
           icon={<Users className="w-5 h-5 text-[#89190E] dark:text-[#EFC988]" />}
-          sparklineData={[32, 45, 58, 70, 85, 96, totalStudents]}
+          sparklineData={[1, 3, 5, 8, 12, 16, totalStudents]}
           description="Role-isolated cohort"
           onClick={() => onNavigateTab('monitoring')}
         />
@@ -226,8 +226,8 @@ export default function TeacherDashboardTab({
           value={upcomingClasses.length}
           trend={{ value: 'Scheduled Today', isPositive: true }}
           icon={<Calendar className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
-          sparklineData={[2, 1, 3, 2, 4, 3, upcomingClasses.length]}
-          description={`Next: ${upcomingClasses[0]?.time || 'Completed'}`}
+          sparklineData={[0, 1, 1, 2, 1, 2, upcomingClasses.length]}
+          description={`Next: ${upcomingClasses[0]?.time || 'None'}`}
           onClick={() => onNavigateTab('classes')}
         />
       </div>
@@ -393,49 +393,11 @@ export default function TeacherDashboardTab({
                   );
                 })
               ) : (
-                courses.map((course) => (
-                  <div key={course.id} className="pt-4 first:pt-2">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#89190E]/10 dark:bg-[#89190E]/20 text-[#89190E] dark:text-[#EFC988]">
-                            {course.code}
-                          </span>
-                          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                            {course.batch}
-                          </span>
-                        </div>
-                        <h4 className="font-serif font-bold text-base text-gray-900 dark:text-white mt-1">
-                          {course.title}
-                        </h4>
-                      </div>
-                      <div className="text-left sm:text-right">
-                        <span className="text-xs font-bold text-gray-900 dark:text-white">
-                          {course.totalStudents} Students Enrolled
-                        </span>
-                        <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                          Next lecture: {course.nextLectureTime}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Syllabus Progress Bar */}
-                    <div className="mt-3">
-                      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        <span>
-                          Lectures Delivered: <strong className="text-gray-800 dark:text-gray-200">{course.lecturesCompleted} / {course.totalLectures}</strong>
-                        </span>
-                        <span className="font-bold text-[#89190E] dark:text-[#EFC988]">{course.progress}% Completed</span>
-                      </div>
-                      <div className="w-full h-2 bg-gray-200/70 dark:bg-white/10 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-linear-to-r from-[#89190E] to-amber-500 rounded-full transition-all duration-500"
-                          style={{ width: `${course.progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))
+                <div className="py-8 text-center bg-gray-50 dark:bg-white/5 rounded-2xl border border-dashed border-gray-200 dark:border-white/10">
+                  <BookOpen className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                  <h4 className="font-serif font-bold text-gray-900 dark:text-white text-sm">No Courses Assigned Yet</h4>
+                  <p className="text-xs text-gray-500 mt-1">Super Admin has not assigned any active courses to your faculty account yet.</p>
+                </div>
               )}
             </div>
           </GlassCard>
@@ -458,57 +420,65 @@ export default function TeacherDashboardTab({
             </div>
 
             <div className="space-y-3 mt-4">
-              {schedules.map((session) => (
-                <div
-                  key={session.id}
-                  className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                    session.isLiveNow
-                      ? 'bg-amber-500/10 dark:bg-amber-950/30 border-amber-400 dark:border-amber-600/50 ring-1 ring-amber-400/30'
-                      : 'bg-white/60 dark:bg-white/5 border-gray-200/60 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20'
-                  }`}
-                >
-                  <div className="space-y-1 min-w-0">
-                    <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-gray-900 text-white dark:bg-white/20">
-                        {session.time}
-                      </span>
-                      <span className="text-xs font-semibold text-[#89190E] dark:text-[#EFC988]">{session.type}</span>
-                      {session.isLiveNow && (
-                        <span className="text-[10px] font-bold text-rose-700 dark:text-rose-300 bg-rose-500/15 border border-rose-500/30 px-2 py-0.5 rounded-full animate-pulse flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                          Happening Now
+              {schedules.length === 0 ? (
+                <div className="py-8 text-center bg-gray-50 dark:bg-white/5 rounded-2xl border border-dashed border-gray-200 dark:border-white/10">
+                  <Calendar className="w-7 h-7 mx-auto text-gray-400 mb-1.5" />
+                  <h5 className="font-serif font-bold text-gray-800 dark:text-gray-200 text-xs">No Lectures Scheduled Today</h5>
+                  <p className="text-[11px] text-gray-500 mt-0.5">Your schedule for today is clear.</p>
+                </div>
+              ) : (
+                schedules.map((session) => (
+                  <div
+                    key={session.id}
+                    className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                      session.isLiveNow
+                        ? 'bg-amber-500/10 dark:bg-amber-950/30 border-amber-400 dark:border-amber-600/50 ring-1 ring-amber-400/30'
+                        : 'bg-white/60 dark:bg-white/5 border-gray-200/60 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20'
+                    }`}
+                  >
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-gray-900 text-white dark:bg-white/20">
+                          {session.time}
                         </span>
+                        <span className="text-xs font-semibold text-[#89190E] dark:text-[#EFC988]">{session.type}</span>
+                        {session.isLiveNow && (
+                          <span className="text-[10px] font-bold text-rose-700 dark:text-rose-300 bg-rose-500/15 border border-rose-500/30 px-2 py-0.5 rounded-full animate-pulse flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                            Happening Now
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="font-serif font-bold text-sm sm:text-base text-gray-900 dark:text-white">
+                        {session.subject}
+                      </h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Batch: {session.batch} • Venue: {session.venue}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-shrink-0 w-full sm:w-auto">
+                      <button
+                        onClick={() => onLaunchAttendance(session)}
+                        className="w-full sm:w-auto px-4 py-2 rounded-xl bg-white/80 dark:bg-white/10 border border-[#89190E]/60 dark:border-[#EFC988]/60 text-[#89190E] dark:text-[#EFC988] hover:bg-[#89190E] hover:text-white dark:hover:bg-[#EFC988] dark:hover:text-gray-950 text-xs font-bold transition-all text-center cursor-pointer shadow-xs"
+                      >
+                        Mark Attendance
+                      </button>
+                      {session.meetLink && (
+                        <a
+                          href={session.meetLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-full sm:w-auto justify-center px-4 py-2 rounded-xl bg-linear-to-r from-[#89190E] to-[#B22222] hover:opacity-95 text-white text-xs font-bold flex items-center space-x-1.5 transition-all shadow-md cursor-pointer"
+                        >
+                          <Video className="w-3.5 h-3.5 text-[#EFC988]" />
+                          <span>Enter Live Session</span>
+                        </a>
                       )}
                     </div>
-                    <h4 className="font-serif font-bold text-sm sm:text-base text-gray-900 dark:text-white">
-                      {session.subject}
-                    </h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Batch: {session.batch} • Venue: {session.venue}
-                    </p>
                   </div>
-
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-shrink-0 w-full sm:w-auto">
-                    <button
-                      onClick={() => onLaunchAttendance(session)}
-                      className="w-full sm:w-auto px-4 py-2 rounded-xl bg-white/80 dark:bg-white/10 border border-[#89190E]/60 dark:border-[#EFC988]/60 text-[#89190E] dark:text-[#EFC988] hover:bg-[#89190E] hover:text-white dark:hover:bg-[#EFC988] dark:hover:text-gray-950 text-xs font-bold transition-all text-center cursor-pointer shadow-xs"
-                    >
-                      Mark Attendance
-                    </button>
-                    {session.meetLink && (
-                      <a
-                        href={session.meetLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="w-full sm:w-auto justify-center px-4 py-2 rounded-xl bg-linear-to-r from-[#89190E] to-[#B22222] hover:opacity-95 text-white text-xs font-bold flex items-center space-x-1.5 transition-all shadow-md cursor-pointer"
-                      >
-                        <Video className="w-3.5 h-3.5 text-[#EFC988]" />
-                        <span>Enter Live Session</span>
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </GlassCard>
 
@@ -530,29 +500,37 @@ export default function TeacherDashboardTab({
             </div>
 
             <div className="divide-y divide-gray-200/40 dark:divide-white/10 mt-2 space-y-3">
-              {assessments.map((asmt) => (
-                <div key={asmt.id} className="pt-3 first:pt-1">
-                  <div className="flex items-start justify-between">
-                    <h5 className="text-xs font-bold text-gray-900 dark:text-white leading-snug">
-                      {asmt.title}
-                    </h5>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                      {asmt.submissionsCount} Subs
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                    Course: {asmt.courseCode} • Max: {asmt.marks} Marks
-                  </p>
-                  {asmt.averageScore && (
-                    <div className="mt-2 p-2 rounded-xl bg-white/50 dark:bg-white/5 border border-gray-200/60 dark:border-white/10 flex items-center justify-between text-xs">
-                      <span className="text-gray-500 dark:text-gray-400">Batch Average:</span>
-                      <span className="font-serif font-bold text-[#89190E] dark:text-[#EFC988]">
-                        {asmt.averageScore}%
+              {assessments.length === 0 ? (
+                <div className="py-8 text-center bg-gray-50 dark:bg-white/5 rounded-2xl border border-dashed border-gray-200 dark:border-white/10">
+                  <Award className="w-7 h-7 mx-auto text-gray-400 mb-1.5" />
+                  <h5 className="font-serif font-bold text-gray-800 dark:text-gray-200 text-xs">No Examination Results Yet</h5>
+                  <p className="text-[11px] text-gray-500 mt-0.5">Create your first test in Test Management to begin tracking batch performance.</p>
+                </div>
+              ) : (
+                assessments.map((asmt) => (
+                  <div key={asmt.id} className="pt-3 first:pt-1">
+                    <div className="flex items-start justify-between">
+                      <h5 className="text-xs font-bold text-gray-900 dark:text-white leading-snug">
+                        {asmt.title}
+                      </h5>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                        {asmt.submissionsCount} Subs
                       </span>
                     </div>
-                  )}
-                </div>
-              ))}
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                      Course: {asmt.courseCode} • Max: {asmt.marks} Marks
+                    </p>
+                    {asmt.averageScore && (
+                      <div className="mt-2 p-2 rounded-xl bg-white/50 dark:bg-white/5 border border-gray-200/60 dark:border-white/10 flex items-center justify-between text-xs">
+                        <span className="text-gray-500 dark:text-gray-400">Batch Average:</span>
+                        <span className="font-serif font-bold text-[#89190E] dark:text-[#EFC988]">
+                          {asmt.averageScore}%
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
 
             <button

@@ -15,6 +15,9 @@ import {
   ChevronRight,
   Sparkles,
   X,
+  FileText,
+  ClipboardCheck,
+  Trophy,
 } from 'lucide-react';
 import { StudentProfile } from './data/studentMockData';
 
@@ -22,6 +25,9 @@ export type StudentModuleTab =
   | 'dashboard'
   | 'profile'
   | 'learning'
+  | 'notes'
+  | 'online-tests'
+  | 'results'
   | 'attendance'
   | 'tests'
   | 'fees';
@@ -51,45 +57,56 @@ export default function StudentSidebar({
   }[] = [
     {
       id: 'dashboard',
-      label: 'Dashboard',
+      label: 'My Courses',
       description: 'Active courses & overview',
       icon: LayoutDashboard,
     },
     {
-      id: 'profile',
-      label: 'Profile',
-      description: 'Credentials & personal info',
-      icon: UserCheck,
+      id: 'notes',
+      label: 'Course Notes & PDFs',
+      description: 'Embedded secured study notes',
+      icon: FileText,
+      badge: 'Secure',
+      badgeType: 'blue',
+    },
+    {
+      id: 'online-tests',
+      label: 'Online Tests',
+      description: 'Randomized proctored mock exams',
+      icon: ClipboardCheck,
+      badge: 'Live',
+      badgeType: 'red',
+    },
+    {
+      id: 'results',
+      label: 'My Results',
+      description: 'Exam scorecards & performance',
+      icon: Trophy,
+      badgeType: 'green',
     },
     {
       id: 'learning',
-      label: 'Learning Hub',
-      description: 'Videos, notes & PYQs',
+      label: 'Course Materials',
+      description: 'Videos, lectures & curriculum',
       icon: BookOpen,
-      badge: '5 New',
-      badgeType: 'blue',
     },
     {
       id: 'attendance',
       label: 'Attendance',
       description: 'Class logs & percentage',
       icon: CalendarCheck,
-      badge: '84.6%',
-      badgeType: 'green',
-    },
-    {
-      id: 'tests',
-      label: 'Tests & Mock',
-      description: 'Live timed simulations',
-      icon: Award,
-      badge: 'Live',
-      badgeType: 'red',
     },
     {
       id: 'fees',
       label: 'Fees & Dues',
       description: 'Receipts & payment history',
       icon: CreditCard,
+    },
+    {
+      id: 'profile',
+      label: 'Student Profile',
+      description: 'Credentials & personal info',
+      icon: UserCheck,
     },
   ];
 

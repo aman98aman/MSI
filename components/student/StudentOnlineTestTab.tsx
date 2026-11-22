@@ -533,8 +533,10 @@ export default function StudentOnlineTestTab({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ testId: test.id, studentPhone, studentName }),
       });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || 'Could not start test');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || data.error || `Could not start test (Server returned ${res.status})`);
+      }
       setActiveTest({
         test,
         attemptId: data.attempt.id,

@@ -16,6 +16,7 @@ import TypewriterHeroBand from '@/components/home/TypewriterHeroBand';
 import Footer from '@/components/footer/Footer';
 import EnquiryModal from '@/components/modals/EnquiryModal';
 import VideoModal from '@/components/modals/VideoModal';
+import MockTestOfferPopup from '@/components/home/MockTestOfferPopup';
 import TiltCard from '@/components/ui/TiltCard';
 import Reveal from '@/components/ui/Reveal';
 import Image from 'next/image';
@@ -465,6 +466,9 @@ export default function HomePage() {
         isOpen={isVideoOpen}
         onClose={() => setIsVideoOpen(false)}
       />
+
+      {/* CLAT PG Mock Test Limited Offer Floating Popup */}
+      <MockTestOfferPopup />
     </div>
   );
 }

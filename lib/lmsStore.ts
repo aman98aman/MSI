@@ -61,6 +61,14 @@ export interface MSICourse {
   updatedDate: string;
   language: string;
   isPublished: boolean;
+  pdfUrl?: string;
+  pdfOriginalName?: string;
+  mockTestPdfs?: {
+    title: string;
+    pdfUrl: string;
+    size?: string;
+    uploadedAt?: string;
+  }[];
 }
 
 export interface TeacherApprovalRecord {

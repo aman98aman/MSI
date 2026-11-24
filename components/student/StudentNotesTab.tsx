@@ -223,7 +223,7 @@ export default function StudentNotesTab({
               style={{ pointerEvents: 'all' }}
             >
               <iframe
-                src={`/api/lms/pdf-access?noteId=${viewingNote.id}&studentPhone=${encodeURIComponent(studentPhone)}`}
+                src={`/api/lms/pdf-access?noteId=${viewingNote.id}&studentPhone=${encodeURIComponent(studentPhone)}#toolbar=0&navpanes=0&scrollbar=0`}
                 className="w-full h-full border-0"
                 style={{
                   height: 'calc(100vh - 120px)',

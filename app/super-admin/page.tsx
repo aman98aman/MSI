@@ -370,6 +370,10 @@ export default function SuperAdminMasterDashboard() {
   const [newCourseThumbnailPreview, setNewCourseThumbnailPreview] = useState<string | null>(null);
   const [newCourseLectureTitle, setNewCourseLectureTitle] = useState('Orientation & Landmark Constitutional Doctrines');
   const [newCourseLectureVideo, setNewCourseLectureVideo] = useState('https://player.mediadelivery.net/embed/782652/175638d1-0e6d-4d8c-beaa-23f879ef5afc');
+  const [newCoursePdfUrl, setNewCoursePdfUrl] = useState('');
+  const [newCoursePdfName, setNewCoursePdfName] = useState('');
+  const [newCoursePdfSize, setNewCoursePdfSize] = useState('');
+  const [isUploadingNewPdf, setIsUploadingNewPdf] = useState(false);
   const [isSubmittingCourse, setIsSubmittingCourse] = useState(false);
 
   // 9a. Course Edit Modal State
@@ -384,6 +388,10 @@ export default function SuperAdminMasterDashboard() {
   const [editCourseDesc, setEditCourseDesc] = useState('');
   const [editCourseThumbnail, setEditCourseThumbnail] = useState('');
   const [editCourseBadge, setEditCourseBadge] = useState<string>('Hot & New');
+  const [editCoursePdfUrl, setEditCoursePdfUrl] = useState('');
+  const [editCoursePdfName, setEditCoursePdfName] = useState('');
+  const [editCoursePdfSize, setEditCoursePdfSize] = useState('');
+  const [isUploadingEditPdf, setIsUploadingEditPdf] = useState(false);
   const [isSubmittingEditCourse, setIsSubmittingEditCourse] = useState(false);
 
   // 9b. Faculty Edit Modal State
@@ -1848,28 +1856,49 @@ export default function SuperAdminMasterDashboard() {
           'Live judicial mentoring and doubt clearing',
         ],
         requirements: ['Dedication to daily legal study drills', 'No prior legal diploma required'],
+        pdfUrl: newCoursePdfUrl.trim() || undefined,
+        pdfOriginalName: newCoursePdfName.trim() || undefined,
+        mockTestPdfs: newCoursePdfUrl.trim()
+          ? [
+              {
+                title: newCoursePdfName.trim() || `${newCourseTitle.trim()} - Mock Test & Answers`,
+                pdfUrl: newCoursePdfUrl.trim(),
+                size: newCoursePdfSize || 'Official PDF',
+                uploadedAt: new Date().toISOString(),
+              },
+            ]
+          : undefined,
         sections: [
           {
             id: `sec-${Date.now()}-1`,
-            title: 'Module 1: Foundational Jurisprudence & Overview',
+            title: 'Module 1: Mock Test Papers & Curriculum Overview',
             duration: '3 hours',
             lectures: [
               {
                 id: `lec-${Date.now()}-1`,
-                title: newCourseLectureTitle.trim() || 'Orientation & Landmark Case Briefs',
+                title: newCourseLectureTitle.trim() || `${newCourseTitle.trim()} - Mock Test Paper & Guidelines`,
                 duration: '45 mins',
                 durationSeconds: 2700,
                 videoUrl: newCourseLectureVideo.trim() || 'https://vz-389201.b-cdn.net/sample.mp4',
                 preview: true,
                 summary: 'Initial recorded foundational orientation lecture for registered scholars.',
-                resources: [
-                  {
-                    title: 'Official Lecture Handout & Landmark Briefs',
-                    type: 'pdf',
-                    size: '2.4 MB',
-                    downloadUrl: '#',
-                  },
-                ],
+                resources: newCoursePdfUrl.trim()
+                  ? [
+                      {
+                        title: newCoursePdfName.trim() || `${newCourseTitle.trim()} - Mock Test Paper (PDF)`,
+                        type: 'pdf',
+                        size: newCoursePdfSize || 'Official PDF',
+                        downloadUrl: newCoursePdfUrl.trim(),
+                      },
+                    ]
+                  : [
+                      {
+                        title: 'Official Lecture Handout & Landmark Briefs',
+                        type: 'pdf',
+                        size: '2.4 MB',
+                        downloadUrl: '#',
+                      },
+                    ],
               },
             ],
           },
@@ -1936,6 +1965,9 @@ export default function SuperAdminMasterDashboard() {
       setNewCourseDesc('');
       setNewCourseThumbnail('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1200&q=80');
       setNewCourseThumbnailPreview(null);
+      setNewCoursePdfUrl('');
+      setNewCoursePdfName('');
+      setNewCoursePdfSize('');
 
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
         const bc = new BroadcastChannel('msi_sync_channel');
@@ -1956,6 +1988,52 @@ export default function SuperAdminMasterDashboard() {
     }
   };
 
+  // Helper: PDF Upload Handler for Courses
+  const handleUploadCoursePdf = async (file: File, isEdit: boolean) => {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
+      showToast('Please upload a valid PDF document (.pdf)');
+      return;
+    }
+    if (isEdit) setIsUploadingEditPdf(true);
+    else setIsUploadingNewPdf(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('fileName', file.name);
+
+      const res = await fetch('/api/lms/upload-pdf', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.pdfPath) {
+        const formattedSize =
+          file.size > 1024 * 1024
+            ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+            : `${Math.round(file.size / 1024)} KB`;
+        if (isEdit) {
+          setEditCoursePdfUrl(data.pdfPath);
+          setEditCoursePdfName(file.name);
+          setEditCoursePdfSize(formattedSize);
+        } else {
+          setNewCoursePdfUrl(data.pdfPath);
+          setNewCoursePdfName(file.name);
+          setNewCoursePdfSize(formattedSize);
+        }
+        showToast(`✓ PDF "${file.name}" uploaded & attached successfully!`);
+      } else {
+        showToast(data.message || 'Failed to upload PDF.');
+      }
+    } catch (err: any) {
+      showToast('Error uploading PDF file.');
+    } finally {
+      if (isEdit) setIsUploadingEditPdf(false);
+      else setIsUploadingNewPdf(false);
+    }
+  };
+
   // 7b. Open Edit Course
   const handleOpenEditCourse = (crs: MSICourse) => {
     setCourseToEdit(crs);
@@ -1969,6 +2047,17 @@ export default function SuperAdminMasterDashboard() {
     setEditCourseDesc(crs.description || '');
     setEditCourseThumbnail(crs.thumbnail || '');
     setEditCourseBadge(crs.badge || 'Hot & New');
+
+    const existingPdfUrl =
+      crs.pdfUrl ||
+      crs.sections?.[0]?.lectures?.[0]?.resources?.find((r) => r.downloadUrl && r.downloadUrl !== '#')?.downloadUrl ||
+      '';
+    const existingPdfName =
+      crs.pdfOriginalName ||
+      (crs.pdfUrl ? crs.pdfUrl.split('/').pop() || 'Mock_Test.pdf' : existingPdfUrl ? 'Mock_Test_Paper.pdf' : '');
+    setEditCoursePdfUrl(existingPdfUrl);
+    setEditCoursePdfName(existingPdfName);
+    setEditCoursePdfSize(existingPdfUrl ? 'Official PDF' : '');
   };
 
   // 7c. Submit Course Update
@@ -2003,6 +2092,64 @@ export default function SuperAdminMasterDashboard() {
         instructorTitle: assignedTeacher.designation || 'Professor of Law',
         instructorAvatar: assignedTeacher.avatarUrl || '/images/avatars/avatar-1.webp',
         updatedDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        pdfUrl: editCoursePdfUrl.trim() || undefined,
+        pdfOriginalName: editCoursePdfName.trim() || undefined,
+        mockTestPdfs: editCoursePdfUrl.trim()
+          ? [
+              {
+                title: editCoursePdfName.trim() || `${editCourseTitle.trim()} - Mock Test & Answers`,
+                pdfUrl: editCoursePdfUrl.trim(),
+                size: editCoursePdfSize || 'Official PDF',
+                uploadedAt: new Date().toISOString(),
+              },
+            ]
+          : courseToEdit.mockTestPdfs || undefined,
+        sections: (() => {
+          const secs = courseToEdit.sections ? [...courseToEdit.sections] : [];
+          if (editCoursePdfUrl.trim()) {
+            if (secs.length === 0) {
+              secs.push({
+                id: `sec-${Date.now()}-1`,
+                title: 'Module 1: Mock Test Papers & Curriculum Overview',
+                duration: '3 hours',
+                lectures: [
+                  {
+                    id: `lec-${Date.now()}-1`,
+                    title: `${editCourseTitle.trim()} - Mock Test Paper & Guidelines`,
+                    duration: '45 mins',
+                    durationSeconds: 2700,
+                    videoUrl: 'https://vz-389201.b-cdn.net/sample.mp4',
+                    preview: true,
+                    summary: 'Comprehensive mock test paper and evaluation guidelines for enrolled candidates.',
+                    resources: [
+                      {
+                        title: editCoursePdfName.trim() || `${editCourseTitle.trim()} - Mock Test Paper (PDF)`,
+                        type: 'pdf',
+                        size: editCoursePdfSize || 'Official PDF',
+                        downloadUrl: editCoursePdfUrl.trim(),
+                      },
+                    ],
+                  },
+                ],
+              });
+            } else if (secs[0]?.lectures?.[0]) {
+              const existingRes =
+                secs[0].lectures[0].resources?.filter(
+                  (r) => r.downloadUrl !== editCoursePdfUrl.trim() && r.downloadUrl !== '#'
+                ) || [];
+              secs[0].lectures[0].resources = [
+                {
+                  title: editCoursePdfName.trim() || `${editCourseTitle.trim()} - Mock Test Paper (PDF)`,
+                  type: 'pdf',
+                  size: editCoursePdfSize || 'Official PDF',
+                  downloadUrl: editCoursePdfUrl.trim(),
+                },
+                ...existingRes,
+              ];
+            }
+          }
+          return secs;
+        })(),
       };
 
       // 1. Persist to API
@@ -8049,6 +8196,129 @@ export default function SuperAdminMasterDashboard() {
                 )}
               </div>
 
+              {/* Mock Test / Study Material PDF Upload & Attachment */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50/80 via-white to-red-50/40 border border-amber-200/90 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-[#89190E] text-white flex items-center justify-center shadow-xs">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#89190E] block">
+                        Mock Test & Curriculum Asset
+                      </span>
+                      <label className="block text-xs font-bold text-[#10233F]">
+                        Attach Mock Test PDF (Question Paper / Syllabus)
+                      </label>
+                    </div>
+                  </div>
+                  {newCoursePdfUrl && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      <Check className="w-3 h-3 text-emerald-700" /> Attached
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-[11px] text-gray-500 leading-relaxed">
+                  Upload your Mock Test PDF here. When candidates enroll (e.g. paying ₹50), this PDF becomes instantly accessible in their Student Learning & Notes Portal to attempt and review.
+                </p>
+
+                {newCoursePdfUrl ? (
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-emerald-200 shadow-xs">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-red-50 border border-red-200 text-red-700 flex items-center justify-center shrink-0">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#10233F] truncate">
+                          {newCoursePdfName || 'Mock_Test_Paper.pdf'}
+                        </p>
+                        <p className="text-[10px] text-gray-400 font-mono">
+                          {newCoursePdfSize || 'Official PDF Document'} • Ready for students
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <a
+                        href={newCoursePdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-[#89190E] bg-[#89190E]/10 hover:bg-[#89190E]/20 transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Preview</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewCoursePdfUrl('');
+                          setNewCoursePdfName('');
+                          setNewCoursePdfSize('');
+                        }}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        title="Remove attached PDF"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="new-course-pdf-file"
+                      className={`flex flex-col items-center justify-center p-4 border-2 border-dashed border-amber-300 hover:border-[#89190E] rounded-xl bg-white/90 hover:bg-amber-50/50 cursor-pointer transition-all ${
+                        isUploadingNewPdf ? 'opacity-60 pointer-events-none' : ''
+                      }`}
+                    >
+                      <input
+                        id="new-course-pdf-file"
+                        type="file"
+                        accept="application/pdf,.pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadCoursePdf(file, false);
+                        }}
+                      />
+                      {isUploadingNewPdf ? (
+                        <div className="flex items-center gap-2 text-xs font-bold text-[#89190E]">
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          <span>Uploading & storing PDF in Cloud GridFS...</span>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <Upload className="w-5 h-5 text-[#89190E] mx-auto mb-1.5" />
+                          <span className="text-xs font-bold text-[#10233F] block">
+                            Click to Upload Mock Test PDF (.pdf)
+                          </span>
+                          <span className="text-[10px] text-gray-400">
+                            Stored securely on MongoDB GridFS / Server uploads
+                          </span>
+                        </div>
+                      )}
+                    </label>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <span className="text-[10px] font-bold uppercase text-gray-400 shrink-0">
+                        Or PDF URL:
+                      </span>
+                      <input
+                        type="url"
+                        value={newCoursePdfUrl}
+                        onChange={(e) => {
+                          setNewCoursePdfUrl(e.target.value);
+                          if (e.target.value && !newCoursePdfName) {
+                            setNewCoursePdfName(e.target.value.split('/').pop() || 'Mock_Test.pdf');
+                          }
+                        }}
+                        placeholder="https://.../clat-pg-mock-test.pdf"
+                        className="flex-1 px-3 py-1.5 rounded-lg border border-[#E8DCCB] text-xs bg-white text-[#10233F] focus:outline-none focus:border-[#89190E]"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Initial Recorded Lecture Module */}
               <div className="p-3.5 rounded-2xl bg-[#FFF9EF] border border-[#E8DCCB] space-y-3">
                 <span className="text-[11px] font-bold text-[#10233F] block uppercase tracking-wider">
@@ -8372,6 +8642,129 @@ export default function SuperAdminMasterDashboard() {
                   onChange={(e) => setEditCourseThumbnail(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8DCCB] text-xs text-[#10233F] focus:outline-none focus:border-[#89190E]"
                 />
+              </div>
+
+              {/* Mock Test / Study Material PDF Upload & Attachment */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50/80 via-white to-red-50/40 border border-amber-200/90 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-[#89190E] text-white flex items-center justify-center shadow-xs">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#89190E] block">
+                        Mock Test & Curriculum Asset
+                      </span>
+                      <label className="block text-xs font-bold text-[#10233F]">
+                        Attach Mock Test PDF (Question Paper / Syllabus)
+                      </label>
+                    </div>
+                  </div>
+                  {editCoursePdfUrl && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      <Check className="w-3 h-3 text-emerald-700" /> Attached
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-[11px] text-gray-500 leading-relaxed">
+                  Upload your Mock Test PDF here. When candidates enroll (e.g. paying ₹50), this PDF becomes instantly accessible in their Student Learning & Notes Portal to attempt and review.
+                </p>
+
+                {editCoursePdfUrl ? (
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-emerald-200 shadow-xs">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-red-50 border border-red-200 text-red-700 flex items-center justify-center shrink-0">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#10233F] truncate">
+                          {editCoursePdfName || 'Mock_Test_Paper.pdf'}
+                        </p>
+                        <p className="text-[10px] text-gray-400 font-mono">
+                          {editCoursePdfSize || 'Official PDF Document'} • Ready for students
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <a
+                        href={editCoursePdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-[#89190E] bg-[#89190E]/10 hover:bg-[#89190E]/20 transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Preview</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditCoursePdfUrl('');
+                          setEditCoursePdfName('');
+                          setEditCoursePdfSize('');
+                        }}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        title="Remove attached PDF"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="edit-course-pdf-file"
+                      className={`flex flex-col items-center justify-center p-4 border-2 border-dashed border-amber-300 hover:border-[#89190E] rounded-xl bg-white/90 hover:bg-amber-50/50 cursor-pointer transition-all ${
+                        isUploadingEditPdf ? 'opacity-60 pointer-events-none' : ''
+                      }`}
+                    >
+                      <input
+                        id="edit-course-pdf-file"
+                        type="file"
+                        accept="application/pdf,.pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadCoursePdf(file, true);
+                        }}
+                      />
+                      {isUploadingEditPdf ? (
+                        <div className="flex items-center gap-2 text-xs font-bold text-[#89190E]">
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          <span>Uploading & storing PDF in Cloud GridFS...</span>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <Upload className="w-5 h-5 text-[#89190E] mx-auto mb-1.5" />
+                          <span className="text-xs font-bold text-[#10233F] block">
+                            Click to Upload Mock Test PDF (.pdf)
+                          </span>
+                          <span className="text-[10px] text-gray-400">
+                            Stored securely on MongoDB GridFS / Server uploads
+                          </span>
+                        </div>
+                      )}
+                    </label>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <span className="text-[10px] font-bold uppercase text-gray-400 shrink-0">
+                        Or PDF URL:
+                      </span>
+                      <input
+                        type="url"
+                        value={editCoursePdfUrl}
+                        onChange={(e) => {
+                          setEditCoursePdfUrl(e.target.value);
+                          if (e.target.value && !editCoursePdfName) {
+                            setEditCoursePdfName(e.target.value.split('/').pop() || 'Mock_Test.pdf');
+                          }
+                        }}
+                        placeholder="https://.../clat-pg-mock-test.pdf"
+                        className="flex-1 px-3 py-1.5 rounded-lg border border-[#E8DCCB] text-xs bg-white text-[#10233F] focus:outline-none focus:border-[#89190E]"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>

@@ -15,6 +15,7 @@ export interface LMSNote {
   courseName: string;
   pdfPath: string;          // e.g. /uploads/notes/filename.pdf
   pdfOriginalName: string;
+  gridFsFileId?: string;    // Persistent MongoDB GridFS document ID
   isPublished: boolean;
   uploadedBy: string;       // faculty name
   uploadedById: string;     // faculty id
@@ -137,7 +138,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       title, description, courseId, courseName,
-      pdfPath, pdfOriginalName, isPublished,
+      pdfPath, pdfOriginalName, gridFsFileId, isPublished,
       uploadedBy, uploadedById,
     } = body;
 
@@ -155,6 +156,7 @@ export async function POST(req: NextRequest) {
       courseName:      (courseName || '').trim(),
       pdfPath:         pdfPath.trim(),
       pdfOriginalName: (pdfOriginalName || path.basename(pdfPath)).trim(),
+      gridFsFileId:    gridFsFileId ? String(gridFsFileId).trim() : undefined,
       isPublished:     isPublished === true,
       uploadedBy:      (uploadedBy || '').trim(),
       uploadedById:    uploadedById.trim(),

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { GridFSBucket, ObjectId } from 'mongodb';
 import { getDb, isMongoConfigured } from '@/lib/mongodb';
 import { getEnrollmentsAsync } from '@/lib/enrollmentStore';
 
@@ -97,31 +98,77 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 3. Resolve PDF Physical Path
-    let physicalPath = '';
-    if (note.pdfPath.startsWith('/') || note.pdfPath.startsWith('\\')) {
-      physicalPath = path.join(process.cwd(), 'public', note.pdfPath.replace(/^[/\\]+/, ''));
-    } else {
-      physicalPath = path.join(process.cwd(), 'public', note.pdfPath);
-    }
+    // 3. Resolve PDF Buffer (from MongoDB GridFS or Local Disk)
+    let fileBuffer: Buffer | null = null;
 
-    if (!fs.existsSync(physicalPath)) {
-      // Also check direct uploads path
-      const directPublic = path.join(process.cwd(), 'public', 'uploads', 'notes', path.basename(note.pdfPath));
-      if (fs.existsSync(directPublic)) {
-        physicalPath = directPublic;
-      } else {
-        return NextResponse.json(
-          { success: false, message: 'PDF document file missing on host server.' },
-          { status: 404 }
-        );
+    // Check MongoDB GridFS first (guaranteed cloud persistence across Vercel serverless instances)
+    if (isMongoConfigured()) {
+      try {
+        const db = await getDb();
+        if (db) {
+          const bucket = new GridFSBucket(db, { bucketName: 'lms_pdfs' });
+          let downloadStream: any = null;
+
+          // Attempt 1: Fetch by gridFsFileId if available
+          if (note.gridFsFileId) {
+            try {
+              downloadStream = bucket.openDownloadStream(new ObjectId(note.gridFsFileId));
+            } catch (_) {}
+          }
+
+          // Attempt 2: Fetch by filename if not matched by ID
+          if (!downloadStream && note.pdfPath) {
+            const baseFileName = path.basename(note.pdfPath);
+            const cursor = bucket.find({ filename: baseFileName });
+            const files = await cursor.toArray();
+            if (files && files.length > 0) {
+              downloadStream = bucket.openDownloadStream(files[0]._id);
+            }
+          }
+
+          if (downloadStream) {
+            const chunks: Buffer[] = [];
+            await new Promise<void>((resolve, reject) => {
+              downloadStream.on('data', (c: any) => chunks.push(Buffer.from(c)));
+              downloadStream.on('end', () => resolve());
+              downloadStream.on('error', (err: any) => reject(err));
+            });
+            fileBuffer = Buffer.concat(chunks);
+          }
+        }
+      } catch (gridErr) {
+        console.warn('[PDF Access GridFS warning]:', gridErr);
       }
     }
 
-    const fileBuffer = fs.readFileSync(physicalPath);
+    // Fallback: Check local disk if GridFS didn't supply the file
+    if (!fileBuffer) {
+      let physicalPath = '';
+      if (note.pdfPath.startsWith('/') || note.pdfPath.startsWith('\\')) {
+        physicalPath = path.join(process.cwd(), 'public', note.pdfPath.replace(/^[/\\]+/, ''));
+      } else {
+        physicalPath = path.join(process.cwd(), 'public', note.pdfPath);
+      }
+
+      if (fs.existsSync(physicalPath)) {
+        fileBuffer = fs.readFileSync(physicalPath);
+      } else {
+        const directPublic = path.join(process.cwd(), 'public', 'uploads', 'notes', path.basename(note.pdfPath));
+        if (fs.existsSync(directPublic)) {
+          fileBuffer = fs.readFileSync(directPublic);
+        }
+      }
+    }
+
+    if (!fileBuffer || fileBuffer.length === 0) {
+      return NextResponse.json(
+        { success: false, message: 'PDF document file missing on host server. Please contact faculty to re-upload.' },
+        { status: 404 }
+      );
+    }
 
     // 4. Return PDF with secure headers (inline view only, disable sniffing, disable caching)
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(new Uint8Array(fileBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',

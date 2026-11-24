@@ -49,6 +49,7 @@ export default function TeacherNotesTab({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<'idle' | 'uploading' | 'saving' | 'done' | 'error'>('idle');
+  const [uploadStatusText, setUploadStatusText] = useState('Uploading PDF...');
   const [uploadError, setUploadError] = useState('');
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
@@ -99,29 +100,76 @@ export default function TeacherNotesTab({
 
     setUploadError('');
     setUploadProgress('uploading');
+    setUploadStatusText('Preparing PDF upload...');
 
     try {
-      // Step 1: Upload PDF
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('teacherId', teacherId);
-      formData.append('courseId', form.courseId);
+      // Step 1: Upload PDF (with client-side chunking for large files)
+      const CHUNK_SIZE = 2 * 1024 * 1024; // 2 MB per chunk to stay well below Vercel's 4.5MB limit
+      const totalChunks = Math.ceil(selectedFile.size / CHUNK_SIZE);
+      const uploadId = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-      const uploadRes = await fetch('/api/lms/upload-pdf', {
-        method: 'POST',
-        body: formData,
-      });
+      let uploadData: any = null;
 
-      if (!uploadRes.ok) {
-        const err = await uploadRes.json().catch(() => ({}));
-        throw new Error(err.error || 'PDF upload failed');
+      if (totalChunks <= 1) {
+        setUploadStatusText('Uploading PDF document...');
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('fileName', selectedFile.name);
+        formData.append('teacherId', teacherId);
+        formData.append('courseId', form.courseId);
+
+        const uploadRes = await fetch('/api/lms/upload-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await uploadRes.json().catch(() => ({}));
+        if (!uploadRes.ok || !data.success) {
+          throw new Error(data.message || data.error || `PDF upload failed (Server status ${uploadRes.status})`);
+        }
+        uploadData = data;
+      } else {
+        // Chunked upload for large files (e.g. 10MB+)
+        for (let i = 0; i < totalChunks; i++) {
+          const start = i * CHUNK_SIZE;
+          const end = Math.min(start + CHUNK_SIZE, selectedFile.size);
+          const chunkBlob = selectedFile.slice(start, end, 'application/pdf');
+          const percent = Math.round(((i + 1) / totalChunks) * 100);
+
+          setUploadStatusText(`Uploading: ${percent}% (Chunk ${i + 1}/${totalChunks})...`);
+
+          const formData = new FormData();
+          formData.append('file', chunkBlob, selectedFile.name);
+          formData.append('uploadId', uploadId);
+          formData.append('chunkIndex', String(i));
+          formData.append('totalChunks', String(totalChunks));
+          formData.append('fileName', selectedFile.name);
+          formData.append('teacherId', teacherId);
+          formData.append('courseId', form.courseId);
+
+          const uploadRes = await fetch('/api/lms/upload-pdf', {
+            method: 'POST',
+            body: formData,
+          });
+
+          const data = await uploadRes.json().catch(() => ({}));
+          if (!uploadRes.ok || !data.success) {
+            throw new Error(data.message || data.error || `Upload failed on chunk ${i + 1} of ${totalChunks} (Status ${uploadRes.status})`);
+          }
+
+          if (data.done) {
+            uploadData = data;
+          }
+        }
       }
 
-      const uploadData = await uploadRes.json();
-      if (!uploadData.success) throw new Error(uploadData.error || 'Upload failed');
+      if (!uploadData || !uploadData.pdfPath) {
+        throw new Error('Failed to obtain uploaded PDF path from server.');
+      }
 
       // Step 2: Save note metadata
       setUploadProgress('saving');
+      setUploadStatusText('Saving course notes to database...');
       const noteRes = await fetch('/api/lms/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -131,22 +179,21 @@ export default function TeacherNotesTab({
           courseId: form.courseId,
           courseName: form.courseName,
           pdfPath: uploadData.pdfPath,
-          pdfOriginalName: uploadData.pdfOriginalName,
+          pdfOriginalName: uploadData.pdfOriginalName || selectedFile.name,
+          gridFsFileId: uploadData.gridFsFileId,
           isPublished: false,
           uploadedBy: teacherName,
           uploadedById: teacherId,
         }),
       });
 
-      if (!noteRes.ok) {
-        const err = await noteRes.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to save note');
+      const noteData = await noteRes.json().catch(() => ({}));
+      if (!noteRes.ok || !noteData.success) {
+        throw new Error(noteData.message || noteData.error || `Failed to save note record (Status ${noteRes.status})`);
       }
 
-      const noteData = await noteRes.json();
-      if (!noteData.success) throw new Error(noteData.error || 'Save failed');
-
       setUploadProgress('done');
+      setUploadStatusText('Upload complete!');
       await fetchNotes();
 
       setTimeout(() => {
@@ -163,6 +210,7 @@ export default function TeacherNotesTab({
     setForm({ title: '', description: '', courseId: '', courseName: '' });
     setSelectedFile(null);
     setUploadProgress('idle');
+    setUploadStatusText('Uploading PDF...');
     setUploadError('');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -438,7 +486,7 @@ export default function TeacherNotesTab({
                   ) : (
                     <div className="text-gray-400 dark:text-gray-500">
                       <Upload className="w-6 h-6 mx-auto mb-1" />
-                      <span className="text-xs">Click to select PDF (max 20MB)</span>
+                      <span className="text-xs">Click to select PDF (max 50MB)</span>
                     </div>
                   )}
                 </div>
@@ -449,8 +497,8 @@ export default function TeacherNotesTab({
                   className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0] || null;
-                    if (file && file.size > 20 * 1024 * 1024) {
-                      setUploadError('File exceeds 20MB limit.');
+                    if (file && file.size > 50 * 1024 * 1024) {
+                      setUploadError('File exceeds 50MB limit.');
                       return;
                     }
                     setSelectedFile(file);
@@ -489,8 +537,12 @@ export default function TeacherNotesTab({
                 disabled={uploadProgress === 'uploading' || uploadProgress === 'saving' || uploadProgress === 'done'}
                 className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#89190E] to-[#B22222] text-white text-xs font-bold flex items-center space-x-1.5 shadow-md transition-all cursor-pointer hover:opacity-95 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {uploadProgress === 'uploading' && <><Loader2 className="w-3.5 h-3.5 animate-spin" /><span>Uploading PDF...</span></>}
-                {uploadProgress === 'saving' && <><Loader2 className="w-3.5 h-3.5 animate-spin" /><span>Saving...</span></>}
+                {(uploadProgress === 'uploading' || uploadProgress === 'saving') && (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>{uploadStatusText}</span>
+                  </>
+                )}
                 {uploadProgress === 'done' && <><CheckCircle2 className="w-3.5 h-3.5" /><span>Uploaded!</span></>}
                 {(uploadProgress === 'idle' || uploadProgress === 'error') && <><Upload className="w-3.5 h-3.5" /><span>Upload Notes</span></>}
               </button>

@@ -447,6 +447,10 @@ export default function SuperAdminMasterDashboard() {
   // 11. Transaction Receipts State
   const [selectedTxnForReceipt, setSelectedTxnForReceipt] = useState<AdminTransaction | null>(null);
 
+  // 11b. Transaction Deletion State
+  const [txnToDelete, setTxnToDelete] = useState<AdminTransaction | null>(null);
+  const [isDeletingTxn, setIsDeletingTxn] = useState(false);
+
   // 12. Manual Invoice & Bulk Deletion States
   const [showCreateManualInvoiceModal, setShowCreateManualInvoiceModal] = useState<boolean>(false);
   const [manualInvoiceSelectedStudent, setManualInvoiceSelectedStudent] = useState<any>(null);
@@ -3104,6 +3108,37 @@ export default function SuperAdminMasterDashboard() {
     }
   };
 
+  // ── Delete a single transaction permanently from ledger ──
+  const handleDeleteTransaction = async (txnId: string) => {
+    if (!txnId) return;
+    // Optimistically remove from state
+    setTransactions((prev) => prev.filter((t) => t.id !== txnId));
+    setTxnToDelete(null);
+    setSelectedTxnForReceipt(null);
+    setIsDeletingTxn(true);
+
+    try {
+      const res = await fetch(`/api/admin/transactions?id=${encodeURIComponent(txnId)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Transaction ${txnId} permanently deleted. Revenue recalculated.`);
+        if (Array.isArray(data.transactions)) {
+          setTransactions(data.transactions);
+        }
+      } else {
+        showToast(data.message || 'Failed to delete transaction.');
+        fetchTransactions();
+      }
+    } catch (err) {
+      showToast('Network error while deleting transaction.');
+      fetchTransactions();
+    } finally {
+      setIsDeletingTxn(false);
+    }
+  };
+
   // ── Render Gatekeeper if Unauthenticated ──────────────────────────────────
   if (!isAuthenticated) {
     return (
@@ -3379,6 +3414,16 @@ export default function SuperAdminMasterDashboard() {
                 {courses.length}
               </span>
             </button>
+            <Link
+              href="/admin/online-examinations"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <ShieldCheck className="w-4 h-4 shrink-0 text-[#89190E]" />
+                <span className="truncate font-semibold">Online Exams &amp; Events</span>
+              </div>
+              <ArrowUpRight className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+            </Link>
           </div>
 
           {/* Content & Website Portal */}
@@ -5417,7 +5462,7 @@ export default function SuperAdminMasterDashboard() {
                   <div className="font-serif font-bold text-2xl text-[#071B37] mt-1">
                     ₹
                     {(
-                      transactions.reduce((acc, t) => acc + (t.amount || 0), 0) || 4999
+                      transactions.reduce((acc, t) => acc + (t.amount || 0), 0)
                     ).toLocaleString('en-IN')}
                   </div>
                   <span className="text-[11px] text-emerald-600 font-bold block mt-0.5">
@@ -5430,7 +5475,7 @@ export default function SuperAdminMasterDashboard() {
                     Completed Transactions
                   </span>
                   <div className="font-serif font-bold text-2xl text-[#071B37] mt-1">
-                    {transactions.length || 1}
+                    {transactions.length}
                   </div>
                   <span className="text-[11px] text-gray-500 font-medium block mt-0.5">
                     Admission fee settlements
@@ -5474,7 +5519,7 @@ export default function SuperAdminMasterDashboard() {
                     </p>
                   </div>
                   <span className="text-xs font-mono font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-lg">
-                    {transactions.length || 1} Records Found
+                    {transactions.length} Records Found
                   </span>
                 </div>
 
@@ -5543,6 +5588,14 @@ export default function SuperAdminMasterDashboard() {
                               >
                                 <FileText className="w-3.5 h-3.5 text-[#89190E]" />
                                 <span>Receipt / Invoice</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setTxnToDelete(txn)}
+                                className="inline-flex items-center gap-1 px-2 py-1.5 rounded-xl border border-rose-200 text-xs font-bold text-rose-600 hover:bg-rose-50 hover:border-rose-400 transition-colors cursor-pointer ml-1.5"
+                                title="Permanently Delete Transaction"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </td>
                           </tr>
@@ -5682,9 +5735,29 @@ export default function SuperAdminMasterDashboard() {
                   allowEdit={true}
                   availableCourses={courses}
                   onSave={(savedInvoice) => handleUpdateTransactionInvoice(selectedTxnForReceipt, savedInvoice)}
+                  onDelete={handleDeleteTransaction}
                   onClose={() => setSelectedTxnForReceipt(null)}
                 />
               )}
+
+      {/* Transaction Delete Confirmation Modal */}
+      {txnToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-red-200 text-center">
+            <Trash2 className="w-10 h-10 text-red-400 mx-auto mb-3" />
+            <h3 className="font-serif font-bold text-lg text-[#071B37] mb-2">Delete Transaction & Invoice?</h3>
+            <p className="text-xs text-gray-500 mb-5 leading-relaxed">
+              Are you sure you want to permanently delete <strong>{txnToDelete.id}</strong> (₹{txnToDelete.amount?.toLocaleString('en-IN')})? This amount will be deducted from Total Captured Revenue.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setTxnToDelete(null)} disabled={isDeletingTxn} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer disabled:opacity-50">Cancel</button>
+              <button onClick={() => handleDeleteTransaction(txnToDelete.id)} disabled={isDeletingTxn} className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2">
+                {isDeletingTxn ? 'Deleting...' : 'Delete Permanently'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
               {/* Create Manual Invoice Modal */}
               {showCreateManualInvoiceModal && (

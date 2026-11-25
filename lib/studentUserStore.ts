@@ -774,8 +774,9 @@ export function deleteStudentFromDisk(rawPhoneOrId: string, additionalId?: strin
  */
 export async function getStudentsAsync(): Promise<RegisteredStudentUser[]> {
   try {
-    const db = await getDb();
-    if (db) {
+    const fetchMongo = async () => {
+      const db = await getDb();
+      if (!db) return null;
       const col = db.collection<RegisteredStudentUser>('students');
       const deletedCol = db.collection('deleted_students');
 
@@ -813,7 +814,11 @@ export async function getStudentsAsync(): Promise<RegisteredStudentUser[]> {
         });
 
       return validStudents;
-    }
+    };
+
+    const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
+    const result = await Promise.race([fetchMongo(), timeoutPromise]);
+    if (result) return result;
   } catch (err) {
     console.warn('[StudentStore] MongoDB read error, falling back to disk:', err);
   }
@@ -907,6 +912,9 @@ export async function deleteStudentAsync(phoneOrId: string, additionalId?: strin
   const addId = (additionalId || '').toLowerCase().trim();
   const addPhone = (additionalId || '').replace(/\D/g, '').slice(-10);
 
+  // 1. Delete immediately from local disk
+  const diskDeleted = deleteStudentFromDisk(phoneOrId, additionalId);
+
   const orConditions: any[] = [];
   if (cleanPhone.length >= 10) {
     orConditions.push({ phone: cleanPhone });
@@ -931,53 +939,49 @@ export async function deleteStudentAsync(phoneOrId: string, additionalId?: strin
     orConditions.push({ id: additionalId });
   }
 
-  if (orConditions.length === 0) {
-    return false;
-  }
+  if (orConditions.length > 0 && isMongoConfigured()) {
+    try {
+      const syncMongo = async () => {
+        const db = await getDb();
+        if (db) {
+          const col = db.collection('students');
+          const deletedCol = db.collection('deleted_students');
+          const enrollmentsCol = db.collection('enrollments');
 
-  try {
-    const db = await getDb();
-    if (db) {
-      const col = db.collection('students');
-      const deletedCol = db.collection('deleted_students');
-      const enrollmentsCol = db.collection('enrollments');
+          // 1. Permanently delete from students collection in Mongo
+          await col.deleteMany({ $or: orConditions });
 
-      // 1. Permanently delete from students collection in Mongo
-      await col.deleteMany({ $or: orConditions });
+          // 2. Mark in deleted_students registry in Mongo
+          const resolvedPhone = cleanPhone.length >= 10 ? cleanPhone : (addPhone.length >= 10 ? addPhone : undefined);
+          const resolvedId = addId || cleanId || phoneOrId;
 
-      // 2. Mark in deleted_students registry in Mongo
-      const resolvedPhone = cleanPhone.length >= 10 ? cleanPhone : (addPhone.length >= 10 ? addPhone : undefined);
-      const resolvedId = addId || cleanId || phoneOrId;
+          await deletedCol.deleteMany({ $or: orConditions });
+          await deletedCol.insertOne({
+            phone: resolvedPhone,
+            id: resolvedId,
+            deletedAt: new Date().toISOString(),
+          });
 
-      await deletedCol.deleteMany({ $or: orConditions });
-      await deletedCol.insertOne({
-        phone: resolvedPhone,
-        id: resolvedId,
-        deletedAt: new Date().toISOString(),
-      });
+          // 3. Cascade delete enrollments
+          const enrollConditions: any[] = [];
+          if (cleanPhone.length >= 10) enrollConditions.push({ studentPhone: cleanPhone });
+          if (addPhone.length >= 10) enrollConditions.push({ studentPhone: addPhone });
+          if (cleanId) enrollConditions.push({ studentId: cleanId });
+          if (addId) enrollConditions.push({ studentId: addId });
+          if (enrollConditions.length > 0) {
+            await enrollmentsCol.deleteMany({ $or: enrollConditions });
+          }
+        }
+      };
 
-      // 3. Cascade delete enrollments
-      const enrollConditions: any[] = [];
-      if (cleanPhone.length >= 10) enrollConditions.push({ studentPhone: cleanPhone });
-      if (addPhone.length >= 10) enrollConditions.push({ studentPhone: addPhone });
-      if (cleanId) enrollConditions.push({ studentId: cleanId });
-      if (addId) enrollConditions.push({ studentId: addId });
-      if (enrollConditions.length > 0) {
-        await enrollmentsCol.deleteMany({ $or: enrollConditions });
-      }
-
-      // 4. Also update local disk
-      try {
-        deleteStudentFromDisk(phoneOrId, additionalId);
-      } catch (_) {}
-
-      return true;
+      const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 3000));
+      await Promise.race([syncMongo(), timeoutPromise]);
+    } catch (err) {
+      console.warn('[StudentStore] MongoDB delete error, saved to disk:', err);
     }
-  } catch (err) {
-    console.warn('[StudentStore] MongoDB delete error, falling back to disk:', err);
   }
 
-  return deleteStudentFromDisk(phoneOrId, additionalId);
+  return diskDeleted;
 }
 
 /**

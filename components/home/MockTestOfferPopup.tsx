@@ -18,6 +18,7 @@ import {
 import RazorpayCheckoutModal, {
   RazorpayPaymentSuccessInfo,
 } from '@/components/payments/RazorpayCheckoutModal';
+import PdfViewerModal from '@/components/modals/PdfViewerModal';
 import { getStoredCourses, enrollStudentAction, MSICourse } from '@/lib/lmsStore';
 
 interface MockTestOfferPopupProps {
@@ -29,6 +30,9 @@ export default function MockTestOfferPopup({ onDismiss }: MockTestOfferPopupProp
   const [isVisible, setIsVisible] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [viewingPdfUrl, setViewingPdfUrl] = useState('');
+  const [viewingPdfTitle, setViewingPdfTitle] = useState('');
   const [clatCourse, setClatCourse] = useState<{
     id: string;
     title: string;
@@ -42,12 +46,11 @@ export default function MockTestOfferPopup({ onDismiss }: MockTestOfferPopupProp
     originalPrice: 999,
   });
 
-  // 1. Detect when splash screen finishes and display side popup
+  // 1. Detect when splash screen finishes and load featured popup course
   useEffect(() => {
     let timer: NodeJS.Timeout;
 
     const checkAndShow = () => {
-      // If user completely closed in this session, don't auto-open
       const dismissed = typeof window !== 'undefined' && sessionStorage.getItem('msi_clat_mock_popup_dismissed');
       if (dismissed === 'true') {
         setIsMinimized(true);
@@ -55,7 +58,6 @@ export default function MockTestOfferPopup({ onDismiss }: MockTestOfferPopupProp
         return;
       }
 
-      // Check if splash screen is done or already viewed
       const splashDone = typeof window !== 'undefined' && sessionStorage.getItem('msi_splash_viewed');
       const delay = splashDone ? 600 : 1800;
 
@@ -66,25 +68,52 @@ export default function MockTestOfferPopup({ onDismiss }: MockTestOfferPopupProp
 
     checkAndShow();
 
-    // Find if course exists in store
-    try {
-      const courses = getStoredCourses();
-      const found = courses.find(
-        (c) =>
-          c.title.toLowerCase().includes('clat pg') ||
-          c.title.toLowerCase().includes('clat mock') ||
-          c.category === 'Law Entrance'
-      );
-      if (found) {
-        setClatCourse({
-          id: found.id,
-          title: found.title,
-          price: found.price || 50,
-          originalPrice: found.originalPrice || 999,
-          pdfUrl: found.pdfUrl,
-        });
+    // 2. Fetch official featured course selected by admin ("Show as Live Offer on Home Screen")
+    const loadPopupCourse = async () => {
+      try {
+        const res = await fetch('/api/courses');
+        const data = await res.json();
+        const courses: MSICourse[] = data?.courses || getStoredCourses();
+        
+        // Priority 1: Course explicitly toggled with showOnHomeScreenPopup: true
+        // Priority 2: CLAT PG or Mock Test course
+        const featured =
+          courses.find((c) => c.showOnHomeScreenPopup === true) ||
+          courses.find((c) => c.title.toLowerCase().includes('clat pg') || c.price === 50);
+
+        if (featured) {
+          const directPdf =
+            featured.pdfUrl ||
+            featured.sections?.[0]?.lectures?.[0]?.resources?.find(
+              (r: any) => r.downloadUrl && r.downloadUrl !== '#'
+            )?.downloadUrl;
+
+          setClatCourse({
+            id: featured.id,
+            title: featured.title,
+            price: featured.price || 50,
+            originalPrice: featured.originalPrice || 999,
+            pdfUrl: directPdf,
+          });
+        }
+      } catch (_) {
+        const courses = getStoredCourses();
+        const featured =
+          courses.find((c) => c.showOnHomeScreenPopup === true) ||
+          courses.find((c) => c.title.toLowerCase().includes('clat pg') || c.price === 50);
+        if (featured) {
+          setClatCourse({
+            id: featured.id,
+            title: featured.title,
+            price: featured.price || 50,
+            originalPrice: featured.originalPrice || 999,
+            pdfUrl: featured.pdfUrl,
+          });
+        }
       }
-    } catch (_) {}
+    };
+
+    loadPopupCourse();
 
     return () => {
       if (timer) clearTimeout(timer);
@@ -129,8 +158,14 @@ export default function MockTestOfferPopup({ onDismiss }: MockTestOfferPopupProp
     setIsCheckoutOpen(false);
     setIsVisible(false);
 
-    // Redirect to Student Dashboard where tests and PDFs are available
-    router.push('/student/dashboard');
+    // If PDF is available, open the in-website PDF Viewer Modal right here!
+    if (clatCourse.pdfUrl) {
+      setViewingPdfUrl(clatCourse.pdfUrl);
+      setViewingPdfTitle(clatCourse.title);
+      setIsPdfModalOpen(true);
+    } else {
+      router.push('/student/dashboard');
+    }
   };
 
   if (!isVisible) return null;
@@ -285,6 +320,17 @@ export default function MockTestOfferPopup({ onDismiss }: MockTestOfferPopupProp
             originalPrice: clatCourse.originalPrice || 999,
           }}
           onPaymentSuccess={handlePaymentSuccess}
+        />
+      )}
+
+      {/* In-Website PDF Viewer Modal for Mock Test Attempt */}
+      {isPdfModalOpen && (
+        <PdfViewerModal
+          isOpen={isPdfModalOpen}
+          onClose={() => setIsPdfModalOpen(false)}
+          pdfUrl={viewingPdfUrl}
+          title={viewingPdfTitle}
+          courseTitle="CLAT PG Mock Test Series"
         />
       )}
     </>

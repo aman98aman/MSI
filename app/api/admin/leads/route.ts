@@ -9,6 +9,55 @@ export const dynamic = 'force-dynamic';
 const DATA_DIR = path.join(process.cwd(), 'data');
 const LEADS_FILE = path.join(DATA_DIR, 'leads.json');
 
+function normalizeLeadStatus(raw: any): 'New' | 'Follow-up' | 'Converted' | 'Dead' {
+  if (!raw) return 'New';
+  const s = String(raw).trim().toLowerCase();
+
+  // 1. Check Dead first (so 'not interested' or 'do not call' are marked Dead, not Follow-up)
+  if (
+    s.includes('dead') ||
+    s.includes('lost') ||
+    s.includes('not interested') ||
+    s.includes('no interest') ||
+    s.includes('reject') ||
+    s.includes('junk') ||
+    s.includes('invalid') ||
+    s.includes('closed') ||
+    s.includes('drop') ||
+    s.includes('wrong')
+  ) {
+    return 'Dead';
+  }
+
+  // 2. Check Converted next
+  if (
+    s.includes('convert') ||
+    s.includes('enroll') ||
+    s.includes('admit') ||
+    s.includes('admission') ||
+    s.includes('paid') ||
+    s.includes('joined') ||
+    s.includes('won') ||
+    s.includes('success')
+  ) {
+    return 'Converted';
+  }
+
+  // 3. Check Follow-up
+  if (
+    s.includes('follow') ||
+    s.includes('call') ||
+    s.includes('interested') ||
+    s.includes('pending') ||
+    s.includes('pipeline') ||
+    s.includes('wait')
+  ) {
+    return 'Follow-up';
+  }
+
+  return 'New';
+}
+
 function readLeadsFromDisk(): Lead[] {
   try {
     if (!fs.existsSync(DATA_DIR)) {
@@ -49,8 +98,9 @@ function writeLeadsToDisk(leads: Lead[]): void {
 async function getLeadsAsync(): Promise<Lead[]> {
   if (isMongoConfigured()) {
     try {
-      const db = await getDb();
-      if (db) {
+      const fetchFromMongo = async () => {
+        const db = await getDb();
+        if (!db) return null;
         const col = db.collection<Lead>('leads');
         const count = await col.countDocuments();
         if (count === 0) {
@@ -60,11 +110,20 @@ async function getLeadsAsync(): Promise<Lead[]> {
           }
         }
         const docs = await col.find({}).sort({ receivedDate: -1 }).toArray();
-        return docs.map((d: any) => {
+        const mongoLeads = docs.map((d: any) => {
           const { _id, ...rest } = d;
           return rest as Lead;
         });
-      }
+
+        // Merge any leads that are currently on disk
+        const diskLeads = readLeadsFromDisk();
+        const mongoIdSet = new Set(mongoLeads.map((l) => l.id));
+        return [...mongoLeads, ...diskLeads.filter((l) => !mongoIdSet.has(l.id))];
+      };
+
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500));
+      const res = await Promise.race([fetchFromMongo(), timeoutPromise]);
+      if (res) return res;
     } catch (err) {
       console.warn('[Leads MongoDB Error]:', err);
     }
@@ -120,6 +179,7 @@ export async function POST(req: NextRequest) {
       const diskLeads = readLeadsFromDisk();
       const newItems: Lead[] = body.leads.map((raw: any, idx: number) => {
         const cleanPhone = (raw.mobile || '').replace(/\D/g, '').slice(-10);
+        const resolvedStatus = normalizeLeadStatus(raw.status || raw.stage || raw.leadStatus || raw.disposition);
         return {
           id: `lead-bulk-${Date.now().toString().slice(-6)}-${idx + 1}`,
           name: (raw.name || 'Inbound Candidate').trim(),
@@ -127,19 +187,19 @@ export async function POST(req: NextRequest) {
           location: (raw.location || 'Chandigarh / Mohali').trim(),
           targetCourse: raw.targetCourse || 'PCS-J Comprehensive Foundation 2026-27',
           source: (raw.source || 'Bulk Excel Import') as any,
-          receivedDate: 'Imported Today',
-          status: 'New',
-          latestRemark: (raw.notes || 'Imported via Bulk Excel / CSV Upload').trim(),
-          fullRemark: (raw.notes || 'Candidate profile imported via Excel / CSV batch dispatch.').trim(),
+          receivedDate: raw.receivedDate || 'Imported Today',
+          status: resolvedStatus,
+          latestRemark: (raw.notes || `Imported via Bulk Excel / CSV Upload [Status: ${resolvedStatus}]`).trim(),
+          fullRemark: (raw.notes || `Candidate profile imported via Excel / CSV batch dispatch (${resolvedStatus}).`).trim(),
           agent: raw.agent || 'Harshit (Reception Desk)',
           remarksHistory: [
             {
               id: `rem-${Date.now()}-${idx}`,
-              outcome: 'Needs More Info',
-              text: raw.notes || 'Imported from Excel / CSV dataset',
+              outcome: resolvedStatus === 'Converted' ? 'Connected — Interested' : resolvedStatus === 'Follow-up' ? 'Callback Requested' : resolvedStatus === 'Dead' ? 'Not Interested' : 'Needs More Info',
+              text: raw.notes || `Imported from Excel / CSV dataset (${resolvedStatus})`,
               timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               author: 'Super Admin Import',
-              leadStatus: 'New',
+              leadStatus: resolvedStatus,
             },
           ],
         };
@@ -212,7 +272,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Single Lead Generation from Super Admin
-    const { name, mobile, location, targetCourse, source, notes, agent } = body;
+    const { name, mobile, location, targetCourse, source, notes, agent, status } = body;
 
     if (!name || !name.trim()) {
       return NextResponse.json(
@@ -230,6 +290,7 @@ export async function POST(req: NextRequest) {
 
     const leads = readLeadsFromDisk();
     const cleanPhone = mobile.replace(/\D/g, '').slice(-10);
+    const resolvedStatus = normalizeLeadStatus(status || 'New');
 
     const newLead: Lead = {
       id: `lead-sa-${Date.now().toString().slice(-6)}`,
@@ -239,24 +300,27 @@ export async function POST(req: NextRequest) {
       targetCourse: targetCourse || 'PCS-J Punjab Judicial Services',
       source: (source || 'Super Admin (#2410)') as any,
       receivedDate: 'Just now (Today)',
-      status: 'New',
+      status: resolvedStatus,
       latestRemark: notes?.trim() || 'Inbound lead entered via Super Admin Master Console.',
       fullRemark: notes?.trim() || 'Inbound inquiry routed directly to Reception & Telecalling desk.',
       agent: agent || 'Harshit (Reception Desk)',
       remarksHistory: [
         {
           id: `rem-${Date.now()}`,
-          outcome: 'Needs More Info',
+          outcome: resolvedStatus === 'Converted' ? 'Connected — Interested' : resolvedStatus === 'Follow-up' ? 'Callback Requested' : resolvedStatus === 'Dead' ? 'Not Interested' : 'Needs More Info',
           text: notes?.trim() || 'Generated via Super Admin Master Portal',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           author: 'Super Admin',
-          leadStatus: 'New',
+          leadStatus: resolvedStatus,
         },
       ],
     };
 
-    const updated = [newLead, ...leads];
+    const updated = [newLead, ...leads.filter((l) => l.id !== newLead.id)];
     writeLeadsToDisk(updated);
+
+    // Sync to MongoDB immediately
+    await syncLeadToMongo(newLead);
 
     return NextResponse.json({
       success: true,
@@ -343,12 +407,16 @@ export async function DELETE(req: NextRequest) {
     const id = searchParams.get('id');
 
     let idsToDelete: string[] = [];
+    let deleteAll = false;
+
     if (id) {
       idsToDelete = [id];
     } else {
       try {
         const body = await req.json().catch(() => ({}));
-        if (Array.isArray(body?.ids)) {
+        if (body?.all === true) {
+          deleteAll = true;
+        } else if (Array.isArray(body?.ids)) {
           idsToDelete = body.ids;
         } else if (body?.id) {
           idsToDelete = [body.id];
@@ -356,34 +424,44 @@ export async function DELETE(req: NextRequest) {
       } catch (_) {}
     }
 
-    if (idsToDelete.length === 0) {
+    if (!deleteAll && idsToDelete.length === 0) {
       return NextResponse.json(
         { success: false, message: 'Lead ID or list of IDs is required.' },
         { status: 400 }
       );
     }
 
+    // 1. Immediately update disk FIRST
+    const currentLeads = readLeadsFromDisk();
+    const remainingLeads = deleteAll ? [] : currentLeads.filter((l) => !idsToDelete.includes(l.id));
+    writeLeadsToDisk(remainingLeads);
+
+    // 2. Synchronize deletion to MongoDB
     if (isMongoConfigured()) {
       try {
         const db = await getDb();
         if (db) {
-          await db.collection('leads').deleteMany({ id: { $in: idsToDelete } });
+          if (deleteAll) {
+            await db.collection('leads').deleteMany({});
+          } else {
+            await db.collection('leads').deleteMany({
+              $or: [
+                { id: { $in: idsToDelete } },
+                { _id: { $in: idsToDelete as any } },
+              ],
+            });
+          }
         }
       } catch (err) {
         console.warn('[Leads MongoDB Delete Error]:', err);
       }
     }
 
-    const leads = await getLeadsAsync();
-    const filtered = leads.filter((l) => !idsToDelete.includes(l.id));
-
-    writeLeadsToDisk(filtered);
-
     return NextResponse.json({
       success: true,
-      message: `${idsToDelete.length} lead(s) removed successfully.`,
-      leads: filtered,
-      count: filtered.length,
+      message: deleteAll ? 'All leads removed successfully.' : `${idsToDelete.length} lead(s) removed successfully.`,
+      leads: remainingLeads,
+      count: remainingLeads.length,
     });
   } catch (error: any) {
     return NextResponse.json(

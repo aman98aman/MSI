@@ -9,6 +9,7 @@ import EnquiryModal from '@/components/modals/EnquiryModal';
 import MSICourseModal from '@/components/courses/MSICourseModal';
 import StudentEnrollLoginModal from '@/components/courses/StudentEnrollLoginModal';
 import RazorpayCheckoutModal from '@/components/payments/RazorpayCheckoutModal';
+import PdfViewerModal from '@/components/modals/PdfViewerModal';
 import PageHero from '@/components/ui/PageHero';
 import Reveal from '@/components/ui/Reveal';
 import SectionHeading from '@/components/ui/SectionHeading';
@@ -104,6 +105,7 @@ export default function CoursesPage() {
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [loginModalCourse, setLoginModalCourse] = useState<MSICourse | null>(null);
+  const [viewingPdfCourse, setViewingPdfCourse] = useState<{ url: string; title: string } | null>(null);
 
   // Horizontal Slider Refs
   const batchesSliderRef = useRef<HTMLDivElement>(null);
@@ -741,14 +743,28 @@ export default function CoursesPage() {
                     </button>
 
                     {isCourseEnrolled(course.id) ? (
-                      <Link
-                        href="/student/dashboard"
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all text-center flex items-center justify-center space-x-1.5 shadow-sm"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Enrolled</span>
-                      </Link>
+                      course.pdfUrl ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewingPdfCourse({ url: course.pdfUrl!, title: course.title });
+                          }}
+                          className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold transition-all text-center flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>View Mock Test PDF</span>
+                        </button>
+                      ) : (
+                        <Link
+                          href="/student/dashboard"
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all text-center flex items-center justify-center space-x-1.5 shadow-sm"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Enrolled</span>
+                        </Link>
+                      )
                     ) : (
                       <button
                         type="button"
@@ -1732,10 +1748,24 @@ export default function CoursesPage() {
               enrollStudentAction(stuId, directCheckoutCourse.id, 'self', studentName, 'Purchased via Razorpay', cleanPhone, studentName);
               loadLmsData();
               showToast(`🎉 Enrolled in ${directCheckoutCourse.title}! Verified via ${info.receiptNumber}`);
+              if (directCheckoutCourse.pdfUrl) {
+                setViewingPdfCourse({ url: directCheckoutCourse.pdfUrl, title: directCheckoutCourse.title });
+              }
             }
 
             setDirectCheckoutCourse(null);
           }}
+        />
+      )}
+
+      {/* In-Website PDF Viewer Modal for Mock Test & Course Documents */}
+      {viewingPdfCourse && (
+        <PdfViewerModal
+          isOpen={!!viewingPdfCourse}
+          onClose={() => setViewingPdfCourse(null)}
+          pdfUrl={viewingPdfCourse.url}
+          title={viewingPdfCourse.title}
+          courseTitle="Official MSI Mock Test Paper"
         />
       )}
     </div>

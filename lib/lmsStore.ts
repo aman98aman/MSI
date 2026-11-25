@@ -63,6 +63,7 @@ export interface MSICourse {
   isPublished: boolean;
   pdfUrl?: string;
   pdfOriginalName?: string;
+  showOnHomeScreenPopup?: boolean;
   mockTestPdfs?: {
     title: string;
     pdfUrl: string;

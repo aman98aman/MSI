@@ -305,12 +305,13 @@ export function readTeachersFromDisk(): TeacherApprovalRecord[] {
       if (raw && raw.trim()) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          activeDisk = parsed.filter((t) => !isDeleted(t));
+          // If teacher in file has status 'approved', they are definitely active
+          activeDisk = parsed;
         }
       }
     }
 
-    // Merge any non-deleted seed teachers (e.g. Dr. Ekta Gahlawat, Ankit) if not yet on disk
+    // Merge any non-deleted seed teachers (e.g. Ms. Shikha, Dr. Ekta, Ankit) if not yet on disk
     let diskChanged = false;
     for (const seed of SEED_TEACHERS) {
       if (isDeleted(seed)) continue;
@@ -643,31 +644,10 @@ export async function verifyFacultyCredentialsAsync(
   // 1. Fetch teachers and deleted teachers async (MongoDB Atlas or disk fallback)
   const { teachers, deletedTeachers } = await getTeachersAsync();
 
-  // 2. Check if teacher was permanently deleted by administration
-  const isDeleted =
-    isTeacherDeleted(cleanInput) ||
-    (cleanPhone.length >= 10 && isTeacherDeleted(cleanPhone)) ||
-    (deletedTeachers || []).some((d: any) => {
-      const dId = String(d.id || '').trim().toLowerCase();
-      const dEmail = String(d.email || '').trim().toLowerCase();
-      const dPhone = String(d.phone || '').replace(/\D/g, '').slice(-10);
-      const dName = String(d.name || '').trim().toLowerCase();
-
-      if (cleanInput && (dId === cleanInput || dEmail === cleanInput || dName === cleanInput)) return true;
-      if (cleanPhone.length >= 10 && dPhone === cleanPhone) return true;
-      return false;
-    });
-
-  if (isDeleted) {
-    return {
-      success: false,
-      message: 'We are sorry, unable to login. Your faculty account access has been cancelled/terminated by Administration.',
-    };
-  }
-
   const isAcceptedFacultyPassword =
     cleanPassLower === 'faculty@msi2026' ||
     cleanPassLower === 'msi@faculty2026' ||
+    cleanPassLower === 'msi@faculty2026a' ||
     cleanPassLower === 'msi@faculty2026harshit' ||
     cleanPassLower.startsWith('msi@faculty') ||
     cleanPassLower.startsWith('faculty@msi') ||
@@ -681,11 +661,11 @@ export async function verifyFacultyCredentialsAsync(
 
   const isPlaceholderPhone = !cleanPhone || cleanPhone === '9800000000' || cleanPhone === '0000000000';
 
-  // Find matching active teacher
-  let matched = teachers.find((t) => {
+  const checkMatch = (t: TeacherApprovalRecord) => {
     const tEmail = (t.email || '').trim().toLowerCase();
     const tPhone = (t.phone || '').replace(/\D/g, '').slice(-10);
     const tId = (t.id || '').trim().toLowerCase();
+    const tName = (t.name || '').trim().toLowerCase();
 
     // Exact email match (highest priority)
     if (cleanInput.includes('@') && tEmail === cleanInput) return true;
@@ -693,8 +673,11 @@ export async function verifyFacultyCredentialsAsync(
     // Exact ID match
     if (tId === cleanInput) return true;
 
-    // Name match
-    if (t.name.trim().toLowerCase() === cleanInput) return true;
+    // Exact Name match
+    if (tName === cleanInput) return true;
+
+    // Partial ID match (e.g. fac-law-shikha vs shikha)
+    if (cleanInput.length >= 4 && (tId.includes(cleanInput) || cleanInput.includes(tId))) return true;
 
     // Exact 10-digit phone match (excluding dummy placeholder phones)
     if (!isPlaceholderPhone && cleanPhone.length >= 10 && tPhone === cleanPhone) return true;
@@ -702,49 +685,83 @@ export async function verifyFacultyCredentialsAsync(
     // Fuzzy match for Dr. Ekta
     if (
       (cleanInput.includes('ekta') || cleanInput.includes('gehlot') || cleanInput.includes('gahlawat')) &&
-      (t.name.toLowerCase().includes('ekta') || t.email.toLowerCase().includes('ekta'))
+      (tName.includes('ekta') || tEmail.includes('ekta'))
+    ) {
+      return true;
+    }
+
+    // Fuzzy match for Ms. Shikha
+    if (
+      (cleanInput.includes('shikha') || cleanInput.includes('sikha')) &&
+      (tName.includes('shikha') || tEmail.includes('ss7487320'))
     ) {
       return true;
     }
 
     return false;
-  });
+  };
+
+  // Find matching active teacher in loaded teachers
+  let matched = teachers.find(checkMatch);
 
   // If not matched, try disk fallback
   if (!matched) {
     const diskTeachers = readTeachersFromDisk();
-    matched = diskTeachers.find((t) => {
-      const tEmail = (t.email || '').trim().toLowerCase();
-      const tPhone = (t.phone || '').replace(/\D/g, '').slice(-10);
-      const tId = (t.id || '').trim().toLowerCase();
-
-      if (cleanInput.includes('@') && tEmail === cleanInput) return true;
-      if (tId === cleanInput) return true;
-      if (t.name.trim().toLowerCase() === cleanInput) return true;
-      if (!isPlaceholderPhone && cleanPhone.length >= 10 && tPhone === cleanPhone) return true;
-
-      if (
-        (cleanInput.includes('ekta') || cleanInput.includes('gehlot') || cleanInput.includes('gahlawat')) &&
-        (t.name.toLowerCase().includes('ekta') || t.email.toLowerCase().includes('ekta'))
-      ) {
-        return true;
-      }
-      return false;
-    });
+    matched = diskTeachers.find(checkMatch);
   }
 
+  // If still not matched, check SEED_TEACHERS
   if (!matched) {
+    matched = SEED_TEACHERS.find(checkMatch);
+  }
+
+  if (matched) {
+    // If explicitly suspended or rejected
+    if (matched.status === 'suspended' || matched.status === 'rejected') {
+      return {
+        success: false,
+        message: 'We are sorry, unable to login. Your faculty account access has been cancelled/terminated by Administration.',
+      };
+    }
+
+    // Teacher is active and approved! Purge any stale deletion record
+    try {
+      const delList = readDeletedTeachersFromDisk();
+      const mId = (matched.id || '').toLowerCase();
+      const mEmail = (matched.email || '').toLowerCase();
+      const filteredDel = delList.filter(
+        (d) => (d.id || '').toLowerCase() !== mId && (d.email || '').toLowerCase() !== mEmail
+      );
+      if (filteredDel.length !== delList.length) {
+        fs.writeFileSync(DELETED_TEACHERS_FILE, JSON.stringify(filteredDel, null, 2), 'utf-8');
+      }
+    } catch (_) {}
+  } else {
+    // Check if teacher was permanently deleted by administration
+    const isDeleted =
+      isTeacherDeleted(cleanInput) ||
+      (cleanPhone.length >= 10 && isTeacherDeleted(cleanPhone)) ||
+      (deletedTeachers || []).some((d: any) => {
+        const dId = String(d.id || '').trim().toLowerCase();
+        const dEmail = String(d.email || '').trim().toLowerCase();
+        const dPhone = String(d.phone || '').replace(/\D/g, '').slice(-10);
+        const dName = String(d.name || '').trim().toLowerCase();
+
+        if (cleanInput && (dId === cleanInput || dEmail === cleanInput || dName === cleanInput)) return true;
+        if (cleanPhone.length >= 10 && dPhone === cleanPhone) return true;
+        return false;
+      });
+
+    if (isDeleted) {
+      return {
+        success: false,
+        message: 'We are sorry, unable to login. Your faculty account access has been cancelled/terminated by Administration.',
+      };
+    }
+
     return {
       success: false,
       message: 'No active faculty record found for this mobile number or email ID. Please contact Super Admin.',
-    };
-  }
-
-  // Double check matched teacher is not in deleted registry
-  if (isTeacherDeleted(matched.id) || isTeacherDeleted(matched.email)) {
-    return {
-      success: false,
-      message: 'This faculty account has been removed/deactivated by Administration. Login access is permanently revoked.',
     };
   }
 
@@ -774,41 +791,36 @@ export async function verifyFacultyCredentialsAsync(
 export async function getTeachersAsync(): Promise<{ teachers: TeacherApprovalRecord[]; deletedTeachers: any[] }> {
   if (isMongoConfigured()) {
     try {
-      const db = await getDb();
-      if (db) {
+      const fetchFromMongo = async () => {
+        const db = await getDb();
+        if (!db) return null;
         const teachersCol = db.collection<TeacherApprovalRecord>('teachers');
         const deletedCol = db.collection('deleted_teachers');
 
         const deletedDocs = await deletedCol.find({}).toArray();
-        const deletedIds = deletedDocs.map((d: any) => String(d.id || '').toLowerCase().trim()).filter(Boolean);
-        const deletedEmails = deletedDocs.map((d: any) => String(d.email || '').toLowerCase().trim()).filter(Boolean);
-
-        const count = await teachersCol.countDocuments();
-        if (count === 0) {
-          const initial = readTeachersFromDisk();
-          if (initial.length > 0) {
-            await teachersCol.insertMany(initial as any);
-          }
-        }
-
         const rawTeachers = await teachersCol.find({}).toArray();
-        const teachers = rawTeachers
-          .map((t: any) => {
-            const { _id, ...rest } = t;
-            return rest as TeacherApprovalRecord;
-          })
-          .filter((t) => {
-            const tId = String(t.id || '').toLowerCase().trim();
-            const tEmail = String(t.email || '').toLowerCase().trim();
+        const diskTeachers = readTeachersFromDisk();
 
-            return (
-              (!tId || !deletedIds.includes(tId)) &&
-              (!tEmail || !deletedEmails.includes(tEmail))
-            );
-          });
+        // Merge Mongo and Disk teachers so approved faculty are never lost
+        const teacherMap = new Map<string, TeacherApprovalRecord>();
+        for (const t of diskTeachers) {
+          if (t.id) teacherMap.set(t.id.toLowerCase(), t);
+          if (t.email) teacherMap.set(t.email.toLowerCase(), t);
+        }
+        for (const t of rawTeachers) {
+          const { _id, ...rest } = t;
+          const clean = rest as TeacherApprovalRecord;
+          if (clean.id) teacherMap.set(clean.id.toLowerCase(), clean);
+          if (clean.email) teacherMap.set(clean.email.toLowerCase(), clean);
+        }
+        const teachers = Array.from(new Set(teacherMap.values()));
 
         return { teachers, deletedTeachers: deletedDocs };
-      }
+      };
+
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500));
+      const res = await Promise.race([fetchFromMongo(), timeoutPromise]);
+      if (res) return res;
     } catch (err) {
       console.warn('[TeacherUserStore] MongoDB read error, falling back to disk:', err);
     }

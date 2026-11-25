@@ -1,0 +1,30 @@
+[
+  {
+    "id": "note-1795579924978-y7s84",
+    "title": "mock test - Mock Test & Study Notes",
+    "description": "Official mock test question paper and comprehensive legal notes for mock test.",
+    "courseId": "crs-msi-923441",
+    "courseName": "mock test",
+    "pdfPath": "/uploads/notes/1795579913404-synopsis_project.pdf",
+    "pdfOriginalName": "synopsis project.pdf",
+    "isPublished": true,
+    "uploadedBy": "Ankit",
+    "uploadedById": "fac-999055",
+    "createdAt": "2026-11-25T04:12:04.978Z",
+    "updatedAt": "2026-11-25T04:12:04.978Z"
+  },
+  {
+    "id": "note-clat-pg-mock-2027",
+    "title": "CLAT PG MOCK TEST 2027 - Question Paper & Model Solutions",
+    "description": "Official verified mock test question paper for CLAT PG 2027 registered candidates.",
+    "courseId": "crs-clat-pg-mock-2027",
+    "courseName": "CLAT PG MOCK TEST 2027",
+    "pdfPath": "/uploads/notes/CLAT_PG_2027_Official_Mock_Test_Paper_MSI.pdf",
+    "pdfOriginalName": "CLAT_PG_2027_Official_Mock_Test_Paper_MSI.pdf",
+    "isPublished": true,
+    "uploadedBy": "Dr. Ekta Sharma",
+    "uploadedById": "fac-ekta-01",
+    "createdAt": "2026-11-25T04:02:24.068Z",
+    "updatedAt": "2026-11-25T04:02:24.068Z"
+  }
+]

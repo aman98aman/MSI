@@ -800,18 +800,40 @@ export async function getTeachersAsync(): Promise<{ teachers: TeacherApprovalRec
         const deletedDocs = await deletedCol.find({}).toArray();
         const rawTeachers = await teachersCol.find({}).toArray();
         const diskTeachers = readTeachersFromDisk();
+        const diskDeleted = readDeletedTeachersFromDisk();
+
+        // Build set of deleted IDs, emails, and phones
+        const deletedSet = new Set<string>();
+        for (const d of [...deletedDocs, ...diskDeleted]) {
+          if (d.id) deletedSet.add(d.id.toLowerCase().trim());
+          if (d.email) deletedSet.add(d.email.toLowerCase().trim());
+          const dPhone = (d.phone || '').replace(/\D/g, '').slice(-10);
+          if (dPhone.length >= 10) deletedSet.add(dPhone);
+        }
 
         // Merge Mongo and Disk teachers so approved faculty are never lost
         const teacherMap = new Map<string, TeacherApprovalRecord>();
         for (const t of diskTeachers) {
+          const tId = (t.id || '').toLowerCase().trim();
+          const tEmail = (t.email || '').toLowerCase().trim();
+          const tPhone = (t.phone || '').replace(/\D/g, '').slice(-10);
+          if (deletedSet.has(tId) || deletedSet.has(tEmail) || (tPhone && deletedSet.has(tPhone))) {
+            continue; // Skip deleted
+          }
           if (t.id) teacherMap.set(t.id.toLowerCase(), t);
-          if (t.email) teacherMap.set(t.email.toLowerCase(), t);
+          else if (t.email) teacherMap.set(t.email.toLowerCase(), t);
         }
         for (const t of rawTeachers) {
           const { _id, ...rest } = t;
           const clean = rest as TeacherApprovalRecord;
+          const tId = (clean.id || '').toLowerCase().trim();
+          const tEmail = (clean.email || '').toLowerCase().trim();
+          const tPhone = (clean.phone || '').replace(/\D/g, '').slice(-10);
+          if (deletedSet.has(tId) || deletedSet.has(tEmail) || (tPhone && deletedSet.has(tPhone))) {
+            continue; // Skip deleted
+          }
           if (clean.id) teacherMap.set(clean.id.toLowerCase(), clean);
-          if (clean.email) teacherMap.set(clean.email.toLowerCase(), clean);
+          else if (clean.email) teacherMap.set(clean.email.toLowerCase(), clean);
         }
         const teachers = Array.from(new Set(teacherMap.values()));
 
@@ -924,56 +946,56 @@ export async function deleteTeacherAsync(identifier: string, email?: string, pho
   const cleanTarget = identifier.toLowerCase().trim();
   const cleanEmail = (email || '').toLowerCase().trim();
 
+  // 1. Always update local disk immediately
+  const diskResult = deleteTeacherFromDisk(identifier, email, phone);
+
+  // 2. Cloud synchronization to MongoDB with timeout
   if (isMongoConfigured()) {
     try {
-      const db = await getDb();
-      if (db) {
-        const teachersCol = db.collection('teachers');
-        const deletedCol = db.collection('deleted_teachers');
+      const syncMongo = async () => {
+        const db = await getDb();
+        if (db) {
+          const teachersCol = db.collection('teachers');
+          const deletedCol = db.collection('deleted_teachers');
 
-        // 1. Mark in deleted_teachers
-        await deletedCol.updateOne(
-          {
+          await deletedCol.updateOne(
+            {
+              $or: [
+                { id: cleanTarget },
+                ...(cleanEmail ? [{ email: cleanEmail }] : []),
+              ],
+            },
+            {
+              $set: {
+                id: cleanTarget,
+                email: cleanEmail || undefined,
+                phone: phone || undefined,
+                deletedAt: new Date().toISOString(),
+              },
+            },
+            { upsert: true }
+          );
+
+          await teachersCol.deleteMany({
             $or: [
               { id: cleanTarget },
+              { id: identifier },
               ...(cleanEmail ? [{ email: cleanEmail }] : []),
             ],
-          },
-          {
-            $set: {
-              id: cleanTarget,
-              email: cleanEmail || undefined,
-              phone: phone || undefined,
-              deletedAt: new Date().toISOString(),
-            },
-          },
-          { upsert: true }
-        );
+          });
+        }
+      };
 
-        // 2. Remove from teachers collection strictly by id or email
-        const deleteResult = await teachersCol.deleteMany({
-          $or: [
-            { id: cleanTarget },
-            { id: identifier },
-            ...(cleanEmail ? [{ email: cleanEmail }] : []),
-          ],
-        });
-
-        // Also update local disk
-        try {
-          deleteTeacherFromDisk(identifier, email, phone);
-        } catch (_) {}
-
-        const result = await getTeachersAsync();
-        return {
-          remainingTeachers: result.teachers,
-          deletedCount: deleteResult.deletedCount || 1,
-        };
-      }
+      const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 3000));
+      await Promise.race([syncMongo(), timeoutPromise]);
     } catch (err) {
-      console.warn('[TeacherUserStore] MongoDB delete error, falling back to disk:', err);
+      console.warn('[TeacherUserStore] MongoDB delete error, saved to disk:', err);
     }
   }
 
-  return deleteTeacherFromDisk(identifier, email, phone);
+  const result = await getTeachersAsync();
+  return {
+    remainingTeachers: result.teachers,
+    deletedCount: diskResult.deletedCount || 1,
+  };
 }

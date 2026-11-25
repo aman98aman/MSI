@@ -1,0 +1,642 @@
+[
+  {
+    "id": "Q-1795590859048-19-YRX",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 20,
+    "section": "Quantitative Techniques",
+    "text": "A book marked at ₹500 is sold at a discount of 10%. What is its selling price?",
+    "options": [
+      {
+        "id": "A",
+        "text": "₹400"
+      },
+      {
+        "id": "B",
+        "text": "₹425"
+      },
+      {
+        "id": "C",
+        "text": "₹450"
+      },
+      {
+        "id": "D",
+        "text": "₹475"
+      }
+    ],
+    "correctOptionId": "C",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "10% of ₹500 is ₹50; selling price = ₹500 − ₹50 = ₹450.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858997-18-O49",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 19,
+    "section": "Quantitative Techniques",
+    "text": "What is 25% of 240?",
+    "options": [
+      {
+        "id": "A",
+        "text": "40"
+      },
+      {
+        "id": "B",
+        "text": "50"
+      },
+      {
+        "id": "C",
+        "text": "60"
+      },
+      {
+        "id": "D",
+        "text": "80"
+      }
+    ],
+    "correctOptionId": "C",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "25% of 240 = 240 × 25/100 = 60.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858950-17-EMM",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 18,
+    "section": "General Knowledge",
+    "text": "Which house of the Indian Parliament is also known as the Council of States?",
+    "options": [
+      {
+        "id": "A",
+        "text": "Lok Sabha"
+      },
+      {
+        "id": "B",
+        "text": "Rajya Sabha"
+      },
+      {
+        "id": "C",
+        "text": "Legislative Assembly"
+      },
+      {
+        "id": "D",
+        "text": "Vidhan Parishad"
+      }
+    ],
+    "correctOptionId": "B",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "Rajya Sabha is the Council of States, while Lok Sabha is the House of the People.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858898-16-7LJ",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 17,
+    "section": "General Knowledge",
+    "text": "The Supreme Court of India is located in:",
+    "options": [
+      {
+        "id": "A",
+        "text": "Mumbai"
+      },
+      {
+        "id": "B",
+        "text": "Kolkata"
+      },
+      {
+        "id": "C",
+        "text": "New Delhi"
+      },
+      {
+        "id": "D",
+        "text": "Chennai"
+      }
+    ],
+    "correctOptionId": "C",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "The Supreme Court of India is located in New Delhi.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858852-15-8FT",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 16,
+    "section": "General Knowledge",
+    "text": "Who is known as the chief architect of the Indian Constitution?",
+    "options": [
+      {
+        "id": "A",
+        "text": "Mahatma Gandhi"
+      },
+      {
+        "id": "B",
+        "text": "Dr. B. R. Ambedkar"
+      },
+      {
+        "id": "C",
+        "text": "Jawaharlal Nehru"
+      },
+      {
+        "id": "D",
+        "text": "Sardar Vallabhbhai Patel"
+      }
+    ],
+    "correctOptionId": "B",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "Dr. B. R. Ambedkar chaired the Drafting Committee of the Constituent Assembly.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858805-14-J9B",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 15,
+    "section": "English Language",
+    "text": "Choose the correctly spelled word.",
+    "options": [
+      {
+        "id": "A",
+        "text": "Accomodation"
+      },
+      {
+        "id": "B",
+        "text": "Acommodation"
+      },
+      {
+        "id": "C",
+        "text": "Accommodation"
+      },
+      {
+        "id": "D",
+        "text": "Acomodation"
+      }
+    ],
+    "correctOptionId": "C",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "The correct spelling is 'accommodation', with double c and double m.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858763-13-CX0",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 14,
+    "section": "English Language",
+    "text": "Fill in the blank: The committee _____ its report yesterday.",
+    "options": [
+      {
+        "id": "A",
+        "text": "submit"
+      },
+      {
+        "id": "B",
+        "text": "submits"
+      },
+      {
+        "id": "C",
+        "text": "submitted"
+      },
+      {
+        "id": "D",
+        "text": "submitting"
+      }
+    ],
+    "correctOptionId": "C",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "The time marker 'yesterday' requires the simple past tense, 'submitted'.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858716-12-QQ1",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 13,
+    "section": "English Language",
+    "text": "Select the grammatically correct sentence.",
+    "options": [
+      {
+        "id": "A",
+        "text": "She do not like tea."
+      },
+      {
+        "id": "B",
+        "text": "She does not likes tea."
+      },
+      {
+        "id": "C",
+        "text": "She does not like tea."
+      },
+      {
+        "id": "D",
+        "text": "She not like tea."
+      }
+    ],
+    "correctOptionId": "C",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "With the singular subject 'she', use 'does not' followed by the base form 'like'.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858673-11-BF7",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 12,
+    "section": "English Language",
+    "text": "Choose the antonym of 'Expand'.",
+    "options": [
+      {
+        "id": "A",
+        "text": "Enlarge"
+      },
+      {
+        "id": "B",
+        "text": "Extend"
+      },
+      {
+        "id": "C",
+        "text": "Contract"
+      },
+      {
+        "id": "D",
+        "text": "Increase"
+      }
+    ],
+    "correctOptionId": "C",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "Contract means to become smaller, which is the opposite of expand.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858630-10-JNE",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 11,
+    "section": "English Language",
+    "text": "Choose the synonym of 'Abundant'.",
+    "options": [
+      {
+        "id": "A",
+        "text": "Scarce"
+      },
+      {
+        "id": "B",
+        "text": "Plentiful"
+      },
+      {
+        "id": "C",
+        "text": "Limited"
+      },
+      {
+        "id": "D",
+        "text": "Rare"
+      }
+    ],
+    "correctOptionId": "B",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "Abundant means existing in large quantities; plentiful is its synonym.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858585-9-UJV",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 10,
+    "section": "Logical Reasoning",
+    "text": "A is taller than B. B is taller than C. Who is the shortest?",
+    "options": [
+      {
+        "id": "A",
+        "text": "A"
+      },
+      {
+        "id": "B",
+        "text": "B"
+      },
+      {
+        "id": "C",
+        "text": "C"
+      },
+      {
+        "id": "D",
+        "text": "Cannot be determined"
+      }
+    ],
+    "correctOptionId": "C",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "Since A > B and B > C in height, C is the shortest.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858542-8-6R7",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 9,
+    "section": "Logical Reasoning",
+    "text": "If CAT is coded as DBU by shifting each letter one step forward, how is DOG coded?",
+    "options": [
+      {
+        "id": "A",
+        "text": "EPH"
+      },
+      {
+        "id": "B",
+        "text": "CNG"
+      },
+      {
+        "id": "C",
+        "text": "EOG"
+      },
+      {
+        "id": "D",
+        "text": "FPH"
+      }
+    ],
+    "correctOptionId": "A",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "D becomes E, O becomes P, and G becomes H; hence DOG becomes EPH.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858498-7-K4Q",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 8,
+    "section": "Logical Reasoning",
+    "text": "Choose the odd one out.",
+    "options": [
+      {
+        "id": "A",
+        "text": "Square"
+      },
+      {
+        "id": "B",
+        "text": "Triangle"
+      },
+      {
+        "id": "C",
+        "text": "Circle"
+      },
+      {
+        "id": "D",
+        "text": "Cube"
+      }
+    ],
+    "correctOptionId": "D",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "Cube is three-dimensional, while the other options are two-dimensional shapes.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858455-6-5N2",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 7,
+    "section": "Logical Reasoning",
+    "text": "If all roses are flowers and some flowers fade quickly, which conclusion definitely follows?",
+    "options": [
+      {
+        "id": "A",
+        "text": "All roses fade quickly"
+      },
+      {
+        "id": "B",
+        "text": "Some roses fade quickly"
+      },
+      {
+        "id": "C",
+        "text": "All roses are flowers"
+      },
+      {
+        "id": "D",
+        "text": "No flowers are roses"
+      }
+    ],
+    "correctOptionId": "C",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "The statement directly establishes that all roses belong to the category of flowers.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858412-5-HPE",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 6,
+    "section": "Logical Reasoning",
+    "text": "Find the next number in the series: 3, 6, 12, 24, __.",
+    "options": [
+      {
+        "id": "A",
+        "text": "30"
+      },
+      {
+        "id": "B",
+        "text": "36"
+      },
+      {
+        "id": "C",
+        "text": "42"
+      },
+      {
+        "id": "D",
+        "text": "48"
+      }
+    ],
+    "correctOptionId": "D",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "Each term is multiplied by 2; therefore, 24 × 2 = 48.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858366-4-WGH",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 5,
+    "section": "Legal Reasoning",
+    "text": "The term 'mens rea' refers to:",
+    "options": [
+      {
+        "id": "A",
+        "text": "Physical act"
+      },
+      {
+        "id": "B",
+        "text": "Guilty mind"
+      },
+      {
+        "id": "C",
+        "text": "Written evidence"
+      },
+      {
+        "id": "D",
+        "text": "Legal notice"
+      }
+    ],
+    "correctOptionId": "B",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "Mens rea means the mental element or guilty intention associated with an offence.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858325-3-VGD",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 4,
+    "section": "Legal Reasoning",
+    "text": "A contract generally requires which of the following to be valid?",
+    "options": [
+      {
+        "id": "A",
+        "text": "Offer and acceptance"
+      },
+      {
+        "id": "B",
+        "text": "Only a written document"
+      },
+      {
+        "id": "C",
+        "text": "Only registration"
+      },
+      {
+        "id": "D",
+        "text": "Approval by a police officer"
+      }
+    ],
+    "correctOptionId": "A",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "A valid contract generally requires a lawful offer and acceptance, along with other legal essentials.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858284-2-XU6",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 3,
+    "section": "Legal Reasoning",
+    "text": "Which writ is issued to produce a detained person before a court and examine the legality of detention?",
+    "options": [
+      {
+        "id": "A",
+        "text": "Mandamus"
+      },
+      {
+        "id": "B",
+        "text": "Certiorari"
+      },
+      {
+        "id": "C",
+        "text": "Habeas Corpus"
+      },
+      {
+        "id": "D",
+        "text": "Quo Warranto"
+      }
+    ],
+    "correctOptionId": "C",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "Habeas Corpus protects personal liberty by requiring the detained person to be brought before the court.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858240-1-AY7",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 2,
+    "section": "Legal Reasoning",
+    "text": "The principle of 'audi alteram partem' means:",
+    "options": [
+      {
+        "id": "A",
+        "text": "No one is above the law"
+      },
+      {
+        "id": "B",
+        "text": "Hear the other side"
+      },
+      {
+        "id": "C",
+        "text": "Let the buyer beware"
+      },
+      {
+        "id": "D",
+        "text": "An act does not make a person guilty"
+      }
+    ],
+    "correctOptionId": "B",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "Audi alteram partem is a principle of natural justice requiring a fair opportunity to be heard.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  },
+  {
+    "id": "Q-1795590858186-0-606",
+    "examId": "EXM-1795590575968-D1L6",
+    "paperVersion": 1,
+    "orderIndex": 1,
+    "section": "Legal Reasoning",
+    "text": "Which Article of the Indian Constitution guarantees equality before the law and equal protection of the laws?",
+    "options": [
+      {
+        "id": "A",
+        "text": "Article 14"
+      },
+      {
+        "id": "B",
+        "text": "Article 19"
+      },
+      {
+        "id": "C",
+        "text": "Article 21"
+      },
+      {
+        "id": "D",
+        "text": "Article 32"
+      }
+    ],
+    "correctOptionId": "A",
+    "marks": 1,
+    "negativeMarks": 0.25,
+    "explanation": "Article 14 guarantees equality before the law and equal protection of the laws.",
+    "status": "active",
+    "createdAt": "2026-11-25T07:14:18.150Z"
+  }
+]

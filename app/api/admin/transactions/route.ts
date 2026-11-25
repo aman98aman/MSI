@@ -68,17 +68,24 @@ function writeTransactionsToDisk(txns: AdminTransaction[]): void {
 async function getTransactionsAsync(): Promise<AdminTransaction[]> {
   if (isMongoConfigured()) {
     try {
-      const db = await getDb();
-      if (db) {
-        const col = db.collection<AdminTransaction>('transactions');
-        const docs = await col.find({}).sort({ timestamp: -1 }).toArray();
-        if (docs.length > 0) {
-          return docs.map((d: any) => {
-            const { _id, ...rest } = d;
-            return rest as AdminTransaction;
-          });
+      const fetchMongo = async () => {
+        const db = await getDb();
+        if (db) {
+          const col = db.collection<AdminTransaction>('transactions');
+          const docs = await col.find({}).sort({ timestamp: -1 }).toArray();
+          if (docs.length > 0) {
+            return docs.map((d: any) => {
+              const { _id, ...rest } = d;
+              return rest as AdminTransaction;
+            });
+          }
         }
-      }
+        return null;
+      };
+
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
+      const res = await Promise.race([fetchMongo(), timeoutPromise]);
+      if (res && res.length > 0) return res;
     } catch (err) {
       console.warn('[Transactions MongoDB Error]:', err);
     }
@@ -240,13 +247,53 @@ export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
+    const isAll = searchParams.get('all') === 'true';
 
     let idsToDelete: string[] = [];
+    if (isAll) {
+      writeTransactionsToDisk([]);
+      if (isMongoConfigured()) {
+        try {
+          const syncMongo = async () => {
+            const db = await getDb();
+            if (db) await db.collection('transactions').deleteMany({});
+          };
+          const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 3000));
+          await Promise.race([syncMongo(), timeoutPromise]);
+        } catch (err) {
+          console.warn('[Transactions API] MongoDB clear error:', err);
+        }
+      }
+      return NextResponse.json({
+        success: true,
+        message: 'All transactions cleared from ledger.',
+        transactions: [],
+      });
+    }
+
     if (id) {
       idsToDelete = [id];
     } else {
       try {
         const body = await req.json().catch(() => ({}));
+        if (body?.all === true) {
+          writeTransactionsToDisk([]);
+          if (isMongoConfigured()) {
+            try {
+              const syncMongo = async () => {
+                const db = await getDb();
+                if (db) await db.collection('transactions').deleteMany({});
+              };
+              const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 3000));
+              await Promise.race([syncMongo(), timeoutPromise]);
+            } catch (_) {}
+          }
+          return NextResponse.json({
+            success: true,
+            message: 'All transactions cleared from ledger.',
+            transactions: [],
+          });
+        }
         if (Array.isArray(body?.ids)) {
           idsToDelete = body.ids;
         } else if (body?.id) {
@@ -262,27 +309,33 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    if (isMongoConfigured()) {
-      try {
-        const db = await getDb();
-        if (db) {
-          await db.collection('transactions').deleteMany({
-            $or: [
-              { id: { $in: idsToDelete } },
-              { receiptNumber: { $in: idsToDelete } },
-            ],
-          });
-        }
-      } catch (err) {
-        console.warn('[Transactions API] MongoDB delete error:', err);
-      }
-    }
-
+    // 1. Immediately delete from local disk first
     const txns = readTransactionsFromDisk();
     const filtered = txns.filter(
       (t) => !idsToDelete.includes(t.id) && !idsToDelete.includes(t.receiptNumber)
     );
     writeTransactionsToDisk(filtered);
+
+    // 2. Synchronize to MongoDB with non-blocking timeout
+    if (isMongoConfigured()) {
+      try {
+        const syncMongo = async () => {
+          const db = await getDb();
+          if (db) {
+            await db.collection('transactions').deleteMany({
+              $or: [
+                { id: { $in: idsToDelete } },
+                { receiptNumber: { $in: idsToDelete } },
+              ],
+            });
+          }
+        };
+        const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 3000));
+        await Promise.race([syncMongo(), timeoutPromise]);
+      } catch (err) {
+        console.warn('[Transactions API] MongoDB delete error, saved to disk:', err);
+      }
+    }
 
     return NextResponse.json({
       success: true,

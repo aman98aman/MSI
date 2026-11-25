@@ -1,0 +1,30 @@
+[
+  {
+    "id": "PAY-1795590620608-LP37",
+    "amount": 1,
+    "candidateId": "CND-1795590448262-VLHV",
+    "createdAt": "2026-11-25T07:10:20.267Z",
+    "currency": "INR",
+    "examId": "EXM-1795590575968-D1L6",
+    "method": "razorpay",
+    "razorpayOrderId": "order_U4Jt46bfdLz622",
+    "registrationId": "REG-1795590620306-ZRS7",
+    "status": "verified",
+    "uid": "MSI-CLAT26-26-0001",
+    "razorpayPaymentId": "pay_U4JtIXrNLAguYw",
+    "razorpaySignature": "843b6772bb1036e381b055f74606c630e7023562e48c969b4852b71ef2aff208",
+    "verifiedAt": "2026-11-25T07:10:51.511Z"
+  },
+  {
+    "id": "PAY-1795590448749-E8BM",
+    "examId": "EXM-1795590353807-2SMW",
+    "registrationId": "REG-1795590448321-R2OQ",
+    "candidateId": "CND-1795590448262-VLHV",
+    "amount": 50,
+    "currency": "INR",
+    "method": "razorpay",
+    "status": "created",
+    "razorpayOrderId": "order_U4Jq2TlIZQbWnn",
+    "createdAt": "2026-11-25T07:07:28.219Z"
+  }
+]

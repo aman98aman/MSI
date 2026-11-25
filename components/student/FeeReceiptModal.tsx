@@ -140,6 +140,7 @@ export interface FeeReceiptModalProps {
   isCreateMode?: boolean;
   onClose: () => void;
   onSave?: (invoiceData: GSTInvoiceData) => Promise<void> | void;
+  onDelete?: (txnId: string) => Promise<void> | void;
 }
 
 export default function FeeReceiptModal({
@@ -152,6 +153,7 @@ export default function FeeReceiptModal({
   isCreateMode = false,
   onClose,
   onSave,
+  onDelete,
 }: FeeReceiptModalProps) {
   const activeStudent = prefillStudent || student;
   if (!transaction && !isCreateMode) return null;
@@ -213,6 +215,14 @@ export default function FeeReceiptModal({
       activeStudent?.batch ||
       'CLAT (LLB)';
 
+    const pnrUtr =
+      transaction?.pnr ||
+      transaction?.utr ||
+      transaction?.poNo ||
+      transaction?.razorpayPaymentId ||
+      transaction?.orderId ||
+      '';
+
     return {
       gstin: '03AEQPE9376K2ZY',
       pan: 'AEQPE9376K',
@@ -228,8 +238,8 @@ export default function FeeReceiptModal({
       addressLine2: 'Khrar , PUNJAB- 140301',
       buyerGst: '',
       buyerPhone: activeStudent?.phone || transaction?.studentPhone || '9463113195',
-      grMarka: '',
-      poNo: transaction?.orderId || transaction?.razorpayOrderId || '',
+      grMarka: transaction?.grMarka || (pnrUtr ? `PNR: ${pnrUtr}` : ''),
+      poNo: pnrUtr,
       poDate: '',
       remarks: transaction?.remarks || '',
       items: [
@@ -738,13 +748,18 @@ export default function FeeReceiptModal({
           <span>MODE OF SUPPLY:</span>
           <span>${invoice.paymentMode || invoice.modeOfSupply}</span>
         </div>
+        ${invoice.poNo ? `
+        <div style="display:flex; justify-content:space-between; color:#89190E;">
+          <span>PNR / UTR REF:</span>
+          <span style="font-family:monospace;">${invoice.poNo}</span>
+        </div>` : ''}
       </div>
     </div>
 
     <!-- GR/MARKA & REMARKS -->
     <div style="padding:2px 6px; border-bottom:1px solid #000; font-size:9.5px; font-weight:bold;">
       <div style="display:flex; justify-content:space-between; margin-bottom:1px;">
-        <div style="flex:1;">GR/MARKA: <span style="font-family:monospace;">${invoice.grMarka || ''}</span></div>
+        <div style="flex:1;">PNR / UTR REF: <span style="font-family:monospace; color:#89190E;">${invoice.poNo || invoice.grMarka || '—'}</span></div>
         <div style="flex:1;">PO NO: <span style="font-family:monospace;">${invoice.poNo || ''}</span></div>
         <div style="flex:1;">PO DT: <span style="font-family:monospace;">${invoice.poDate || ''}</span></div>
       </div>
@@ -1022,6 +1037,27 @@ export default function FeeReceiptModal({
               <Printer className="w-3.5 h-3.5 text-[#EFC988]" />
               <span>Print / Download Single Sheet</span>
             </button>
+
+            {onDelete && transaction?.id && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (
+                    window.confirm(
+                      `Are you sure you want to permanently delete Transaction / Invoice ${transaction.id}? The amount ₹${Number(transaction.amount || 0).toLocaleString('en-IN')} will be deducted from total revenue.`
+                    )
+                  ) {
+                    await onDelete(transaction.id);
+                    onClose();
+                  }
+                }}
+                className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center space-x-1.5 transition-colors shadow-xs cursor-pointer"
+                title="Delete this transaction and invoice permanently"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Invoice</span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -1506,6 +1542,21 @@ export default function FeeReceiptModal({
                     <span>{invoice.modeOfSupply}</span>
                   )}
                 </div>
+
+                <div className="flex">
+                  <span className="w-32 shrink-0 text-[#89190E]">PNR / UTR REF:</span>
+                  {canEdit ? (
+                    <input
+                      type="text"
+                      value={invoice.poNo}
+                      onChange={(e) => setInvoice({ ...invoice, poNo: e.target.value })}
+                      placeholder="e.g. 432109876543"
+                      className="border border-dashed border-gray-400 px-1 font-mono text-[10px] w-full text-[#89190E] font-bold"
+                    />
+                  ) : (
+                    <span className="font-mono text-[#89190E] font-bold">{invoice.poNo || invoice.grMarka || '—'}</span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1513,7 +1564,7 @@ export default function FeeReceiptModal({
             <div className="border-b border-black px-2 py-0.5 text-[10px] font-bold">
               <div className="grid grid-cols-12 gap-2 pb-0.5">
                 <div className="col-span-4 flex items-center">
-                  <span>GR/MARKA:</span>
+                  <span>PNR/GR:</span>
                   {canEdit ? (
                     <input
                       type="text"
@@ -1522,11 +1573,11 @@ export default function FeeReceiptModal({
                       className="ml-1 border border-dashed border-gray-400 px-1 w-full text-[9.5px]"
                     />
                   ) : (
-                    <span className="ml-1 font-mono">{invoice.grMarka}</span>
+                    <span className="ml-1 font-mono text-[#89190E]">{invoice.grMarka || invoice.poNo || '—'}</span>
                   )}
                 </div>
                 <div className="col-span-4 flex items-center">
-                  <span>PO NO:</span>
+                  <span>PO / UTR NO:</span>
                   {canEdit ? (
                     <input
                       type="text"
@@ -1535,7 +1586,7 @@ export default function FeeReceiptModal({
                       className="ml-1 border border-dashed border-gray-400 px-1 w-full text-[9.5px]"
                     />
                   ) : (
-                    <span className="ml-1 font-mono">{invoice.poNo}</span>
+                    <span className="ml-1 font-mono">{invoice.poNo || '—'}</span>
                   )}
                 </div>
                 <div className="col-span-4 flex items-center">

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "REG-1795590620306-ZRS7",
+    "batchId": null,
+    "candidateId": "CND-1795590448262-VLHV",
+    "customFieldValues": null,
+    "email": "sharshit.0211@gmail.com",
+    "examId": "EXM-1795590575968-D1L6",
+    "feeAmount": 1,
+    "fullName": "harshit",
+    "mobile": "9792303434",
+    "participationMode": "online",
+    "paymentStatus": "verified",
+    "registeredAt": "2026-11-25T07:10:20.267Z",
+    "registrationStatus": "confirmed",
+    "source": "website",
+    "teamMembers": null,
+    "teamName": null,
+    "uid": "MSI-CLAT26-26-0001",
+    "confirmedAt": "2026-11-25T07:10:51.511Z"
+  },
+  {
+    "id": "REG-1795590448321-R2OQ",
+    "examId": "EXM-1795590353807-2SMW",
+    "candidateId": "CND-1795590448262-VLHV",
+    "uid": "",
+    "fullName": "harshit singh",
+    "mobile": "9792303434",
+    "email": "sharshit.0211@gmail.com",
+    "participationMode": "online",
+    "source": "website",
+    "registrationStatus": "pending_payment",
+    "paymentStatus": "pending",
+    "feeAmount": 50,
+    "registeredAt": "2026-11-25T07:07:28.219Z"
+  }
+]

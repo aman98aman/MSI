@@ -1,0 +1,1091 @@
+'use client';
+
+import React, { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import * as XLSX from 'xlsx';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Copy,
+  Download,
+  FileSpreadsheet,
+  Lock,
+  Plus,
+  Printer,
+  QrCode,
+  RefreshCw,
+  Search,
+  ShieldAlert,
+  Trash2,
+  Upload,
+  UserCheck,
+  UserPlus,
+  XCircle,
+} from 'lucide-react';
+import ExamAdminAuthGate from '@/components/admin/ExamAdminAuthGate';
+
+type DetailTab =
+  | 'overview'
+  | 'qr'
+  | 'candidates'
+  | 'questions'
+  | 'monitoring'
+  | 'attendance'
+  | 'results'
+  | 'audit';
+
+function ExamDetailContent() {
+  const params = useParams<{ examId: string }>();
+  const examId = params.examId;
+
+  const [tab, setTab] = useState<DetailTab>('overview');
+  const [exam, setExam] = useState<any>(null);
+  const [batches, setBatches] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState<any>(null);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [qrData, setQrData] = useState<any>(null);
+  const [candidates, setCandidates] = useState<any[]>([]);
+  const [candSearch, setCandSearch] = useState('');
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [paperVerified, setPaperVerified] = useState(false);
+  const [attempts, setAttempts] = useState<any[]>([]);
+  const [roster, setRoster] = useState<any[]>([]);
+  const [results, setResults] = useState<any[]>([]);
+  const [resultsPublished, setResultsPublished] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState('');
+
+  // Batch form
+  const [batchCode, setBatchCode] = useState('');
+  const [batchName, setBatchName] = useState('');
+  const [batchCapacity, setBatchCapacity] = useState('');
+
+  // Offline registration modal
+  const [showOfflineModal, setShowOfflineModal] = useState(false);
+  const [offName, setOffName] = useState('');
+  const [offMobile, setOffMobile] = useState('');
+  const [offEmail, setOffEmail] = useState('');
+  const [offMode, setOffMode] = useState<'online' | 'offline'>('offline');
+  const [offReceipt, setOffReceipt] = useState('');
+
+  // Manual Question form
+  const [qSection, setQSection] = useState('General');
+  const [qText, setQText] = useState('');
+  const [qOptA, setQOptA] = useState('');
+  const [qOptB, setQOptB] = useState('');
+  const [qOptC, setQOptC] = useState('');
+  const [qOptD, setQOptD] = useState('');
+  const [qCorrect, setQCorrect] = useState<'A' | 'B' | 'C' | 'D'>('A');
+  const [qMarks, setQMarks] = useState('1');
+  const [qNegMarks, setQNegMarks] = useState('0.25');
+
+  // Excel/CSV & PDF-assisted import preview
+  const [importPreview, setImportPreview] = useState<any[]>([]);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [pdfRawText, setPdfRawText] = useState('');
+  const [showPdfHelper, setShowPdfHelper] = useState(false);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 3500);
+  };
+
+  const loadOverview = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/examinations/${examId}`);
+      const data = await res.json();
+      if (data.success) {
+        setExam(data.exam);
+        setBatches(data.batches || []);
+        setMetrics(data.metrics);
+        setAuditLogs(data.auditLogs || []);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [examId]);
+
+  const loadQr = useCallback(async () => {
+    const res = await fetch(`/api/admin/examinations/${examId}/qr`);
+    const data = await res.json();
+    if (data.success) setQrData(data);
+  }, [examId]);
+
+  const loadCandidates = useCallback(async () => {
+    const res = await fetch(
+      `/api/admin/examinations/${examId}/candidates?search=${encodeURIComponent(candSearch)}`
+    );
+    const data = await res.json();
+    if (data.success) setCandidates(data.candidates || []);
+  }, [examId, candSearch]);
+
+  const loadQuestions = useCallback(async () => {
+    const res = await fetch(`/api/admin/examinations/${examId}/questions`);
+    const data = await res.json();
+    if (data.success) {
+      setQuestions(data.questions || []);
+      setPaperVerified(Boolean(data.paperVerified));
+    }
+  }, [examId]);
+
+  const loadMonitoring = useCallback(async () => {
+    const res = await fetch(`/api/admin/examinations/${examId}/attempts`);
+    const data = await res.json();
+    if (data.success) setAttempts(data.attempts || []);
+  }, [examId]);
+
+  const loadAttendance = useCallback(async () => {
+    const res = await fetch(`/api/admin/examinations/${examId}/attendance`);
+    const data = await res.json();
+    if (data.success) setRoster(data.roster || []);
+  }, [examId]);
+
+  const loadResults = useCallback(async () => {
+    const res = await fetch(`/api/admin/examinations/${examId}/results`);
+    const data = await res.json();
+    if (data.success) {
+      setResults(data.results || []);
+      setResultsPublished(Boolean(data.resultsPublished));
+    }
+  }, [examId]);
+
+  useEffect(() => {
+    loadOverview();
+  }, [loadOverview]);
+
+  useEffect(() => {
+    if (tab === 'qr') loadQr();
+    else if (tab === 'candidates') loadCandidates();
+    else if (tab === 'questions') loadQuestions();
+    else if (tab === 'monitoring') loadMonitoring();
+    else if (tab === 'attendance') loadAttendance();
+    else if (tab === 'results') loadResults();
+  }, [tab, loadQr, loadCandidates, loadQuestions, loadMonitoring, loadAttendance, loadResults]);
+
+  const handleLifecycle = async (action: string, label: string) => {
+    if (!window.confirm(`Confirm: ${label}?`)) return;
+    const res = await fetch(`/api/admin/examinations/${examId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`${label} successful.`);
+      loadOverview();
+    } else {
+      showToast(data.message || 'Action failed.');
+    }
+  };
+
+  const handleCreateBatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await fetch(`/api/admin/examinations/${examId}/batches`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        batchCode,
+        batchName,
+        capacity: batchCapacity ? Number(batchCapacity) : undefined,
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      setBatchCode('');
+      setBatchName('');
+      setBatchCapacity('');
+      showToast('Batch added.');
+      loadOverview();
+    } else {
+      showToast(data.message || 'Failed to add batch.');
+    }
+  };
+
+  const handleOfflineEntry = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await fetch(`/api/admin/examinations/${examId}/candidates`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fullName: offName,
+        mobile: offMobile,
+        email: offEmail,
+        participationMode: offMode,
+        offlineReceiptRef: offReceipt,
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Registered offline candidate! UID: ${data.uid}`);
+      setShowOfflineModal(false);
+      setOffName('');
+      setOffMobile('');
+      setOffEmail('');
+      setOffReceipt('');
+      loadCandidates();
+      loadOverview();
+    } else {
+      showToast(data.message || 'Failed to register candidate.');
+    }
+  };
+
+  const handleAddQuestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await fetch(`/api/admin/examinations/${examId}/questions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: 'manual',
+        section: qSection,
+        text: qText,
+        options: [
+          { id: 'A', text: qOptA },
+          { id: 'B', text: qOptB },
+          { id: 'C', text: qOptC },
+          { id: 'D', text: qOptD },
+        ],
+        correctOptionId: qCorrect,
+        marks: Number(qMarks || 1),
+        negativeMarks: Number(qNegMarks || 0),
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Question saved.');
+      setQText('');
+      setQOptA('');
+      setQOptB('');
+      setQOptC('');
+      setQOptD('');
+      loadQuestions();
+    } else {
+      showToast(data.message || 'Failed to save question.');
+    }
+  };
+
+  const handleExcelFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf);
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json<any>(sheet);
+
+    const parsed: any[] = [];
+    const errs: string[] = [];
+
+    rows.forEach((r, idx) => {
+      const text = String(r.Question || r.question || '').trim();
+      const optionA = String(r.OptionA || r.A || '').trim();
+      const optionB = String(r.OptionB || r.B || '').trim();
+      const optionC = String(r.OptionC || r.C || '').trim();
+      const optionD = String(r.OptionD || r.D || '').trim();
+      const correctOptionId = String(r.CorrectOption || r.Answer || '').trim().toUpperCase();
+
+      if (!text || !optionA || !optionB || !optionC || !optionD || !['A', 'B', 'C', 'D'].includes(correctOptionId)) {
+        errs.push(`Row ${idx + 2}: Missing question, options, or invalid CorrectOption (must be A/B/C/D).`);
+      } else {
+        parsed.push({
+          section: String(r.Section || 'General').trim(),
+          text,
+          optionA,
+          optionB,
+          optionC,
+          optionD,
+          correctOptionId,
+          marks: Number(r.Marks ?? 1),
+          negativeMarks: Number(r.NegativeMarks ?? 0),
+          explanation: r.Explanation ? String(r.Explanation).trim() : '',
+        });
+      }
+    });
+
+    setImportPreview(parsed);
+    setImportErrors(errs);
+  };
+
+  const handleParsePdfText = () => {
+    // Assisted extraction of numbered MCQs from pasted PDF text into review queue (never guesses answers)
+    const blocks = pdfRawText.split(/\n(?=\d+[\.\)]\s+)/g).filter((b) => b.trim());
+    const extracted: any[] = [];
+    blocks.forEach((blk) => {
+      const lines = blk.split('\n').map((l) => l.trim()).filter(Boolean);
+      const qLine = lines[0]?.replace(/^\d+[\.\)]\s*/, '') || '';
+      const findOpt = (letter: string) => {
+        const found = lines.find((l) => new RegExp(`^\\(?${letter}[\\)\\.]\\s+`, 'i').test(l));
+        return found ? found.replace(new RegExp(`^\\(?${letter}[\\)\\.]\\s+`, 'i'), '') : '';
+      };
+      if (qLine) {
+        extracted.push({
+          section: 'PDF Extracted',
+          text: qLine,
+          optionA: findOpt('A'),
+          optionB: findOpt('B'),
+          optionC: findOpt('C'),
+          optionD: findOpt('D'),
+          correctOptionId: '', // Admin MUST explicitly verify and set!
+          marks: Number(exam?.cbtRules?.marksPerQuestion ?? 1),
+          negativeMarks: Number(exam?.cbtRules?.negativeMarking ?? 0),
+        });
+      }
+    });
+    setImportPreview(extracted);
+    setImportErrors(
+      extracted.length > 0
+        ? ['Verify all extracted questions and select the Correct Option (A/B/C/D) for each row before committing.']
+        : ['No numbered questions detected. Use format: 1. Question text / A) ... B) ... C) ... D) ...']
+    );
+  };
+
+  const commitImportPreview = async () => {
+    const invalid = importPreview.some(
+      (r) => !r.text || !r.optionA || !r.optionB || !r.optionC || !r.optionD || !['A', 'B', 'C', 'D'].includes(r.correctOptionId)
+    );
+    if (invalid) {
+      showToast('Every row must have all 4 options and a valid CorrectOption (A/B/C/D).');
+      return;
+    }
+
+    const res = await fetch(`/api/admin/examinations/${examId}/questions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'bulk', questions: importPreview }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Imported ${data.importedCount} questions! Now click "Verify & Publish Paper".`);
+      setImportPreview([]);
+      setImportErrors([]);
+      setShowPdfHelper(false);
+      loadQuestions();
+    } else {
+      showToast(data.message || 'Bulk import failed.');
+    }
+  };
+
+  const handleVerifyPaper = async () => {
+    const res = await fetch(`/api/admin/examinations/${examId}/questions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'verify_and_publish' }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Question paper verified and published!');
+      loadQuestions();
+      loadOverview();
+    } else {
+      showToast(data.message || 'Verification failed.');
+    }
+  };
+
+  const handleMarkAttendance = async (registrationId: string, status: 'present' | 'absent') => {
+    const res = await fetch(`/api/admin/examinations/${examId}/attendance`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ registrationId, status }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Marked ${status}.`);
+      loadAttendance();
+    }
+  };
+
+  const handleResultsAction = async (action: 're_evaluate' | 'publish_results') => {
+    const res = await fetch(`/api/admin/examinations/${examId}/results`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(action === 'publish_results' ? 'Results published!' : `Re-evaluated ${data.evaluatedCount} attempts.`);
+      loadResults();
+      loadOverview();
+    }
+  };
+
+  if (loading && !exam) {
+    return (
+      <div className="min-h-screen bg-[#F6F8FC] flex items-center justify-center text-sm font-bold text-[#071B37]">
+        Loading examination console...
+      </div>
+    );
+  }
+
+  if (!exam) {
+    return (
+      <div className="min-h-screen bg-[#F6F8FC] flex flex-col items-center justify-center gap-3">
+        <p className="text-sm font-bold text-rose-700">Examination not found.</p>
+        <Link href="/admin/online-examinations" className="text-xs font-bold underline">
+          Back to Examinations
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#F6F8FC] text-[#071B37] pb-16">
+      {toast && (
+        <div className="fixed bottom-5 right-5 z-50 bg-[#071B37] text-white px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold border border-[#EFC988]/40">
+          {toast}
+        </div>
+      )}
+
+      <header className="bg-white border-b border-[#E8EEFF] sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Link href="/admin/online-examinations" className="p-2 rounded-xl border border-gray-200 hover:bg-gray-50">
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#071B37] text-[#EFC988]">
+                  {exam.code}
+                </span>
+                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                  {String(exam.effectiveStatus).replace(/_/g, ' ')}
+                </span>
+              </div>
+              <h1 className="font-serif font-bold text-lg sm:text-xl text-[#071B37] mt-0.5">
+                {exam.title}
+              </h1>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {exam.effectiveStatus === 'draft' && (
+              <button
+                onClick={() => handleLifecycle('publish', 'Publish Examination')}
+                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer"
+              >
+                Publish Now
+              </button>
+            )}
+            {exam.effectiveStatus === 'registration_open' && (
+              <button
+                onClick={() => handleLifecycle('close_registration', 'Close Registration')}
+                className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer"
+              >
+                Close Registration
+              </button>
+            )}
+            <Link
+              href={`/exam/${exam.publicSlug}`}
+              target="_blank"
+              className="px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-bold hover:bg-gray-50"
+            >
+              Open Public Page
+            </Link>
+          </div>
+        </div>
+
+        {/* Navigation Tabs */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex gap-1 overflow-x-auto border-t border-gray-100">
+          {[
+            { id: 'overview', label: 'Overview & Batches' },
+            { id: 'qr', label: 'Link & QR Code' },
+            { id: 'candidates', label: 'Candidates' },
+            ...(exam.eventType === 'online_cbt' || exam.eventType === 'hybrid'
+              ? [
+                  { id: 'questions', label: 'Questions & Key' },
+                  { id: 'monitoring', label: 'Attempts & Violations' },
+                ]
+              : []),
+            ...(exam.eventType === 'offline_mock' || exam.eventType === 'hybrid'
+              ? [{ id: 'attendance', label: 'Offline Attendance' }]
+              : []),
+            { id: 'results', label: 'Results & Exports' },
+            { id: 'audit', label: 'Audit History' },
+          ].map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id as DetailTab)}
+              className={`px-4 py-3 text-xs font-bold whitespace-nowrap border-b-2 transition-colors cursor-pointer ${
+                tab === t.id
+                  ? 'border-[#89190E] text-[#89190E]'
+                  : 'border-transparent text-gray-500 hover:text-[#071B37]'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        {tab === 'overview' && (
+          <div className="space-y-6">
+            {metrics && (
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
+                <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF]">
+                  <span className="text-[10px] font-bold uppercase text-gray-400">Confirmed</span>
+                  <div className="font-serif font-bold text-2xl mt-1">{metrics.confirmedRegistrations}</div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF]">
+                  <span className="text-[10px] font-bold uppercase text-gray-400">Pending Pay</span>
+                  <div className="font-serif font-bold text-2xl text-amber-600 mt-1">{metrics.pendingRegistrations}</div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF]">
+                  <span className="text-[10px] font-bold uppercase text-gray-400">Revenue</span>
+                  <div className="font-serif font-bold text-2xl mt-1">₹{metrics.totalRevenue.toLocaleString('en-IN')}</div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF]">
+                  <span className="text-[10px] font-bold uppercase text-gray-400">Submitted</span>
+                  <div className="font-serif font-bold text-2xl text-emerald-700 mt-1">{metrics.submittedAttempts}</div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF]">
+                  <span className="text-[10px] font-bold uppercase text-gray-400">Active Now</span>
+                  <div className="font-serif font-bold text-2xl text-rose-600 mt-1">{metrics.activeAttempts}</div>
+                </div>
+              </div>
+            )}
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-white p-6 rounded-2xl border border-[#E8EEFF] space-y-2 text-xs">
+                <h2 className="font-serif font-bold text-base mb-3">Configuration Summary</h2>
+                <div><strong>Event Type:</strong> {exam.eventType} ({exam.participationMode})</div>
+                <div><strong>Category:</strong> {exam.category}</div>
+                <div><strong>Fee:</strong> {exam.registrationConfig?.isFree ? 'FREE' : `₹${exam.registrationConfig?.feeAmount} INR`}</div>
+                <div><strong>Exam Date:</strong> {exam.scheduleConfig?.examDate} ({exam.scheduleConfig?.durationMinutes} mins)</div>
+                <div><strong>Public URL:</strong> <span className="font-mono">/exam/{exam.publicSlug}</span></div>
+                <div><strong>Paper Verified:</strong> {exam.paperVerified ? '✅ Verified & Published' : '⚠️ Pending Verification'}</div>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-[#E8EEFF] space-y-4">
+                <h2 className="font-serif font-bold text-base">Batches / Sessions ({batches.length})</h2>
+                <form onSubmit={handleCreateBatch} className="grid grid-cols-3 gap-2">
+                  <input
+                    value={batchCode}
+                    onChange={(e) => setBatchCode(e.target.value.toUpperCase())}
+                    placeholder="Code (B1)"
+                    required
+                    className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono"
+                  />
+                  <input
+                    value={batchName}
+                    onChange={(e) => setBatchName(e.target.value)}
+                    placeholder="Batch Name"
+                    required
+                    className="px-3 py-2 rounded-xl border border-gray-200 text-xs"
+                  />
+                  <button
+                    type="submit"
+                    className="px-3 py-2 rounded-xl bg-[#071B37] text-white text-xs font-bold cursor-pointer"
+                  >
+                    + Add Batch
+                  </button>
+                </form>
+                <div className="space-y-2">
+                  {batches.map((b) => (
+                    <div key={b.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 text-xs">
+                      <div>
+                        <span className="font-mono font-bold mr-2">{b.batchCode}</span>
+                        <span>{b.batchName}</span>
+                      </div>
+                      <span className="text-[11px] text-gray-500">{b.status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'qr' && qrData && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E8EEFF] max-w-2xl mx-auto text-center space-y-5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-xs font-bold">
+              <QrCode className="w-4 h-4 text-[#89190E]" />
+              QR Version {qrData.qrVersion}
+            </div>
+            <h2 className="font-serif font-bold text-xl">{exam.title}</h2>
+            <div className="flex justify-center">
+              <img src={qrData.dataUrl} alt="Exam QR Code" className="w-64 h-64 rounded-2xl border border-gray-200 p-2 bg-white" />
+            </div>
+            <div className="p-3 rounded-xl bg-slate-50 border border-gray-200 flex items-center justify-between gap-2 text-xs font-mono">
+              <span className="truncate">{qrData.publicUrl}</span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(qrData.publicUrl);
+                  showToast('Registration URL copied!');
+                }}
+                className="px-3 py-1.5 rounded-lg bg-[#071B37] text-white font-sans font-bold cursor-pointer shrink-0 inline-flex items-center gap-1"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                Copy
+              </button>
+            </div>
+            <div className="flex flex-wrap justify-center gap-3">
+              <a
+                href={`/api/admin/examinations/${examId}/qr?format=png`}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#89190E] text-white text-xs font-bold"
+              >
+                <Download className="w-4 h-4" />
+                Download PNG
+              </a>
+              <a
+                href={`/api/admin/examinations/${examId}/qr?format=svg`}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#071B37] text-[#071B37] text-xs font-bold"
+              >
+                <Download className="w-4 h-4" />
+                Download SVG
+              </a>
+              <button
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-bold cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                Print Sheet
+              </button>
+            </div>
+          </div>
+        )}
+
+        {tab === 'candidates' && (
+          <div className="space-y-4">
+            <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF] flex flex-wrap items-center justify-between gap-3">
+              <div className="relative flex-1 min-w-[240px]">
+                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                <input
+                  value={candSearch}
+                  onChange={(e) => setCandSearch(e.target.value)}
+                  placeholder="Search by UID (MSI-...), name, mobile, or email..."
+                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-xs"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setShowOfflineModal(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#89190E] text-white text-xs font-bold cursor-pointer"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  Offline Admin Entry
+                </button>
+                <a
+                  href={`/api/admin/examinations/${examId}/candidates?export=xlsx`}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-bold hover:bg-gray-50"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700" />
+                  Export XLSX
+                </a>
+                <a
+                  href={`/api/admin/examinations/${examId}/candidates?export=csv`}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-bold hover:bg-gray-50"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Export CSV
+                </a>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-[#E8EEFF] overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="bg-[#F0F3FF] text-[10px] uppercase font-bold text-gray-500 border-b">
+                    <th className="py-3 px-4">Candidate UID</th>
+                    <th className="py-3 px-4">Name &amp; Contact</th>
+                    <th className="py-3 px-4">Mode / Source</th>
+                    <th className="py-3 px-4">Payment</th>
+                    <th className="py-3 px-4">Attempt</th>
+                    <th className="py-3 px-4">Score / Violations</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {candidates.map((c) => (
+                    <tr key={c.id}>
+                      <td className="py-3 px-4 font-mono font-bold text-[#89190E]">{c.uid || 'PENDING'}</td>
+                      <td className="py-3 px-4">
+                        <div className="font-bold">{c.fullName}</div>
+                        <div className="text-[11px] text-gray-500">{c.mobile} • {c.email}</div>
+                      </td>
+                      <td className="py-3 px-4 capitalize">
+                        <div>{c.participationMode}</div>
+                        <div className="text-[11px] text-gray-400">{c.source}</div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="font-bold uppercase text-[11px]">{c.paymentStatus}</span>
+                        <div className="text-[11px] text-gray-500">₹{c.feeAmount}</div>
+                      </td>
+                      <td className="py-3 px-4 capitalize">{String(c.attemptStatus).replace('_', ' ')}</td>
+                      <td className="py-3 px-4">
+                        {c.rawScore !== undefined ? <strong>{c.rawScore}</strong> : '—'}
+                        {c.violationCount > 0 && (
+                          <span className="ml-2 text-[11px] text-rose-600 font-bold">({c.violationCount} flags)</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {candidates.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="py-10 text-center text-gray-400">
+                        No candidates found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {tab === 'questions' && (
+          <div className="space-y-6">
+            <div className="bg-white p-5 rounded-2xl border border-[#E8EEFF] flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 className="font-serif font-bold text-base flex items-center gap-2">
+                  Question Paper v{exam.activePaperVersion} ({questions.length} questions)
+                  {paperVerified ? (
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                      VERIFIED &amp; PUBLISHED
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+                      UNVERIFIED
+                    </span>
+                  )}
+                </h2>
+                <p className="text-xs text-gray-500">
+                  Answer keys are stored server-side only and never sent to candidate browsers.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={`/api/admin/examinations/${examId}/questions?template=xlsx`}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-xs font-bold"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Excel Template
+                </a>
+                <label className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-xs font-bold cursor-pointer hover:bg-gray-50">
+                  <Upload className="w-3.5 h-3.5" />
+                  Upload Excel/CSV
+                  <input type="file" accept=".xlsx,.xls,.csv" onChange={handleExcelFileChange} className="hidden" />
+                </label>
+                <button
+                  onClick={() => setShowPdfHelper((v) => !v)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-xs font-bold cursor-pointer"
+                >
+                  PDF Text Helper
+                </button>
+                <button
+                  onClick={handleVerifyPaper}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Verify Questions &amp; Publish Paper
+                </button>
+              </div>
+            </div>
+
+            {showPdfHelper && (
+              <div className="bg-white p-5 rounded-2xl border border-indigo-200 space-y-3">
+                <h3 className="font-bold text-xs uppercase text-indigo-900">
+                  PDF-Assisted Question Extraction Review Queue
+                </h3>
+                <textarea
+                  rows={5}
+                  value={pdfRawText}
+                  onChange={(e) => setPdfRawText(e.target.value)}
+                  placeholder="Paste text extracted from PDF (e.g. 1. Question text... A) Opt 1 B) Opt 2 C) Opt 3 D) Opt 4)"
+                  className="w-full p-3 rounded-xl border border-gray-200 text-xs font-mono"
+                />
+                <button
+                  onClick={handleParsePdfText}
+                  className="px-4 py-2 rounded-xl bg-[#071B37] text-white text-xs font-bold cursor-pointer"
+                >
+                  Extract into Review Preview
+                </button>
+              </div>
+            )}
+
+            {importPreview.length > 0 && (
+              <div className="bg-white p-5 rounded-2xl border border-amber-300 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-sm">Import Review Preview ({importPreview.length} rows)</h3>
+                  <button
+                    onClick={commitImportPreview}
+                    className="px-4 py-2 rounded-xl bg-[#89190E] text-white text-xs font-bold cursor-pointer"
+                  >
+                    Commit Verified Questions
+                  </button>
+                </div>
+                {importErrors.map((err, i) => (
+                  <div key={i} className="text-xs text-rose-700 font-semibold">{err}</div>
+                ))}
+                <div className="max-h-64 overflow-y-auto space-y-2">
+                  {importPreview.map((row, idx) => (
+                    <div key={idx} className="p-3 rounded-xl bg-slate-50 text-xs flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex-1 min-w-[240px]">
+                        <strong>Q{idx + 1}:</strong> {row.text}
+                        <div className="text-[11px] text-gray-500">
+                          A: {row.optionA} | B: {row.optionB} | C: {row.optionC} | D: {row.optionD}
+                        </div>
+                      </div>
+                      <select
+                        value={row.correctOptionId}
+                        onChange={(e) => {
+                          const copy = [...importPreview];
+                          copy[idx] = { ...copy[idx], correctOptionId: e.target.value };
+                          setImportPreview(copy);
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg border border-gray-300 font-bold bg-white"
+                      >
+                        <option value="">Select Answer*</option>
+                        <option value="A">Correct: A</option>
+                        <option value="B">Correct: B</option>
+                        <option value="C">Correct: C</option>
+                        <option value="D">Correct: D</option>
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Manual Add Form */}
+            <form onSubmit={handleAddQuestion} className="bg-white p-5 rounded-2xl border border-[#E8EEFF] space-y-3">
+              <h3 className="font-serif font-bold text-sm">Add Single Question Manually</h3>
+              <div className="grid sm:grid-cols-4 gap-3">
+                <input value={qSection} onChange={(e) => setQSection(e.target.value)} placeholder="Section" className="px-3 py-2 rounded-xl border border-gray-200 text-xs" />
+                <input type="number" step="0.25" value={qMarks} onChange={(e) => setQMarks(e.target.value)} placeholder="Marks" className="px-3 py-2 rounded-xl border border-gray-200 text-xs" />
+                <input type="number" step="0.25" value={qNegMarks} onChange={(e) => setQNegMarks(e.target.value)} placeholder="Neg Marks" className="px-3 py-2 rounded-xl border border-gray-200 text-xs" />
+                <select value={qCorrect} onChange={(e) => setQCorrect(e.target.value as any)} className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-bold bg-white">
+                  <option value="A">Correct: Option A</option>
+                  <option value="B">Correct: Option B</option>
+                  <option value="C">Correct: Option C</option>
+                  <option value="D">Correct: Option D</option>
+                </select>
+              </div>
+              <textarea required rows={2} value={qText} onChange={(e) => setQText(e.target.value)} placeholder="Question text..." className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs" />
+              <div className="grid sm:grid-cols-2 gap-2.5">
+                <input required value={qOptA} onChange={(e) => setQOptA(e.target.value)} placeholder="Option A" className="px-3 py-2 rounded-xl border border-gray-200 text-xs" />
+                <input required value={qOptB} onChange={(e) => setQOptB(e.target.value)} placeholder="Option B" className="px-3 py-2 rounded-xl border border-gray-200 text-xs" />
+                <input required value={qOptC} onChange={(e) => setQOptC(e.target.value)} placeholder="Option C" className="px-3 py-2 rounded-xl border border-gray-200 text-xs" />
+                <input required value={qOptD} onChange={(e) => setQOptD(e.target.value)} placeholder="Option D" className="px-3 py-2 rounded-xl border border-gray-200 text-xs" />
+              </div>
+              <button type="submit" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#071B37] text-white text-xs font-bold cursor-pointer">
+                <Plus className="w-3.5 h-3.5" />
+                Add Question
+              </button>
+            </form>
+
+            {/* Questions List */}
+            <div className="space-y-2.5">
+              {questions.map((q, idx) => (
+                <div key={q.id} className="bg-white p-4 rounded-2xl border border-[#E8EEFF] text-xs flex justify-between gap-4">
+                  <div>
+                    <div className="font-bold text-[#071B37]">
+                      Q{idx + 1}. [{q.section}] {q.text}
+                    </div>
+                    <div className="mt-1.5 flex flex-wrap gap-3 text-gray-600">
+                      {q.options?.map((o: any) => (
+                        <span key={o.id} className={o.id === q.correctOptionId ? 'font-bold text-emerald-700' : ''}>
+                          {o.id}) {o.text}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="font-mono font-bold text-emerald-700">Key: {q.correctOptionId}</span>
+                    <div className="text-[11px] text-gray-400">+{q.marks} / -{q.negativeMarks}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'monitoring' && (
+          <div className="bg-white rounded-2xl border border-[#E8EEFF] overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-[#F0F3FF] text-[10px] uppercase font-bold text-gray-500 border-b">
+                  <th className="py-3 px-4">UID</th>
+                  <th className="py-3 px-4">Candidate</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Progress</th>
+                  <th className="py-3 px-4">Violations</th>
+                  <th className="py-3 px-4">Started / Submitted</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {attempts.map((a) => (
+                  <tr key={a.id}>
+                    <td className="py-3 px-4 font-mono font-bold">{a.uid}</td>
+                    <td className="py-3 px-4">{a.fullName} ({a.mobile})</td>
+                    <td className="py-3 px-4 uppercase font-bold text-[11px]">{a.status}</td>
+                    <td className="py-3 px-4">Q{(a.currentIndex || 0) + 1} / {a.questionSequence?.length || 0}</td>
+                    <td className="py-3 px-4">
+                      <span className={`font-bold ${a.violationCount > 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
+                        {a.violationCount || 0} total
+                      </span>
+                      <div className="text-[10px] text-gray-400">
+                        FS: {a.fullscreenExitCount || 0} • Tab: {a.tabSwitchCount || 0} • Blur: {a.windowBlurCount || 0}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-[11px] text-gray-500">
+                      {new Date(a.startedAt).toLocaleString('en-IN')}
+                    </td>
+                  </tr>
+                ))}
+                {attempts.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="py-10 text-center text-gray-400">No CBT attempts yet.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {tab === 'attendance' && (
+          <div className="bg-white rounded-2xl border border-[#E8EEFF] overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-[#F0F3FF] text-[10px] uppercase font-bold text-gray-500 border-b">
+                  <th className="py-3 px-4">UID</th>
+                  <th className="py-3 px-4">Candidate</th>
+                  <th className="py-3 px-4">Mode</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Check-In Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {roster.map((r) => (
+                  <tr key={r.registrationId}>
+                    <td className="py-3 px-4 font-mono font-bold">{r.uid}</td>
+                    <td className="py-3 px-4">{r.fullName} • {r.mobile}</td>
+                    <td className="py-3 px-4 capitalize">{r.participationMode}</td>
+                    <td className="py-3 px-4 uppercase font-bold">{r.attendanceStatus}</td>
+                    <td className="py-3 px-4 text-right space-x-2">
+                      <button
+                        onClick={() => handleMarkAttendance(r.registrationId, 'present')}
+                        className="px-3 py-1 rounded-lg bg-emerald-600 text-white font-bold cursor-pointer"
+                      >
+                        Present
+                      </button>
+                      <button
+                        onClick={() => handleMarkAttendance(r.registrationId, 'absent')}
+                        className="px-3 py-1 rounded-lg bg-rose-100 text-rose-700 font-bold cursor-pointer"
+                      >
+                        Absent
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {tab === 'results' && (
+          <div className="space-y-4">
+            <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF] flex flex-wrap items-center justify-between gap-3">
+              <div className="text-xs font-bold">
+                Publication Status:{' '}
+                <span className={resultsPublished ? 'text-emerald-700' : 'text-amber-600'}>
+                  {resultsPublished ? 'PUBLISHED TO CANDIDATES' : 'HIDDEN (ADMIN REVIEW ONLY)'}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => handleResultsAction('re_evaluate')}
+                  className="px-3.5 py-2 rounded-xl border border-[#071B37] text-xs font-bold cursor-pointer"
+                >
+                  Re-evaluate All
+                </button>
+                {!resultsPublished && (
+                  <button
+                    onClick={() => handleResultsAction('publish_results')}
+                    className="px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold cursor-pointer"
+                  >
+                    Publish Results
+                  </button>
+                )}
+                <a
+                  href={`/api/admin/examinations/${examId}/results?export=xlsx`}
+                  className="px-3.5 py-2 rounded-xl bg-[#071B37] text-white text-xs font-bold"
+                >
+                  Export XLSX
+                </a>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-[#E8EEFF] overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="bg-[#F0F3FF] text-[10px] uppercase font-bold text-gray-500 border-b">
+                    <th className="py-3 px-4">UID</th>
+                    <th className="py-3 px-4">Candidate</th>
+                    <th className="py-3 px-4">Score</th>
+                    <th className="py-3 px-4">Correct / Wrong / Skip</th>
+                    <th className="py-3 px-4">Violations</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {results.map((r) => (
+                    <tr key={r.attemptId}>
+                      <td className="py-3 px-4 font-mono font-bold">{r.uid}</td>
+                      <td className="py-3 px-4">{r.fullName}</td>
+                      <td className="py-3 px-4 font-bold">{r.rawScore} / {r.maxScore} ({r.percentage}%)</td>
+                      <td className="py-3 px-4">{r.correctCount} / {r.wrongCount} / {r.unansweredCount}</td>
+                      <td className="py-3 px-4">{r.violationCount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {tab === 'audit' && (
+          <div className="bg-white rounded-2xl border border-[#E8EEFF] p-5 space-y-2.5">
+            {auditLogs.map((log) => (
+              <div key={log.id} className="p-3 rounded-xl bg-slate-50 text-xs flex justify-between gap-4">
+                <div>
+                  <span className="font-mono font-bold text-[#89190E] mr-2">{log.action}</span>
+                  <span>{log.summary}</span>
+                </div>
+                <span className="text-[11px] text-gray-400 shrink-0">
+                  {log.actorName} • {new Date(log.createdAt).toLocaleString('en-IN')}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Offline Admin Entry Modal */}
+      {showOfflineModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <form onSubmit={handleOfflineEntry} className="w-full max-w-md bg-white rounded-3xl p-6 space-y-4">
+            <h3 className="font-serif font-bold text-lg">Offline Admin Candidate Entry</h3>
+            <input required value={offName} onChange={(e) => setOffName(e.target.value)} placeholder="Full Name *" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm" />
+            <input required value={offMobile} onChange={(e) => setOffMobile(e.target.value)} placeholder="10-Digit Mobile *" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm" />
+            <input required type="email" value={offEmail} onChange={(e) => setOffEmail(e.target.value)} placeholder="Email Address *" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm" />
+            <select value={offMode} onChange={(e) => setOffMode(e.target.value as any)} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm bg-white">
+              <option value="offline">Offline Participation</option>
+              <option value="online">Online Participation</option>
+            </select>
+            <input value={offReceipt} onChange={(e) => setOffReceipt(e.target.value)} placeholder="Manual Cash / UPI Receipt Ref (Optional)" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm" />
+            <div className="flex gap-2 pt-2">
+              <button type="button" onClick={() => setShowOfflineModal(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-xs font-bold cursor-pointer">Cancel</button>
+              <button type="submit" className="flex-1 py-2.5 rounded-xl bg-[#89190E] text-white text-xs font-bold cursor-pointer">Confirm &amp; Issue UID</button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ExamDetailPage() {
+  return (
+    <ExamAdminAuthGate>
+      <ExamDetailContent />
+    </ExamAdminAuthGate>
+  );
+}

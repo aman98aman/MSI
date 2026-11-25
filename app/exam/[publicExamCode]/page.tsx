@@ -1,0 +1,446 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import Script from 'next/script';
+import { useParams } from 'next/navigation';
+import {
+  Calendar,
+  CheckCircle2,
+  Clock,
+  IndianRupee,
+  LogIn,
+  MapPin,
+  Printer,
+  ShieldAlert,
+} from 'lucide-react';
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+export default function PublicExamRegistrationPage() {
+  const params = useParams<{ publicExamCode: string }>();
+  const publicCode = params.publicExamCode;
+
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(null);
+
+  // Registration Form State
+  const [fullName, setFullName] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [email, setEmail] = useState('');
+  const [batchId, setBatchId] = useState('');
+  const [participationMode, setParticipationMode] = useState<'online' | 'offline'>('online');
+  const [institution, setInstitution] = useState('');
+  const [city, setCity] = useState('');
+  const [consentAccepted, setConsentAccepted] = useState(false);
+
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [confirmedUid, setConfirmedUid] = useState('');
+  const [confirmedReg, setConfirmedReg] = useState<any>(null);
+
+  useEffect(() => {
+    fetch(`/api/exams/${encodeURIComponent(publicCode)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        setData(d);
+        if (d?.exam?.participationMode === 'offline') setParticipationMode('offline');
+        if (d?.batches?.length > 0) setBatchId(d.batches[0].id);
+      })
+      .catch(() => setData({ unavailable: true, message: 'Unable to load examination.' }))
+      .finally(() => setLoading(false));
+  }, [publicCode]);
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!consentAccepted) {
+      setError('Please accept the declaration and examination rules.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/exams/${encodeURIComponent(publicCode)}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName,
+          mobile,
+          email,
+          batchId: batchId || undefined,
+          participationMode,
+          institution,
+          city,
+        }),
+      });
+      const regData = await res.json();
+
+      if (!res.ok || !regData.success) {
+        setError(regData.message || 'Registration could not be completed.');
+        setSubmitting(false);
+        return;
+      }
+
+      if (!regData.requiresPayment) {
+        setConfirmedUid(regData.uid);
+        setConfirmedReg(regData.registration);
+        setSubmitting(false);
+        return;
+      }
+
+      // Paid exam: launch Razorpay Checkout
+      if (!window.Razorpay) {
+        setError('Razorpay Checkout SDK failed to load. Please refresh and try again.');
+        setSubmitting(false);
+        return;
+      }
+
+      const rzp = new window.Razorpay({
+        key: regData.keyId,
+        amount: regData.order.amount,
+        currency: regData.currency,
+        name: 'MSI Group of Institutes',
+        description: data.exam.title,
+        order_id: regData.order.id,
+        prefill: { name: fullName, email, contact: mobile },
+        theme: { color: '#89190E' },
+        handler: async (response: any) => {
+          const verifyRes = await fetch('/api/exams/payments/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }),
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyRes.ok && verifyData.success) {
+            setConfirmedUid(verifyData.uid);
+            setConfirmedReg(verifyData.registration);
+          } else {
+            setError(verifyData.message || 'Payment verification failed.');
+          }
+          setSubmitting(false);
+        },
+        modal: {
+          ondismiss: () => {
+            setSubmitting(false);
+            setError('Payment was cancelled before completion.');
+          },
+        },
+      });
+      rzp.open();
+    } catch {
+      setError('Network error during registration.');
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F6F8FC] flex items-center justify-center text-sm font-bold text-[#071B37]">
+        Loading Examination Details...
+      </div>
+    );
+  }
+
+  if (!data || data.unavailable || !data.exam) {
+    return (
+      <div className="min-h-screen bg-[#F6F8FC] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-xl border border-rose-200 text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+            <ShieldAlert className="w-7 h-7" />
+          </div>
+          <h1 className="font-serif font-bold text-2xl text-[#071B37]">
+            {data?.message || 'This examination is no longer available.'}
+          </h1>
+          {data?.exam?.cancellationReason && (
+            <p className="text-xs text-rose-700 font-semibold">{data.exam.cancellationReason}</p>
+          )}
+          <p className="text-xs text-gray-500">
+            Registrations and attempts for this examination are closed.
+          </p>
+          <Link href="/" className="inline-block px-5 py-2.5 rounded-xl bg-[#071B37] text-white text-xs font-bold">
+            Go to MSI Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const exam = data.exam;
+  const batches = data.batches || [];
+
+  if (confirmedUid) {
+    return (
+      <div className="min-h-screen bg-[#F6F8FC] flex items-center justify-center p-4">
+        <div className="max-w-lg w-full bg-white rounded-3xl p-8 shadow-2xl border border-emerald-200 text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-9 h-9" />
+          </div>
+          <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-700">
+            Registration Confirmed
+          </span>
+          <h1 className="font-serif font-bold text-2xl text-[#071B37]">{exam.title}</h1>
+          <div className="p-4 rounded-2xl bg-[#071B37] text-white space-y-1">
+            <div className="text-[11px] uppercase tracking-wider text-[#EFC988]">Your Unique Candidate UID</div>
+            <div className="font-mono font-bold text-2xl tracking-wider">{confirmedUid}</div>
+          </div>
+          <div className="text-left p-4 rounded-2xl bg-slate-50 border border-gray-200 text-xs space-y-1.5">
+            <div><strong>Candidate Name:</strong> {confirmedReg?.fullName || fullName}</div>
+            <div><strong>Mobile:</strong> {confirmedReg?.mobile || mobile}</div>
+            <div><strong>Exam Date:</strong> {exam.scheduleConfig?.examDate}</div>
+            <div><strong>Duration:</strong> {exam.scheduleConfig?.durationMinutes} minutes</div>
+            <div><strong>Mode:</strong> {confirmedReg?.participationMode}</div>
+            {exam.offlineVenue?.venueName && (
+              <div><strong>Venue:</strong> {exam.offlineVenue.venueName} {exam.offlineVenue.fullAddress}</div>
+            )}
+          </div>
+          <p className="text-[11px] text-gray-500">
+            Save or print your Candidate UID. You will need your UID and registered mobile number to enter the examination.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
+            <button
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-bold cursor-pointer"
+            >
+              <Printer className="w-4 h-4" />
+              Print Confirmation
+            </button>
+            {(exam.eventType === 'online_cbt' || exam.eventType === 'hybrid') && (
+              <Link
+                href={`/exam/login?examCode=${encodeURIComponent(exam.code)}&uid=${encodeURIComponent(confirmedUid)}`}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#89190E] text-white text-xs font-bold"
+              >
+                <LogIn className="w-4 h-4" />
+                Go to Exam Login
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#F6F8FC] text-[#071B37] pb-16">
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+
+      <div className="bg-[#071B37] text-white py-10 px-4">
+        <div className="max-w-4xl mx-auto space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-3 py-1 rounded-full bg-[#89190E] text-white text-[10px] font-bold uppercase tracking-wider">
+              {exam.category}
+            </span>
+            <span className="px-3 py-1 rounded-full bg-white/10 text-[#EFC988] text-[10px] font-mono font-bold">
+              {exam.code}
+            </span>
+          </div>
+          <h1 className="font-serif font-bold text-2xl sm:text-4xl">{exam.title}</h1>
+          {exam.description && <p className="text-sm text-slate-300 max-w-2xl">{exam.description}</p>}
+
+          <div className="pt-3 flex flex-wrap gap-4 text-xs text-slate-200">
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar className="w-4 h-4 text-[#EFC988]" />
+              Exam Date: {exam.scheduleConfig?.examDate}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-[#EFC988]" />
+              Duration: {exam.scheduleConfig?.durationMinutes} mins
+            </span>
+            <span className="inline-flex items-center gap-1.5 font-bold text-[#EFC988]">
+              <IndianRupee className="w-4 h-4" />
+              Fee: {exam.registrationConfig?.isFree ? 'FREE' : `₹${exam.registrationConfig?.feeAmount} INR`}
+            </span>
+            {exam.offlineVenue?.venueName && (
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 text-[#EFC988]" />
+                {exam.offlineVenue.venueName}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <main className="max-w-4xl mx-auto px-4 -mt-6 grid md:grid-cols-5 gap-6">
+        {/* Left: Registration Form */}
+        <div className="md:col-span-3 bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-[#E8EEFF]">
+          {!data.canRegister ? (
+            <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 space-y-2">
+              <h2 className="font-bold text-base">Registration Unavailable</h2>
+              <p className="text-xs">{data.registrationMessage || 'Registration is currently closed.'}</p>
+            </div>
+          ) : (
+            <form onSubmit={handleRegister} className="space-y-4">
+              <h2 className="font-serif font-bold text-xl">Candidate Registration</h2>
+
+              {error && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-700">
+                  {error}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold mb-1">Full Name *</label>
+                <input
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Enter candidate full name"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm"
+                />
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold mb-1">10-Digit Mobile Number *</label>
+                  <input
+                    required
+                    type="tel"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                    placeholder="e.g. 9876543210"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold mb-1">Email Address *</label>
+                  <input
+                    required
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="candidate@email.com"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm"
+                  />
+                </div>
+              </div>
+
+              {batches.length > 0 && (
+                <div>
+                  <label className="block text-xs font-bold mb-1">Select Batch / Session</label>
+                  <select
+                    value={batchId}
+                    onChange={(e) => setBatchId(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm bg-white"
+                  >
+                    {batches.map((b: any) => (
+                      <option key={b.id} value={b.id}>
+                        {b.batchName} ({b.batchCode})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {exam.participationMode === 'both' && (
+                <div>
+                  <label className="block text-xs font-bold mb-1">Participation Mode</label>
+                  <select
+                    value={participationMode}
+                    onChange={(e) => setParticipationMode(e.target.value as any)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm bg-white"
+                  >
+                    <option value="online">Online</option>
+                    <option value="offline">Offline</option>
+                  </select>
+                </div>
+              )}
+
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold mb-1">School / College / Institution</label>
+                  <input
+                    value={institution}
+                    onChange={(e) => setInstitution(e.target.value)}
+                    placeholder="Optional"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold mb-1">City</label>
+                  <input
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="Optional"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm"
+                  />
+                </div>
+              </div>
+
+              <label className="flex items-start gap-2.5 text-xs text-gray-600 cursor-pointer pt-1">
+                <input
+                  type="checkbox"
+                  checked={consentAccepted}
+                  onChange={(e) => setConsentAccepted(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-[#89190E]"
+                />
+                <span>{exam.registrationConfig?.consentNotice}</span>
+              </label>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-3.5 rounded-xl bg-[#89190E] hover:bg-[#6e130b] text-white font-bold text-sm shadow-md cursor-pointer disabled:opacity-50"
+              >
+                {submitting
+                  ? 'Processing...'
+                  : exam.registrationConfig?.isFree
+                  ? 'Complete Free Registration'
+                  : `Pay ₹${exam.registrationConfig?.feeAmount} & Register`}
+              </button>
+            </form>
+          )}
+        </div>
+
+        {/* Right: Instructions & Already Registered */}
+        <div className="md:col-span-2 space-y-4">
+          <div className="bg-white rounded-3xl p-6 shadow-md border border-[#E8EEFF] space-y-3 text-xs">
+            <h3 className="font-serif font-bold text-base">Important Details</h3>
+            {exam.registrationConfig?.eligibilityText && (
+              <div>
+                <strong>Eligibility:</strong> {exam.registrationConfig.eligibilityText}
+              </div>
+            )}
+            <div>
+              <strong>Registration Deadline:</strong>{' '}
+              {new Date(exam.registrationConfig?.registrationCloseAt).toLocaleString('en-IN')}
+            </div>
+            {exam.instructions && (
+              <div className="pt-2 border-t border-gray-100 whitespace-pre-line text-gray-600">
+                {exam.instructions}
+              </div>
+            )}
+            {exam.contactPhones && (
+              <div className="pt-2 border-t border-gray-100">
+                <strong>Enquiries:</strong> {exam.contactPhones}
+              </div>
+            )}
+          </div>
+
+          {(exam.eventType === 'online_cbt' || exam.eventType === 'hybrid') && (
+            <div className="bg-[#071B37] text-white rounded-3xl p-6 space-y-3">
+              <h3 className="font-serif font-bold text-base text-[#EFC988]">Already Registered?</h3>
+              <p className="text-xs text-slate-300">
+                Enter your Candidate UID and registered mobile number to start your examination during the scheduled window.
+              </p>
+              <Link
+                href={`/exam/login?examCode=${encodeURIComponent(exam.code)}`}
+                className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#89190E] hover:bg-[#6e130b] text-white text-xs font-bold"
+              >
+                <LogIn className="w-4 h-4" />
+                Candidate Exam Login
+              </Link>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}

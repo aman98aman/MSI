@@ -1,0 +1,90 @@
+[
+  {
+    "id": "AUD-1795590859136-f0ti6",
+    "entityType": "paper",
+    "entityId": "EXM-1795590575968-D1L6",
+    "examId": "EXM-1795590575968-D1L6",
+    "actorId": "super-admin-01",
+    "actorName": "MSI Administrator",
+    "action": "BULK_IMPORT_QUESTIONS",
+    "summary": "Imported 20 questions into Paper v1",
+    "createdAt": "2026-11-25T07:14:19.136Z"
+  },
+  {
+    "id": "AUD-1795590651736-oxpe6",
+    "entityType": "payment",
+    "entityId": "PAY-1795590620608-LP37",
+    "examId": "EXM-1795590575968-D1L6",
+    "actorId": "verify_endpoint",
+    "actorName": "Payment Verifier",
+    "action": "PAYMENT_VERIFIED_UID_ISSUED",
+    "summary": "Verified payment pay_U4JtIXrNLAguYw (₹1) and issued UID MSI-CLAT26-26-0001",
+    "createdAt": "2026-11-25T07:10:51.736Z"
+  },
+  {
+    "id": "AUD-1795590576024-jxbbt",
+    "entityType": "exam",
+    "entityId": "EXM-1795590575968-D1L6",
+    "examId": "EXM-1795590575968-D1L6",
+    "actorId": "super-admin-01",
+    "actorName": "MSI Administrator",
+    "action": "CREATE_EXAM",
+    "summary": "Created online_cbt \"CLAT -UG\" (CLAT-26) as published",
+    "after": {
+      "code": "CLAT-26",
+      "status": "published",
+      "feeAmount": 1
+    },
+    "createdAt": "2026-11-25T07:09:36.024Z"
+  },
+  {
+    "id": "AUD-1795590503565-nubd4",
+    "entityType": "exam",
+    "entityId": "EXM-1795590353807-2SMW",
+    "examId": "EXM-1795590353807-2SMW",
+    "actorId": "super-admin-01",
+    "actorName": "MSI Administrator",
+    "action": "CANCEL",
+    "summary": "Cancelled examination CLAT01: Cancelled by Super Admin",
+    "before": {
+      "status": "registration_closed"
+    },
+    "after": {
+      "status": "cancelled"
+    },
+    "createdAt": "2026-11-25T07:08:23.565Z"
+  },
+  {
+    "id": "AUD-1795590495010-cgln0",
+    "entityType": "exam",
+    "entityId": "EXM-1795590353807-2SMW",
+    "examId": "EXM-1795590353807-2SMW",
+    "actorId": "super-admin-01",
+    "actorName": "MSI Administrator",
+    "action": "CLOSE_REGISTRATION",
+    "summary": "Closed registration for CLAT01",
+    "before": {
+      "status": "published"
+    },
+    "after": {
+      "status": "registration_closed"
+    },
+    "createdAt": "2026-11-25T07:08:15.010Z"
+  },
+  {
+    "id": "AUD-1795590353857-8yvge",
+    "entityType": "exam",
+    "entityId": "EXM-1795590353807-2SMW",
+    "examId": "EXM-1795590353807-2SMW",
+    "actorId": "super-admin-01",
+    "actorName": "MSI Administrator",
+    "action": "CREATE_EXAM",
+    "summary": "Created online_cbt \"mock test 2\" (CLAT01) as published",
+    "after": {
+      "code": "CLAT01",
+      "status": "published",
+      "feeAmount": 50
+    },
+    "createdAt": "2026-11-25T07:05:53.857Z"
+  }
+]

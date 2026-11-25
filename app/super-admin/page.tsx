@@ -374,6 +374,7 @@ export default function SuperAdminMasterDashboard() {
   const [newCoursePdfName, setNewCoursePdfName] = useState('');
   const [newCoursePdfSize, setNewCoursePdfSize] = useState('');
   const [isUploadingNewPdf, setIsUploadingNewPdf] = useState(false);
+  const [newCourseShowOnHomePopup, setNewCourseShowOnHomePopup] = useState(false);
   const [isSubmittingCourse, setIsSubmittingCourse] = useState(false);
 
   // 9a. Course Edit Modal State
@@ -392,6 +393,7 @@ export default function SuperAdminMasterDashboard() {
   const [editCoursePdfName, setEditCoursePdfName] = useState('');
   const [editCoursePdfSize, setEditCoursePdfSize] = useState('');
   const [isUploadingEditPdf, setIsUploadingEditPdf] = useState(false);
+  const [editCourseShowOnHomePopup, setEditCourseShowOnHomePopup] = useState(false);
   const [isSubmittingEditCourse, setIsSubmittingEditCourse] = useState(false);
 
   // 9b. Faculty Edit Modal State
@@ -986,7 +988,11 @@ export default function SuperAdminMasterDashboard() {
         setNewLeadName('');
         setNewLeadMobile('');
         setNewLeadNotes('');
-        fetchLeads();
+        if (data.leads && Array.isArray(data.leads)) {
+          setLeads(data.leads);
+        } else if (data.lead) {
+          setLeads((prev) => [data.lead, ...prev.filter((l) => l.id !== data.lead.id)]);
+        }
         try {
           window.dispatchEvent(new Event('msi_leads_sync'));
         } catch (_) {}
@@ -1103,11 +1109,12 @@ export default function SuperAdminMasterDashboard() {
         const location = parts[2]?.trim() || 'Chandigarh / Mohali';
         const course = parts[3]?.trim() || bulkDefaultCourse;
         const source = parts[4]?.trim() || bulkDefaultSource;
+        const rawStatus = parts[5]?.trim() || 'New';
         const agent =
-          bulkDefaultAgent === 'Auto Round-Robin Distribution' || !parts[5]?.trim()
+          bulkDefaultAgent === 'Auto Round-Robin Distribution' || !parts[6]?.trim()
             ? telecallersList[i % telecallersList.length]
-            : parts[5].trim();
-        const notes = parts[6]?.trim() || `Batch imported lead (${source})`;
+            : parts[6].trim();
+        const notes = parts[7]?.trim() || parts[6]?.trim() || `Batch imported lead (${source})`;
 
         parsedLeads.push({
           name,
@@ -1115,6 +1122,7 @@ export default function SuperAdminMasterDashboard() {
           location,
           targetCourse: course,
           source,
+          status: rawStatus,
           agent,
           notes,
         });
@@ -1140,7 +1148,11 @@ export default function SuperAdminMasterDashboard() {
         showToast(`Imported ${parsedLeads.length} leads successfully! Distributed to counselors.`);
         setShowBulkLeadModal(false);
         setBulkLeadsText('');
-        fetchLeads();
+        if (data.leads && Array.isArray(data.leads)) {
+          setLeads(data.leads);
+        } else {
+          fetchLeads();
+        }
         try {
           window.dispatchEvent(new Event('msi_leads_sync'));
         } catch (_) {}
@@ -1906,6 +1918,7 @@ export default function SuperAdminMasterDashboard() {
         updatedDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
         language: 'English & Bilingual Legal Notes',
         isPublished: true,
+        showOnHomeScreenPopup: newCourseShowOnHomePopup,
       };
 
       // Unmark local deletions for this id/slug
@@ -1968,6 +1981,7 @@ export default function SuperAdminMasterDashboard() {
       setNewCoursePdfUrl('');
       setNewCoursePdfName('');
       setNewCoursePdfSize('');
+      setNewCourseShowOnHomePopup(false);
 
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
         const bc = new BroadcastChannel('msi_sync_channel');
@@ -2058,6 +2072,7 @@ export default function SuperAdminMasterDashboard() {
     setEditCoursePdfUrl(existingPdfUrl);
     setEditCoursePdfName(existingPdfName);
     setEditCoursePdfSize(existingPdfUrl ? 'Official PDF' : '');
+    setEditCourseShowOnHomePopup(crs.showOnHomeScreenPopup === true);
   };
 
   // 7c. Submit Course Update
@@ -2092,6 +2107,7 @@ export default function SuperAdminMasterDashboard() {
         instructorTitle: assignedTeacher.designation || 'Professor of Law',
         instructorAvatar: assignedTeacher.avatarUrl || '/images/avatars/avatar-1.webp',
         updatedDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        showOnHomeScreenPopup: editCourseShowOnHomePopup,
         pdfUrl: editCoursePdfUrl.trim() || undefined,
         pdfOriginalName: editCoursePdfName.trim() || undefined,
         mockTestPdfs: editCoursePdfUrl.trim()
@@ -2692,19 +2708,68 @@ export default function SuperAdminMasterDashboard() {
     );
   }, [students, searchQuery]);
 
+  const normalizeStatusSafe = (raw: any): 'New' | 'Follow-up' | 'Converted' | 'Dead' => {
+    if (!raw) return 'New';
+    const s = String(raw).trim().toLowerCase();
+
+    // 1. Check Dead first
+    if (
+      s.includes('dead') ||
+      s.includes('lost') ||
+      s.includes('not interested') ||
+      s.includes('no interest') ||
+      s.includes('reject') ||
+      s.includes('junk') ||
+      s.includes('invalid') ||
+      s.includes('closed') ||
+      s.includes('drop') ||
+      s.includes('wrong')
+    ) {
+      return 'Dead';
+    }
+
+    // 2. Check Converted next
+    if (
+      s.includes('convert') ||
+      s.includes('enroll') ||
+      s.includes('admit') ||
+      s.includes('admission') ||
+      s.includes('paid') ||
+      s.includes('joined') ||
+      s.includes('won') ||
+      s.includes('success')
+    ) {
+      return 'Converted';
+    }
+
+    // 3. Check Follow-up
+    if (
+      s.includes('follow') ||
+      s.includes('call') ||
+      s.includes('interested') ||
+      s.includes('pending') ||
+      s.includes('pipeline') ||
+      s.includes('wait')
+    ) {
+      return 'Follow-up';
+    }
+
+    return 'New';
+  };
+
   const leadCounts = useMemo(() => {
     return {
       All: leads.length,
-      New: leads.filter((l) => l.status === 'New').length,
-      Converted: leads.filter((l) => l.status === 'Converted').length,
-      Dead: leads.filter((l) => l.status === 'Dead').length,
-      'Follow-up': leads.filter((l) => l.status === 'Follow-up').length,
+      New: leads.filter((l) => normalizeStatusSafe(l.status) === 'New').length,
+      Converted: leads.filter((l) => normalizeStatusSafe(l.status) === 'Converted').length,
+      Dead: leads.filter((l) => normalizeStatusSafe(l.status) === 'Dead').length,
+      'Follow-up': leads.filter((l) => normalizeStatusSafe(l.status) === 'Follow-up').length,
     };
   }, [leads]);
 
   const filteredLeads = useMemo(() => {
     return leads.filter((l) => {
-      if (leadStatusFilter !== 'All' && l.status !== leadStatusFilter) {
+      if (leadStatusFilter !== 'All' && normalizeStatusSafe(l.status) !== leadStatusFilter) {
         return false;
       }
       const effectiveSearch = leadSearchInput.trim() || searchQuery.trim();
@@ -2824,25 +2889,33 @@ export default function SuperAdminMasterDashboard() {
 
   const handleDeleteLead = async (lead: Lead) => {
     try {
+      setLeads((prev) => prev.filter((l) => l.id !== lead.id));
+      setSelectedLeadIds((prev) => prev.filter((id) => id !== lead.id));
+      setLeadToDelete(null);
+
       const res = await fetch(`/api/admin/leads?id=${encodeURIComponent(lead.id)}`, {
         method: 'DELETE',
       });
       const data = await res.json();
       if (data.success) {
         showToast(`Lead ${lead.name} removed from queue.`);
-        setLeads((prev) => prev.filter((l) => l.id !== lead.id));
-        setLeadToDelete(null);
+        if (data.leads && Array.isArray(data.leads)) {
+          setLeads(data.leads);
+        }
       } else {
         showToast(data.message || 'Failed to delete lead.');
+        fetchLeads();
       }
     } catch (err) {
       showToast('Network error while deleting lead.');
+      fetchLeads();
     }
   };
 
   const handleBulkDeleteLeads = async () => {
     if (selectedLeadIds.length === 0) return;
     const countToDelete = selectedLeadIds.length;
+    const isAllTotalSelected = selectedLeadIds.length >= leads.length;
     setIsBulkDeletingLeads(true);
 
     // Optimistic UI update
@@ -2852,7 +2925,10 @@ export default function SuperAdminMasterDashboard() {
       const res = await fetch('/api/admin/leads', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: selectedLeadIds }),
+        body: JSON.stringify({
+          all: isAllTotalSelected,
+          ids: selectedLeadIds,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -2862,10 +2938,10 @@ export default function SuperAdminMasterDashboard() {
         }
       } else {
         showToast(data.message || 'Failed to delete leads.');
+        fetchLeads();
       }
       setSelectedLeadIds([]);
       setShowBulkDeleteLeadsModal(false);
-      fetchLeads();
     } catch (err) {
       showToast('Network error while deleting leads.');
       fetchLeads();
@@ -8319,6 +8395,35 @@ export default function SuperAdminMasterDashboard() {
                 )}
               </div>
 
+              {/* Feature as Live Popup Offer on Home Screen Toggle */}
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-red-50 via-amber-50 to-orange-50 border border-amber-200 shadow-2xs">
+                <div className="flex items-center gap-2.5 pr-2">
+                  <div className="w-8 h-8 rounded-xl bg-[#89190E] text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Sparkles className="w-4 h-4 text-amber-300" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#89190E] block">
+                      Home Screen Placement
+                    </span>
+                    <label className="block text-xs font-bold text-[#10233F]">
+                      Feature this Course as Live Offer Popup on Home Screen?
+                    </label>
+                    <p className="text-[10px] text-gray-500">
+                      When enabled, this course will appear as the floating offer popup to visitors right after the splash screen finishes.
+                    </p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={newCourseShowOnHomePopup}
+                    onChange={(e) => setNewCourseShowOnHomePopup(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#89190E]"></div>
+                </label>
+              </div>
+
               {/* Initial Recorded Lecture Module */}
               <div className="p-3.5 rounded-2xl bg-[#FFF9EF] border border-[#E8DCCB] space-y-3">
                 <span className="text-[11px] font-bold text-[#10233F] block uppercase tracking-wider">
@@ -8765,6 +8870,35 @@ export default function SuperAdminMasterDashboard() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Feature as Live Popup Offer on Home Screen Toggle */}
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-red-50 via-amber-50 to-orange-50 border border-amber-200 shadow-2xs">
+                <div className="flex items-center gap-2.5 pr-2">
+                  <div className="w-8 h-8 rounded-xl bg-[#89190E] text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Sparkles className="w-4 h-4 text-amber-300" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#89190E] block">
+                      Home Screen Placement
+                    </span>
+                    <label className="block text-xs font-bold text-[#10233F]">
+                      Feature this Course as Live Offer Popup on Home Screen?
+                    </label>
+                    <p className="text-[10px] text-gray-500">
+                      When enabled, this course will appear as the floating offer popup to visitors right after the splash screen finishes.
+                    </p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={editCourseShowOnHomePopup}
+                    onChange={(e) => setEditCourseShowOnHomePopup(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#89190E]"></div>
+                </label>
               </div>
 
               <div>

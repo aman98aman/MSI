@@ -144,6 +144,7 @@ export async function POST(req: NextRequest) {
       updatedDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
       language: body.language || 'English & Bilingual Legal Notes',
       isPublished: true,
+      showOnHomeScreenPopup: body.showOnHomeScreenPopup === true,
     };
 
     const updated = await addCourseAsync(newCourse);

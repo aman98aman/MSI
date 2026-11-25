@@ -30,8 +30,65 @@ export interface ExcelLeadRow {
   location: string;
   targetCourse: string;
   source: string;
+  status: 'New' | 'Follow-up' | 'Converted' | 'Dead';
   agent: string;
   notes: string;
+}
+
+export const STATUS_OPTIONS: Array<'New' | 'Follow-up' | 'Converted' | 'Dead'> = [
+  'New',
+  'Follow-up',
+  'Converted',
+  'Dead',
+];
+
+export function normalizeExcelLeadStatus(raw: any): 'New' | 'Follow-up' | 'Converted' | 'Dead' {
+  if (!raw) return 'New';
+  const s = String(raw).trim().toLowerCase();
+
+  // 1. Check Dead first (so 'not interested' or 'do not call' are marked Dead, not Follow-up)
+  if (
+    s.includes('dead') ||
+    s.includes('lost') ||
+    s.includes('not interested') ||
+    s.includes('no interest') ||
+    s.includes('reject') ||
+    s.includes('junk') ||
+    s.includes('invalid') ||
+    s.includes('closed') ||
+    s.includes('drop') ||
+    s.includes('wrong')
+  ) {
+    return 'Dead';
+  }
+
+  // 2. Check Converted next
+  if (
+    s.includes('convert') ||
+    s.includes('enroll') ||
+    s.includes('admit') ||
+    s.includes('admission') ||
+    s.includes('paid') ||
+    s.includes('joined') ||
+    s.includes('won') ||
+    s.includes('success')
+  ) {
+    return 'Converted';
+  }
+
+  // 3. Check Follow-up
+  if (
+    s.includes('follow') ||
+    s.includes('call') ||
+    s.includes('interested') ||
+    s.includes('pending') ||
+    s.includes('pipeline') ||
+    s.includes('wait')
+  ) {
+    return 'Follow-up';
+  }
+
+  return 'New';
 }
 
 interface ExcelLeadManagerModalProps {
@@ -80,6 +137,7 @@ function createEmptyRow(idx?: number): ExcelLeadRow {
     location: 'Chandigarh / Mohali',
     targetCourse: COURSES_OPTIONS[0],
     source: SOURCE_OPTIONS[0],
+    status: 'New',
     agent: AGENT_OPTIONS[0],
     notes: '',
   };
@@ -101,6 +159,7 @@ export default function ExcelLeadManagerModal({
       location: 'Chandigarh',
       targetCourse: 'PCS-J Punjab Judicial Services',
       source: 'Meta Ads (Facebook/Instagram)',
+      status: 'Follow-up',
       agent: 'Harshit (Reception Desk)',
       notes: 'High intent candidate, requested scholarship details',
     },
@@ -111,6 +170,7 @@ export default function ExcelLeadManagerModal({
       location: 'Mohali',
       targetCourse: 'CLAT 2027 (2-Yr Class)',
       source: 'Google Ads',
+      status: 'New',
       agent: 'Counselor Priya (Law Admissions Desk)',
       notes: 'Interested in weekend classroom batch',
     },
@@ -121,6 +181,7 @@ export default function ExcelLeadManagerModal({
       location: 'Ludhiana',
       targetCourse: 'Judiciary Mains Answer Writing',
       source: 'College Workshop',
+      status: 'Converted',
       agent: 'Auto Round-Robin Distribution',
       notes: 'Met at GNDU campus law seminar',
     },
@@ -183,6 +244,7 @@ export default function ExcelLeadManagerModal({
           'Location / City': 'Chandigarh',
           'Target Course': 'PCS-J Punjab Judicial Services',
           'Lead Source': 'Meta Ads (Facebook/Instagram)',
+          'Status (New / Follow-up / Converted / Dead)': 'Follow-up',
           'Assigned Telecaller': 'Harshit (Reception Desk)',
           'Notes / Remarks': 'Inquired about Judiciary foundation batch',
         },
@@ -192,6 +254,7 @@ export default function ExcelLeadManagerModal({
           'Location / City': 'Mohali',
           'Target Course': 'CLAT 2027 (2-Yr Class)',
           'Lead Source': 'Google Ads',
+          'Status (New / Follow-up / Converted / Dead)': 'New',
           'Assigned Telecaller': 'Counselor Priya (Law Admissions Desk)',
           'Notes / Remarks': 'Interested in weekend scholarship test',
         },
@@ -201,6 +264,7 @@ export default function ExcelLeadManagerModal({
           'Location / City': 'Panchkula',
           'Target Course': 'PU Law 3-Yr Entrance',
           'Lead Source': 'Local Walk-in',
+          'Status (New / Follow-up / Converted / Dead)': 'Converted',
           'Assigned Telecaller': 'Auto Round-Robin Distribution',
           'Notes / Remarks': 'Visited campus reception counter',
         },
@@ -213,6 +277,7 @@ export default function ExcelLeadManagerModal({
         { wch: 20 }, // Location
         { wch: 32 }, // Course
         { wch: 30 }, // Source
+        { wch: 18 }, // Status
         { wch: 35 }, // Agent
         { wch: 45 }, // Notes
       ];
@@ -230,10 +295,10 @@ export default function ExcelLeadManagerModal({
   // Download CSV Template
   const handleDownloadCsvTemplate = () => {
     const csvContent =
-      'Candidate Name *,Mobile Number *,Location / City,Target Course,Lead Source,Assigned Telecaller,Notes / Remarks\n' +
-      'Aarav Sharma,9876543210,Chandigarh,PCS-J Punjab Judicial Services,Meta Ads (Facebook/Instagram),Harshit (Reception Desk),Inquired about Judiciary foundation batch\n' +
-      'Meera Sen,9812345678,Mohali,CLAT 2027 (2-Yr Class),Google Ads,Counselor Priya (Law Admissions Desk),Interested in weekend scholarship test\n' +
-      'Kabir Singh,9898765432,Panchkula,PU Law 3-Yr Entrance,Local Walk-in,Auto Round-Robin Distribution,Visited campus reception counter\n';
+      'Candidate Name *,Mobile Number *,Location / City,Target Course,Lead Source,Status (New/Follow-up/Converted/Dead),Assigned Telecaller,Notes / Remarks\n' +
+      'Aarav Sharma,9876543210,Chandigarh,PCS-J Punjab Judicial Services,Meta Ads (Facebook/Instagram),Follow-up,Harshit (Reception Desk),Inquired about Judiciary foundation batch\n' +
+      'Meera Sen,9812345678,Mohali,CLAT 2027 (2-Yr Class),Google Ads,New,Counselor Priya (Law Admissions Desk),Interested in weekend scholarship test\n' +
+      'Kabir Singh,9898765432,Panchkula,PU Law 3-Yr Entrance,Local Walk-in,Converted,Auto Round-Robin Distribution,Visited campus reception counter\n';
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -285,6 +350,7 @@ export default function ExcelLeadManagerModal({
       const locIdx = findColIdx(['location', 'city', 'state', 'address']);
       const courseIdx = findColIdx(['course', 'program', 'target', 'stream']);
       const sourceIdx = findColIdx(['source', 'channel', 'platform']);
+      const statusIdx = findColIdx(['status', 'stage', 'leadstatus', 'lead status', 'state', 'disposition']);
       const agentIdx = findColIdx(['agent', 'telecaller', 'counselor', 'assignee', 'assigned']);
       const notesIdx = findColIdx(['note', 'remark', 'comment', 'message', 'inquiry']);
 
@@ -296,6 +362,7 @@ export default function ExcelLeadManagerModal({
         const locVal = locIdx >= 0 ? String(r[locIdx] || '').trim() : String(r[2] || '').trim() || 'Chandigarh / Mohali';
         const courseVal = courseIdx >= 0 ? String(r[courseIdx] || '').trim() : String(r[3] || '').trim() || COURSES_OPTIONS[0];
         const sourceVal = sourceIdx >= 0 ? String(r[sourceIdx] || '').trim() : String(r[4] || '').trim() || 'Bulk Excel Import';
+        const statusVal = statusIdx >= 0 ? normalizeExcelLeadStatus(r[statusIdx]) : 'New';
         const agentVal = agentIdx >= 0 ? String(r[agentIdx] || '').trim() : String(r[5] || '').trim() || AGENT_OPTIONS[0];
         const notesVal = notesIdx >= 0 ? String(r[notesIdx] || '').trim() : String(r[6] || '').trim() || 'Uploaded from Excel spreadsheet';
 
@@ -306,6 +373,7 @@ export default function ExcelLeadManagerModal({
           location: locVal || 'Chandigarh / Mohali',
           targetCourse: courseVal || COURSES_OPTIONS[0],
           source: sourceVal || 'Bulk Excel Import',
+          status: statusVal,
           agent: agentVal || AGENT_OPTIONS[0],
           notes: notesVal,
         };
@@ -353,8 +421,10 @@ export default function ExcelLeadManagerModal({
       const location = parts[2]?.trim() || 'Chandigarh / Mohali';
       const targetCourse = parts[3]?.trim() || COURSES_OPTIONS[0];
       const source = parts[4]?.trim() || 'Pasted Spreadsheet Import';
-      const agent = parts[5]?.trim() || AGENT_OPTIONS[0];
-      const notes = parts[6]?.trim() || 'Pasted from Excel dataset';
+      const statusRaw = parts[5]?.trim();
+      const status = normalizeExcelLeadStatus(statusRaw);
+      const agent = (parts.length > 6 ? parts[6]?.trim() : parts[5]?.trim()) || AGENT_OPTIONS[0];
+      const notes = (parts.length > 7 ? parts[7]?.trim() : parts[6]?.trim()) || 'Pasted from Excel dataset';
 
       parsed.push({
         id: `paste-${Date.now()}-${i}`,
@@ -363,6 +433,7 @@ export default function ExcelLeadManagerModal({
         location,
         targetCourse,
         source,
+        status,
         agent,
         notes,
       });
@@ -426,8 +497,9 @@ export default function ExcelLeadManagerModal({
           location: r.location.trim() || 'Chandigarh / Mohali',
           targetCourse: r.targetCourse.trim() || COURSES_OPTIONS[0],
           source: r.source.trim() || 'Excel Sheet Generation',
+          status: r.status || 'New',
           agent: assignedAgent,
-          notes: r.notes.trim() || `Generated via Super Admin Excel Sheet (${r.source})`,
+          notes: r.notes.trim() || `Generated via Super Admin Excel Sheet (${r.source}) [Status: ${r.status || 'New'}]`,
         };
       });
 
@@ -656,6 +728,7 @@ export default function ExcelLeadManagerModal({
                         <th className="py-3 px-3 min-w-[140px]">City / Location</th>
                         <th className="py-3 px-3 min-w-[190px]">Target Course</th>
                         <th className="py-3 px-3 min-w-[180px]">Lead Source</th>
+                        <th className="py-3 px-3 min-w-[130px]">Lead Status</th>
                         <th className="py-3 px-3 min-w-[190px]">Assigned Counselor</th>
                         <th className="py-3 px-3 min-w-[180px]">Notes / Remarks</th>
                         <th className="py-3 px-2 text-center w-12">Action</th>
@@ -664,7 +737,7 @@ export default function ExcelLeadManagerModal({
                     <tbody className="divide-y divide-gray-100 font-sans">
                       {displayedRows.length === 0 ? (
                         <tr>
-                          <td colSpan={9} className="text-center py-12 text-gray-400">
+                          <td colSpan={10} className="text-center py-12 text-gray-400">
                             No rows to display.{' '}
                             <button
                               type="button"
@@ -788,6 +861,29 @@ export default function ExcelLeadManagerModal({
                                   {SOURCE_OPTIONS.map((s) => (
                                     <option key={s} value={s}>
                                       {s}
+                                    </option>
+                                  ))}
+                                </select>
+                              </td>
+
+                              {/* Lead Status */}
+                              <td className="py-2.5 px-3">
+                                <select
+                                  value={r.status || 'New'}
+                                  onChange={(e) => updateRow(r.id, 'status', e.target.value as any)}
+                                  className={`w-full px-2 py-1.5 rounded-lg border text-xs font-bold focus:outline-none focus:border-[#89190E] bg-white ${
+                                    r.status === 'Converted'
+                                      ? 'text-emerald-700 bg-emerald-50/50 border-emerald-300'
+                                      : r.status === 'Follow-up'
+                                      ? 'text-amber-700 bg-amber-50/50 border-amber-300'
+                                      : r.status === 'Dead'
+                                      ? 'text-rose-700 bg-rose-50/50 border-rose-300'
+                                      : 'text-indigo-700 bg-indigo-50/50 border-indigo-300'
+                                  }`}
+                                >
+                                  {STATUS_OPTIONS.map((st) => (
+                                    <option key={st} value={st}>
+                                      {st}
                                     </option>
                                   ))}
                                 </select>

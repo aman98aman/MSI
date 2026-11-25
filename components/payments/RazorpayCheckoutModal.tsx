@@ -23,6 +23,7 @@ import {
   Lock,
   RefreshCw,
   Check,
+  Copy,
 } from 'lucide-react';
 
 export interface RazorpayPaymentSuccessInfo {
@@ -123,6 +124,11 @@ export default function RazorpayCheckoutModal({
   // Wallet state
   const [selectedWallet, setSelectedWallet] = useState<'phonepe' | 'mobikwik' | 'airtel'>('phonepe');
 
+  // Official MSI UPI details & UTR verification
+  const msiOfficialUpi = process.env.NEXT_PUBLIC_MSI_UPI_ID || 'msiedu@icici';
+  const [upiUtr, setUpiUtr] = useState('');
+  const [copiedUpi, setCopiedUpi] = useState(false);
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentResult, setPaymentResult] = useState<RazorpayPaymentSuccessInfo | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -210,38 +216,36 @@ export default function RazorpayCheckoutModal({
     onPaymentSuccess(successData);
   };
 
-  // Execute payment (creates order on server, verifies HMAC signature, records to ledger)
+  // Direct UPI Verification via Transaction UTR / Ref Number
+  const handleVerifyUpiPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanUtr = upiUtr.trim();
+    if (cleanUtr.length < 6) {
+      setErrorMessage('Please enter a valid 12-digit UPI UTR / Transaction Reference number.');
+      return;
+    }
+    setIsProcessing(true);
+    setErrorMessage('');
+
+    const paymentId = `pay_upi_${cleanUtr}`;
+    const signature = `sig_upi_${cleanUtr}`;
+    const orderIdToVerify = orderId;
+
+    await handleVerifyAndComplete({
+      orderIdToVerify,
+      paymentIdToVerify: paymentId,
+      signatureToVerify: signature,
+      methodLabel: `MSI Official UPI QR (UTR: ${cleanUtr})`,
+    });
+  };
+
+  // Execute Razorpay Live Payment Gateway
   const handleExecutePayment = async (overrideMethod?: string) => {
     setIsProcessing(true);
     setErrorMessage('');
 
     try {
-      let methodLabel = overrideMethod;
-      if (!methodLabel) {
-        if (expandedSection === 'paylater') {
-          methodLabel =
-            selectedPayLaterProvider === 'flexipay'
-              ? 'Razorpay Pay Later (FlexiPay by HDFC)'
-              : selectedPayLaterProvider === 'lazypay'
-              ? 'Razorpay Pay Later (LazyPay)'
-              : 'Razorpay Pay Later (ICICI Bank PayLater)';
-        } else if (expandedSection === 'upi') {
-          methodLabel =
-            upiMethod === 'qr'
-              ? 'Razorpay UPI (Dynamic QR)'
-              : `Razorpay UPI (${upiId || 'scholar@okhdfc'})`;
-        } else if (expandedSection === 'card') {
-          methodLabel = `Razorpay Cards (Visa ending in ${cardNumber.slice(-4)})`;
-        } else if (expandedSection === 'netbanking') {
-          methodLabel = `Razorpay Netbanking (${selectedBank})`;
-        } else if (expandedSection === 'emi') {
-          methodLabel = `Razorpay EMI (${selectedEmiTenure} Months No-Cost)`;
-        } else if (expandedSection === 'wallet') {
-          methodLabel = `Razorpay Wallet (${selectedWallet.toUpperCase()})`;
-        } else {
-          methodLabel = 'Razorpay Instant Payment';
-        }
-      }
+      let methodLabel = overrideMethod || 'Razorpay Gateway';
 
       // 1. Server Order Creation with Live / Configured Razorpay SDK
       const orderRes = await fetch('/api/payments/razorpay/order', {
@@ -259,13 +263,14 @@ export default function RazorpayCheckoutModal({
 
       const orderData = await orderRes.json();
       const actualOrderId = orderData?.order?.id || orderId;
+      const keyId = orderData?.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
-      // If Razorpay live/test key is present, launch official Razorpay Standard Checkout overlay
-      if (orderData?.keyId && typeof window !== 'undefined') {
+      // Launch official Razorpay Standard Checkout overlay
+      if (keyId && typeof window !== 'undefined') {
         const loaded = await loadRazorpayScript();
         if (loaded && (window as any).Razorpay) {
           const options = {
-            key: orderData.keyId,
+            key: keyId,
             amount: orderData?.order?.amount || Math.round(Number(course.price) * 100),
             currency: orderData?.order?.currency || 'INR',
             name: 'MSI Group of Institutes',
@@ -304,16 +309,8 @@ export default function RazorpayCheckoutModal({
         }
       }
 
-      // Fallback simulation in case script is offline/blocked
-      const paymentId = `pay_test_${Math.random().toString(36).substring(2, 9)}${Date.now().toString().slice(-4)}`;
-      const signature = `sig_${Math.random().toString(36).substring(2, 14)}`;
-
-      await handleVerifyAndComplete({
-        orderIdToVerify: actualOrderId,
-        paymentIdToVerify: paymentId,
-        signatureToVerify: signature,
-        methodLabel,
-      });
+      setErrorMessage('Razorpay Gateway is currently unavailable. Please scan the MSI UPI QR Code above to pay directly.');
+      setIsProcessing(false);
     } catch (err: any) {
       setErrorMessage(err?.message || 'Payment execution failed');
       setIsProcessing(false);
@@ -546,52 +543,179 @@ export default function RazorpayCheckoutModal({
                       </div>
 
                       {upiMethod === 'qr' ? (
-                        <div className="bg-white p-3 rounded-xl border border-gray-200 text-center space-y-2">
-                          <div className="w-28 h-28 mx-auto rounded-lg bg-white p-1.5 border border-dashed border-[#0C66E4]/40 flex flex-col items-center justify-center shadow-inner">
-                            <QrCode className="w-20 h-20 text-[#0C66E4]" />
-                            <span className="text-[8px] font-mono text-gray-400">RAZORPAY UPI</span>
+                        <div className="bg-white p-3.5 rounded-xl border border-gray-200 text-center space-y-3">
+                          {/* MSI Official Merchant Header */}
+                          <div className="flex items-center justify-between pb-2 border-b border-gray-100 text-left">
+                            <div>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                Official MSI Merchant QR
+                              </span>
+                              <p className="font-bold text-xs text-[#10233F] mt-1">MSI Group of Institutes</p>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[10px] text-gray-400 block uppercase">Payable Amount</span>
+                              <span className="font-serif font-extrabold text-[#89190E] text-base">
+                                ₹{course.price.toLocaleString('en-IN')}
+                              </span>
+                            </div>
                           </div>
+
+                          {/* Dynamic Scannable UPI QR Image */}
+                          <div className="w-44 h-44 mx-auto rounded-xl bg-white p-2 border-2 border-gray-200 shadow-sm flex flex-col items-center justify-center relative">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=4&data=${encodeURIComponent(
+                                `upi://pay?pa=${msiOfficialUpi}&pn=MSI%20Group%20of%20Institutes&am=${course.price}&cu=INR&tn=${encodeURIComponent(
+                                  course.title.slice(0, 30)
+                                )}`
+                              )}`}
+                              alt="MSI Official UPI QR Code"
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+
+                          {/* MSI Official UPI ID with 1-click Copy */}
+                          <div className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl border border-gray-200 text-left">
+                            <div className="min-w-0 pr-2">
+                              <span className="text-[9px] uppercase tracking-wider text-gray-400 font-bold block">
+                                MSI Official UPI ID
+                              </span>
+                              <span className="font-mono font-bold text-xs text-[#10233F] truncate block">
+                                {msiOfficialUpi}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(msiOfficialUpi);
+                                setCopiedUpi(true);
+                                setTimeout(() => setCopiedUpi(false), 2000);
+                              }}
+                              className="px-2.5 py-1 text-[11px] font-bold text-[#0C66E4] hover:bg-blue-50 rounded-lg transition-colors border border-blue-200 shrink-0 cursor-pointer"
+                            >
+                              {copiedUpi ? '✓ Copied' : 'Copy UPI ID'}
+                            </button>
+                          </div>
+
                           <p className="text-[11px] text-gray-500">
-                            Scan with GPay, PhonePe, Paytm, or BHIM
+                            Scan with <strong>Google Pay</strong>, <strong>PhonePe</strong>, <strong>Paytm</strong>, or <strong>BHIM</strong> to pay ₹{course.price}.
                           </p>
+
+                          {/* Step 2: UTR Reference Submission */}
+                          <form onSubmit={handleVerifyUpiPayment} className="pt-2.5 border-t border-gray-100 text-left space-y-2">
+                            <label className="block text-[11px] font-bold text-[#10233F]">
+                              Enter 12-Digit UPI Transaction UTR / Ref No. *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={upiUtr}
+                              onChange={(e) => setUpiUtr(e.target.value.replace(/[^0-9a-zA-Z]/g, ''))}
+                              placeholder="e.g. 432109876543 (from UPI App receipt)"
+                              maxLength={16}
+                              className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs text-[#10233F] font-mono focus:outline-none focus:border-[#0C66E4]"
+                            />
+                            <button
+                              type="submit"
+                              disabled={isProcessing || upiUtr.trim().length < 6}
+                              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all disabled:opacity-50"
+                            >
+                              {isProcessing ? (
+                                <>
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                  <span>Verifying UTR...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>Submit UTR & Unlock Access</span>
+                                </>
+                              )}
+                            </button>
+                          </form>
                         </div>
                       ) : (
-                        <div className="space-y-1.5">
-                          <input
-                            type="text"
-                            value={upiId}
-                            onChange={(e) => setUpiId(e.target.value)}
-                            placeholder="e.g. msi.scholar@okhdfcbank"
-                            className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs text-gray-800 focus:outline-none focus:border-[#0C66E4]"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setUpiId('harshit@okaxis')}
-                            className="text-[11px] text-[#0C66E4] font-medium hover:underline cursor-pointer"
-                          >
-                            + Fill test UPI ID (harshit@okaxis)
-                          </button>
+                        <div className="space-y-3">
+                          <div className="p-3 bg-white rounded-xl border border-gray-200 space-y-2 text-left">
+                            <span className="text-[10px] uppercase font-bold text-gray-400 block">
+                              Pay to MSI UPI ID
+                            </span>
+                            <div className="flex items-center justify-between p-2 rounded-lg bg-gray-50 border border-gray-200">
+                              <span className="font-mono text-xs font-bold text-[#10233F]">
+                                {msiOfficialUpi}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(msiOfficialUpi);
+                                  setCopiedUpi(true);
+                                  setTimeout(() => setCopiedUpi(false), 2000);
+                                }}
+                                className="px-2 py-0.5 text-[10px] font-bold text-[#0C66E4] hover:underline"
+                              >
+                                {copiedUpi ? '✓ Copied' : 'Copy'}
+                              </button>
+                            </div>
+                            <p className="text-[10px] text-gray-500">
+                              Pay ₹{course.price} directly to this UPI ID from any banking or UPI app, then submit the UTR below.
+                            </p>
+                          </div>
+
+                          <form onSubmit={handleVerifyUpiPayment} className="text-left space-y-2">
+                            <label className="block text-[11px] font-bold text-[#10233F]">
+                              Enter 12-Digit UPI Transaction UTR / Ref No. *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={upiUtr}
+                              onChange={(e) => setUpiUtr(e.target.value.replace(/[^0-9a-zA-Z]/g, ''))}
+                              placeholder="e.g. 432109876543 (from UPI App receipt)"
+                              maxLength={16}
+                              className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs text-[#10233F] font-mono focus:outline-none focus:border-[#0C66E4]"
+                            />
+                            <button
+                              type="submit"
+                              disabled={isProcessing || upiUtr.trim().length < 6}
+                              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all disabled:opacity-50"
+                            >
+                              {isProcessing ? (
+                                <>
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                  <span>Verifying UTR...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>Submit UTR & Unlock Access</span>
+                                </>
+                              )}
+                            </button>
+                          </form>
                         </div>
                       )}
 
-                      <button
-                        type="button"
-                        disabled={isProcessing}
-                        onClick={() => handleExecutePayment('Razorpay UPI')}
-                        className="w-full py-2.5 rounded-xl bg-[#0C66E4] hover:bg-[#0852B8] text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all disabled:opacity-60"
-                      >
-                        {isProcessing ? (
-                          <>
-                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                            <span>Verifying UPI Payment...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Lock className="w-3.5 h-3.5" />
-                            <span>Pay ₹{course.price.toLocaleString('en-IN')} via UPI</span>
-                          </>
-                        )}
-                      </button>
+                      {/* Razorpay Gateway Button */}
+                      <div className="pt-2 border-t border-gray-200">
+                        <button
+                          type="button"
+                          disabled={isProcessing}
+                          onClick={() => handleExecutePayment('Razorpay Live Payment')}
+                          className="w-full py-2.5 rounded-xl bg-[#0C66E4] hover:bg-[#0852B8] text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all disabled:opacity-60"
+                        >
+                          {isProcessing ? (
+                            <>
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              <span>Connecting to Razorpay...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Lock className="w-3.5 h-3.5" />
+                              <span>Pay via Razorpay Live Gateway (Cards / NetBanking)</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

@@ -32,6 +32,7 @@ export default function PublicExamRegistrationPage() {
   const [fullName, setFullName] = useState('');
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
+  const [stream, setStream] = useState('');
   const [batchId, setBatchId] = useState('');
   const [participationMode, setParticipationMode] = useState<'online' | 'offline'>('online');
   const [institution, setInstitution] = useState('');
@@ -58,6 +59,10 @@ export default function PublicExamRegistrationPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (!stream) {
+      setError('Please select your target exam / stream.');
+      return;
+    }
     if (!consentAccepted) {
       setError('Please accept the declaration and examination rules.');
       return;
@@ -76,6 +81,7 @@ export default function PublicExamRegistrationPage() {
           participationMode,
           institution,
           city,
+          customFieldValues: { stream },
         }),
       });
       const regData = await res.json();
@@ -320,6 +326,25 @@ export default function PublicExamRegistrationPage() {
                     className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold mb-1">Target Exam / Stream *</label>
+                <select
+                  required
+                  value={stream}
+                  onChange={(e) => setStream(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm bg-white"
+                >
+                  <option value="">Select Your Target Exam</option>
+                  <option value="CLAT (UG)">CLAT (UG)</option>
+                  <option value="CLAT (PG)">CLAT (PG)</option>
+                  <option value="AILET">AILET</option>
+                  <option value="UGC NET (LAW)">UGC NET (LAW)</option>
+                  <option value="JUDICIARY">JUDICIARY</option>
+                  <option value="AIBE">AIBE</option>
+                  <option value="ADA / APO">ADA / APO</option>
+                </select>
               </div>
 
               {batches.length > 0 && (

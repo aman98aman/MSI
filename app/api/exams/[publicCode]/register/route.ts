@@ -74,6 +74,7 @@ export async function POST(
     const fullName = String(body.fullName || '').trim();
     const mobile = sanitizeIndianPhone(String(body.mobile || ''));
     const email = String(body.email || '').trim().toLowerCase();
+    const photoUrl = String(body.photoUrl || '').trim();
     const batchId = body.batchId ? String(body.batchId).trim() : undefined;
     const participationMode: 'online' | 'offline' =
       exam.participationMode === 'both'
@@ -95,6 +96,12 @@ export async function POST(
     }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ success: false, message: 'Please enter a valid email address.' }, { status: 400 });
+    }
+    if (!photoUrl) {
+      return NextResponse.json(
+        { success: false, message: 'Please upload your profile photograph (JPG, JPEG, or PNG).' },
+        { status: 400 }
+      );
     }
 
     // Validate batch — mandatory if exam has active batches configured
@@ -162,12 +169,16 @@ export async function POST(
         fullName,
         mobile,
         email,
+        photoUrl,
         institution: body.institution ? String(body.institution).trim() : undefined,
         classOrCourse: body.classOrCourse ? String(body.classOrCourse).trim() : undefined,
         city: body.city ? String(body.city).trim() : undefined,
         createdAt: nowIso,
         updatedAt: nowIso,
       };
+      await upsertExamDoc('exam_candidates', candidate);
+    } else if (photoUrl && candidate.photoUrl !== photoUrl) {
+      candidate = { ...candidate, photoUrl, updatedAt: nowIso };
       await upsertExamDoc('exam_candidates', candidate);
     }
 
@@ -195,6 +206,7 @@ export async function POST(
         fullName,
         mobile,
         email,
+        photoUrl,
         participationMode,
         source: 'website',
         registrationStatus: 'confirmed',
@@ -237,6 +249,7 @@ export async function POST(
         fullName,
         mobile,
         email,
+        photoUrl,
         participationMode,
         source: 'website',
         registrationStatus: 'pending_payment',

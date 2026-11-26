@@ -204,9 +204,6 @@ export default function HomePage() {
       {/* Floating Glassmorphism Navbar with Active State & Admissions Ticker */}
       <Navbar onOpenEnquiry={() => setIsEnquiryOpen(true)} />
 
-      {/* Live Breaking News Ticker with Moving Boxes */}
-      <LiveMockBreakingTicker onOpenRegisterModal={() => setIsFreeMockOpen(true)} />
-
       {/* Main Content Flow */}
       <main className="flex-grow">
         {/* Full-Width Auto-Slide Hero Carousel */}

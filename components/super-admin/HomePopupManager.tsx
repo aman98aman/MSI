@@ -67,18 +67,58 @@ export default function HomePopupManager() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [newScrollText, setNewScrollText] = useState('');
+  const [liveTicker, setLiveTicker] = useState({
+    isLive: false,
+    liveText: 'REGISTER FOR FREE MOCK TEST 2027 — OFFICIAL ONLINE CBT & ANSWER KEY',
+    liveBadge: 'LIVE',
+    liveLink: '/exam',
+  });
+  const [savingTicker, setSavingTicker] = useState(false);
 
   /* ── Load Config ── */
   useEffect(() => {
     setLoading(true);
-    fetch('/api/home-popup')
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
-        if (data) setConfig({ ...DEFAULT_CONFIG, ...data });
+    Promise.all([
+      fetch('/api/home-popup').then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetch('/api/live-ticker').then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    ])
+      .then(([popupData, tickerData]) => {
+        if (popupData) setConfig({ ...DEFAULT_CONFIG, ...popupData });
+        if (tickerData?.success && tickerData.config) setLiveTicker(tickerData.config);
       })
-      .catch(() => {/* use defaults */})
       .finally(() => setLoading(false));
   }, []);
+
+  const handleSaveLiveTicker = async (nextLiveState?: boolean) => {
+    setSavingTicker(true);
+    const payload = {
+      ...liveTicker,
+      isLive: nextLiveState !== undefined ? nextLiveState : liveTicker.isLive,
+    };
+    try {
+      const res = await fetch('/api/live-ticker', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const d = await res.json();
+      if (res.ok && d.success) {
+        setLiveTicker(d.config);
+        showToast(
+          d.config.isLive
+            ? '🔴 Top Live Ticker is now LIVE across the entire website!'
+            : '⏹️ Top Live Ticker stopped.',
+          'success'
+        );
+      } else {
+        showToast('❌ Failed to update Live Ticker.', 'error');
+      }
+    } catch {
+      showToast('❌ Network error updating Live Ticker.', 'error');
+    } finally {
+      setSavingTicker(false);
+    }
+  };
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type });
@@ -144,6 +184,71 @@ export default function HomePopupManager() {
           {toast.msg}
         </div>
       )}
+
+      {/* Top Live Ticker Broadcast Controller */}
+      <div className="bg-gradient-to-r from-[#071B37] to-[#122d54] text-white p-6 rounded-2xl border border-[#EFC988]/40 shadow-md space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className={`h-2.5 w-2.5 rounded-full ${liveTicker.isLive ? 'bg-red-500 animate-ping' : 'bg-gray-400'}`} />
+              <h3 className="font-serif font-bold text-lg text-[#EFC988]">
+                Top Screen Live Ticker Broadcast
+              </h3>
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${liveTicker.isLive ? 'bg-red-600 text-white' : 'bg-white/10 text-gray-300'}`}>
+                {liveTicker.isLive ? '● LIVE ON WEBSITE' : '○ STOPPED'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 mt-1">
+              Jo text aap yahan likh kar <strong>Start Live</strong> karenge, woh website ke top ticker par lagatar chalta rahega jab tak aap <strong>Stop / End Live</strong> na karein.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              disabled={savingTicker}
+              onClick={() => handleSaveLiveTicker(!liveTicker.isLive)}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer transition-all ${
+                liveTicker.isLive
+                  ? 'bg-amber-500 hover:bg-amber-600 text-[#071B37]'
+                  : 'bg-red-600 hover:bg-red-700 text-white'
+              }`}
+            >
+              {liveTicker.isLive ? '⏹️ Stop / End Live' : '🔴 Start Live'}
+            </button>
+            <button
+              type="button"
+              disabled={savingTicker}
+              onClick={() => handleSaveLiveTicker()}
+              className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold cursor-pointer"
+            >
+              Save Text
+            </button>
+          </div>
+        </div>
+        <div className="grid sm:grid-cols-4 gap-3">
+          <input
+            type="text"
+            value={liveTicker.liveBadge}
+            onChange={(e) => setLiveTicker((p) => ({ ...p, liveBadge: e.target.value }))}
+            placeholder="Badge (e.g. LIVE)"
+            className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-xs text-white placeholder-slate-400"
+          />
+          <input
+            type="text"
+            value={liveTicker.liveText}
+            onChange={(e) => setLiveTicker((p) => ({ ...p, liveText: e.target.value }))}
+            placeholder="Enter scrolling live announcement text..."
+            className="sm:col-span-2 px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-xs text-white placeholder-slate-400"
+          />
+          <input
+            type="text"
+            value={liveTicker.liveLink}
+            onChange={(e) => setLiveTicker((p) => ({ ...p, liveLink: e.target.value }))}
+            placeholder="Click Link (e.g. /exam)"
+            className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-xs font-mono text-white placeholder-slate-400"
+          />
+        </div>
+      </div>
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-[#E8EEFF] shadow-xs">

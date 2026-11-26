@@ -116,6 +116,10 @@ async function ensureExamIndexes(db: Db): Promise<void> {
     db.collection('exam_attendance').createIndex({ id: 1 }, { unique: true }),
     db.collection('exam_attendance').createIndex({ registrationId: 1 }, { unique: true }),
 
+    db.collection('exam_consents').createIndex({ id: 1 }, { unique: true }),
+    db.collection('exam_consents').createIndex({ registrationId: 1, examId: 1, consentVersion: 1 }, { unique: true }),
+    db.collection('exam_consents').createIndex({ examId: 1, acceptedAt: -1 }),
+
     db.collection('exam_audit_logs').createIndex({ entityId: 1, createdAt: -1 }),
     db.collection('exam_audit_logs').createIndex({ examId: 1, createdAt: -1 }),
   ]);

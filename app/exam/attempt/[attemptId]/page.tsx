@@ -9,9 +9,17 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock,
+  FileCheck2,
   Maximize2,
   ShieldAlert,
 } from 'lucide-react';
+import {
+  MSI_CONSENT_BUTTON_TEXT,
+  MSI_CONSENT_CHECKBOX_TEXT,
+  MSI_MOCK_CONSENT_PARAGRAPHS,
+  MSI_MOCK_CONSENT_SUBTITLE,
+  MSI_MOCK_CONSENT_TITLE,
+} from '@/lib/examConsent';
 
 function formatSeconds(sec: number): string {
   const s = Math.max(0, sec);
@@ -38,6 +46,8 @@ export default function CandidateAttemptPage() {
   const [warningBanner, setWarningBanner] = useState('');
   const [fsSupported, setFsSupported] = useState(true);
   const [starting, setStarting] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [savingConsent, setSavingConsent] = useState(false);
 
   const isStartedRef = useRef(false);
 
@@ -157,6 +167,32 @@ export default function CandidateAttemptPage() {
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [state?.attemptStatus, logProctorEvent]);
+
+  const handleAcceptConsent = async () => {
+    if (!consentChecked) {
+      setError('Please read and tick the consent checkbox to proceed.');
+      return;
+    }
+    setError('');
+    setSavingConsent(true);
+    try {
+      const res = await fetch(`/api/exams/attempts/${attemptId}/consent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accepted: true }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        await fetchState();
+      } else {
+        setError(data.message || 'Unable to record consent. Please try again.');
+      }
+    } catch {
+      setError('Network error saving consent.');
+    } finally {
+      setSavingConsent(false);
+    }
+  };
 
   const handleStartExam = async () => {
     setError('');
@@ -344,6 +380,66 @@ export default function CandidateAttemptPage() {
               Return to MSI Home
             </Link>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Pre-Start Mandatory Consent Form (when not yet accepted)
+  if (state?.attemptStatus === 'not_started' && !state?.consentAccepted) {
+    return (
+      <div className="min-h-screen bg-[#F6F8FC] flex items-center justify-center p-4 py-8">
+        <div className="max-w-2xl w-full bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#E8EEFF] space-y-5">
+          <div className="flex items-start justify-between gap-4 border-b border-gray-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-[#89190E]/10 text-[#89190E] flex items-center justify-center shrink-0">
+                <FileCheck2 className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-widest text-[#89190E]">
+                  {MSI_MOCK_CONSENT_TITLE}
+                </div>
+                <h1 className="font-serif font-bold text-xl sm:text-2xl text-[#071B37]">
+                  {MSI_MOCK_CONSENT_SUBTITLE}
+                </h1>
+              </div>
+            </div>
+            <div className="text-right text-[11px] font-mono font-bold text-[#071B37] shrink-0">
+              {state.uid}
+            </div>
+          </div>
+
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-gray-200 max-h-72 overflow-y-auto space-y-3 text-xs sm:text-[13px] text-[#071B37] leading-relaxed">
+            {MSI_MOCK_CONSENT_PARAGRAPHS.map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
+          </div>
+
+          <label className="flex items-start gap-3 p-4 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consentChecked}
+              onChange={(e) => setConsentChecked(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-[#89190E] shrink-0"
+            />
+            <span className="leading-relaxed font-medium">{MSI_CONSENT_CHECKBOX_TEXT}</span>
+          </label>
+
+          {error && (
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-700">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="button"
+            disabled={!consentChecked || savingConsent}
+            onClick={handleAcceptConsent}
+            className="w-full py-3.5 rounded-xl bg-[#89190E] hover:bg-[#6e130b] text-white font-bold text-sm shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <span>{savingConsent ? 'Recording Consent...' : MSI_CONSENT_BUTTON_TEXT}</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
     );

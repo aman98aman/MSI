@@ -4,8 +4,9 @@ import {
   getAttemptAndExamForCandidate,
 } from '@/lib/examAttemptHelper';
 import { getCandidateSession, unauthorizedCandidateResponse } from '@/lib/examAuth';
-import { listExamCollection } from '@/lib/examDb';
-import { CandidateAnswer, ExamQuestion } from '@/lib/examTypes';
+import { findOneExamDoc, listExamCollection } from '@/lib/examDb';
+import { CONSENT_VERSION } from '@/lib/examConsent';
+import { CandidateAnswer, ExamConsentRecord, ExamQuestion } from '@/lib/examTypes';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,12 +70,17 @@ export async function GET(
     });
   }
 
-  const [questions, answers] = await Promise.all([
+  const [questions, answers, consentDoc] = await Promise.all([
     listExamCollection<ExamQuestion>('exam_questions', {
       examId: exam.id,
       paperVersion: attempt.paperVersion,
     }),
     listExamCollection<CandidateAnswer>('exam_answers', { attemptId: attempt.id }),
+    findOneExamDoc<ExamConsentRecord>('exam_consents', {
+      registrationId: attempt.registrationId,
+      examId: exam.id,
+      consentVersion: CONSENT_VERSION,
+    }),
   ]);
 
   const qMap = new Map(questions.map((q) => [q.id, q]));
@@ -115,6 +121,8 @@ export async function GET(
   return NextResponse.json({
     success: true,
     attemptStatus: attempt.status,
+    consentAccepted: Boolean(consentDoc),
+    consentAcceptedAt: consentDoc?.acceptedAt || null,
     uid: attempt.uid,
     examTitle: exam.title,
     examCategory: exam.category,

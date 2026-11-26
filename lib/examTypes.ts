@@ -142,6 +142,7 @@ export interface ExamCandidate {
   fullName: string;
   mobile: string; // sanitized 10-digit
   email: string;
+  photoUrl?: string;
   institution?: string;
   classOrCourse?: string;
   city?: string;
@@ -158,6 +159,7 @@ export interface ExamRegistration {
   fullName: string;
   mobile: string;
   email: string;
+  photoUrl?: string;
   participationMode: 'online' | 'offline';
   source: 'website' | 'offline_admin';
   registrationStatus: 'pending_payment' | 'confirmed' | 'cancelled';
@@ -310,6 +312,26 @@ export interface ExamAttendance {
   checkedInAt?: string;
   operatorId: string;
   notes?: string;
+}
+
+export interface ExamConsentRecord {
+  id: string;
+  registrationId: string;
+  candidateId: string;
+  uid: string;
+  fullName: string;
+  email: string;
+  mobile: string;
+  examId: string;
+  examTitle: string;
+  batchId?: string;
+  batchName?: string;
+  consentVersion: string;
+  consentStatement: string;
+  accepted: boolean;
+  acceptedAt: string;
+  ipAddress?: string;
+  userAgent?: string;
 }
 
 export interface ExamAuditLog {

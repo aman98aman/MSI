@@ -29,6 +29,7 @@ type DetailTab =
   | 'overview'
   | 'qr'
   | 'candidates'
+  | 'consents'
   | 'questions'
   | 'monitoring'
   | 'attendance'
@@ -48,6 +49,7 @@ function ExamDetailContent() {
   const [candidates, setCandidates] = useState<any[]>([]);
   const [candSearch, setCandSearch] = useState('');
   const [streamFilter, setStreamFilter] = useState('ALL');
+  const [selectedCandidateDetail, setSelectedCandidateDetail] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [paperVerified, setPaperVerified] = useState(false);
   const [selectedBatchId, setSelectedBatchId] = useState<string>('');
@@ -181,7 +183,7 @@ function ExamDetailContent() {
 
   useEffect(() => {
     if (tab === 'qr') loadQr();
-    else if (tab === 'candidates') loadCandidates();
+    else if (tab === 'candidates' || tab === 'consents') loadCandidates();
     else if (tab === 'questions') loadQuestions();
     else if (tab === 'monitoring') loadMonitoring();
     else if (tab === 'attendance') loadAttendance();
@@ -554,6 +556,7 @@ function ExamDetailContent() {
             { id: 'overview', label: 'Overview & Batches' },
             { id: 'qr', label: 'Link & QR Code' },
             { id: 'candidates', label: 'Candidates' },
+            { id: 'consents', label: 'Consent Records' },
             ...(exam.eventType === 'online_cbt' || exam.eventType === 'hybrid'
               ? [
                   { id: 'questions', label: 'Questions & Key' },
@@ -865,19 +868,34 @@ function ExamDetailContent() {
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="bg-[#F0F3FF] text-[10px] uppercase font-bold text-gray-500 border-b">
-                    <th className="py-3 px-4">Candidate UID</th>
+                    <th className="py-3 px-4">Photo &amp; UID</th>
                     <th className="py-3 px-4">Name &amp; Contact</th>
                     <th className="py-3 px-4">Target Stream</th>
-                    <th className="py-3 px-4">Mode / Source</th>
+                    <th className="py-3 px-4">Consent</th>
                     <th className="py-3 px-4">Payment</th>
                     <th className="py-3 px-4">Attempt</th>
-                    <th className="py-3 px-4">Score / Violations</th>
+                    <th className="py-3 px-4">Score / Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {filteredCandidates.map((c) => (
                     <tr key={c.id}>
-                      <td className="py-3 px-4 font-mono font-bold text-[#89190E]">{c.uid || 'PENDING'}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-10 rounded-lg overflow-hidden bg-slate-100 border border-gray-200 shrink-0 flex items-center justify-center text-[10px] text-gray-400">
+                            {c.photoUrl ? (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img src={c.photoUrl} alt={c.fullName} className="w-full h-full object-cover" />
+                            ) : (
+                              'N/A'
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-mono font-bold text-[#89190E]">{c.uid || 'PENDING'}</div>
+                            <div className="text-[10px] text-gray-400 font-mono">{c.id}</div>
+                          </div>
+                        </div>
+                      </td>
                       <td className="py-3 px-4">
                         <div className="font-bold">{c.fullName}</div>
                         <div className="text-[11px] text-gray-500">{c.mobile} • {c.email}</div>
@@ -891,9 +909,23 @@ function ExamDetailContent() {
                           <span className="text-gray-400">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 capitalize">
-                        <div>{c.participationMode}</div>
-                        <div className="text-[11px] text-gray-400">{c.source}</div>
+                      <td className="py-3 px-4">
+                        {c.consentStatus === 'accepted' ? (
+                          <div>
+                            <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                              Accepted
+                            </span>
+                            {c.consentAcceptedAt && (
+                              <div className="text-[10px] text-gray-400 mt-0.5">
+                                {new Date(c.consentAcceptedAt).toLocaleString('en-IN')}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="inline-block px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">
+                            Pending
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <span className="font-bold uppercase text-[11px]">{c.paymentStatus}</span>
@@ -901,10 +933,21 @@ function ExamDetailContent() {
                       </td>
                       <td className="py-3 px-4 capitalize">{String(c.attemptStatus).replace('_', ' ')}</td>
                       <td className="py-3 px-4">
-                        {c.rawScore !== undefined ? <strong>{c.rawScore}</strong> : '—'}
-                        {c.violationCount > 0 && (
-                          <span className="ml-2 text-[11px] text-rose-600 font-bold">({c.violationCount} flags)</span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <span>
+                            {c.rawScore !== undefined ? <strong>{c.rawScore}</strong> : '—'}
+                            {c.violationCount > 0 && (
+                              <span className="ml-1 text-[11px] text-rose-600 font-bold">({c.violationCount} flags)</span>
+                            )}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCandidateDetail(c)}
+                            className="px-2.5 py-1 rounded-lg bg-[#071B37] text-white text-[10px] font-bold cursor-pointer"
+                          >
+                            View Details
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -919,6 +962,116 @@ function ExamDetailContent() {
               </table>
             </div>
           </div>
+          );
+        })()}
+
+        {tab === 'consents' && (() => {
+          const acceptedCount = candidates.filter((c) => c.consentStatus === 'accepted').length;
+          const pendingCount = candidates.length - acceptedCount;
+          return (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF]">
+                  <span className="text-[10px] font-bold uppercase text-gray-400">Total Registered</span>
+                  <div className="font-serif font-bold text-2xl mt-1">{candidates.length}</div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF]">
+                  <span className="text-[10px] font-bold uppercase text-gray-400">Consent Accepted</span>
+                  <div className="font-serif font-bold text-2xl text-emerald-700 mt-1">{acceptedCount}</div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF]">
+                  <span className="text-[10px] font-bold uppercase text-gray-400">Consent Pending</span>
+                  <div className="font-serif font-bold text-2xl text-amber-600 mt-1">{pendingCount}</div>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF]">
+                <div className="relative">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                  <input
+                    value={candSearch}
+                    onChange={(e) => setCandSearch(e.target.value)}
+                    placeholder="Search consent records by UID, name, mobile, or email..."
+                    className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-[#E8EEFF] overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-[#F0F3FF] text-[10px] uppercase font-bold text-gray-500 border-b">
+                      <th className="py-3 px-4">Photo &amp; Student</th>
+                      <th className="py-3 px-4">Registration ID / UID</th>
+                      <th className="py-3 px-4">Exam / Batch</th>
+                      <th className="py-3 px-4">Consent Status</th>
+                      <th className="py-3 px-4">Accepted Date &amp; Time</th>
+                      <th className="py-3 px-4 text-right">Record</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {candidates.map((c) => (
+                      <tr key={c.id}>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-9 h-10 rounded-lg overflow-hidden bg-slate-100 border border-gray-200 shrink-0 flex items-center justify-center text-[10px] text-gray-400">
+                              {c.photoUrl ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img src={c.photoUrl} alt={c.fullName} className="w-full h-full object-cover" />
+                              ) : (
+                                'N/A'
+                              )}
+                            </div>
+                            <div>
+                              <div className="font-bold text-[#071B37]">{c.fullName}</div>
+                              <div className="text-[11px] text-gray-500">{c.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 font-mono">
+                          <div className="font-bold text-[#89190E]">{c.uid || 'PENDING'}</div>
+                          <div className="text-[10px] text-gray-400">{c.id}</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-semibold">{exam.title}</div>
+                          <div className="text-[11px] text-gray-500">{c.customFieldValues?.stream || '—'}</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          {c.consentStatus === 'accepted' ? (
+                            <span className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                              Accepted ({c.consentVersion || 'v1.0'})
+                            </span>
+                          ) : (
+                            <span className="inline-block px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">
+                              Pending
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-[11px] text-gray-600">
+                          {c.consentAcceptedAt ? new Date(c.consentAcceptedAt).toLocaleString('en-IN') : '—'}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCandidateDetail(c)}
+                            className="px-3 py-1.5 rounded-lg bg-[#071B37] text-white text-[11px] font-bold cursor-pointer"
+                          >
+                            View Consent &amp; Photo
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {candidates.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="py-10 text-center text-gray-400">
+                          No registered students yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           );
         })()}
 
@@ -1358,6 +1511,84 @@ function ExamDetailContent() {
           </div>
         )}
       </main>
+
+      {/* Candidate Photo & Consent Record Detail Modal */}
+      {selectedCandidateDetail && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-white rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between gap-4 border-b border-gray-100 pb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-24 rounded-2xl overflow-hidden bg-slate-100 border border-gray-200 shrink-0 flex items-center justify-center text-xs text-gray-400">
+                  {selectedCandidateDetail.photoUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={selectedCandidateDetail.photoUrl}
+                      alt={selectedCandidateDetail.fullName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    'No Photo'
+                  )}
+                </div>
+                <div className="space-y-1 text-xs">
+                  <div className="font-mono font-bold text-[#89190E]">{selectedCandidateDetail.uid}</div>
+                  <h3 className="font-serif font-bold text-xl text-[#071B37]">
+                    {selectedCandidateDetail.fullName}
+                  </h3>
+                  <div className="text-gray-600">
+                    {selectedCandidateDetail.mobile} • {selectedCandidateDetail.email}
+                  </div>
+                  <div className="text-[11px] text-gray-500">
+                    Registration ID: <span className="font-mono">{selectedCandidateDetail.id}</span>
+                  </div>
+                  {selectedCandidateDetail.customFieldValues?.stream && (
+                    <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#F0F3FF] text-[#071B37] font-bold text-[10px]">
+                      {selectedCandidateDetail.customFieldValues.stream}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedCandidateDetail(null)}
+                className="px-3 py-1.5 rounded-xl border border-gray-200 text-xs font-bold cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h4 className="font-serif font-bold text-sm text-[#071B37]">
+                  Examination Consent Record
+                </h4>
+                {selectedCandidateDetail.consentStatus === 'accepted' ? (
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                    ✓ Accepted on{' '}
+                    {selectedCandidateDetail.consentAcceptedAt
+                      ? new Date(selectedCandidateDetail.consentAcceptedAt).toLocaleString('en-IN')
+                      : ''}
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold">
+                    Consent Pending (Not Yet Accepted)
+                  </span>
+                )}
+              </div>
+
+              {selectedCandidateDetail.consentStatement ? (
+                <div className="p-4 rounded-2xl bg-slate-50 border border-gray-200 text-xs text-[#071B37] whitespace-pre-line leading-relaxed max-h-64 overflow-y-auto">
+                  {selectedCandidateDetail.consentStatement}
+                </div>
+              ) : (
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
+                  This student has not accepted the mandatory Declaration &amp; Consent form yet. They will be required to accept it before starting the examination.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Offline Admin Entry Modal */}
       {showOfflineModal && (

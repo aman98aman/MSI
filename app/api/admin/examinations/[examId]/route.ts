@@ -27,7 +27,14 @@ export async function GET(
   if (!admin) return unauthorizedAdminResponse();
 
   const { examId } = await context.params;
-  const exam = await findOneExamDoc<ExamEvent>('exam_events', { id: examId });
+  const cleanId = decodeURIComponent(examId || '').trim();
+  let exam = await findOneExamDoc<ExamEvent>('exam_events', { id: cleanId });
+  if (!exam) {
+    exam = await findOneExamDoc<ExamEvent>('exam_events', { code: cleanId.toUpperCase() });
+  }
+  if (!exam) {
+    exam = await findOneExamDoc<ExamEvent>('exam_events', { publicSlug: cleanId });
+  }
   if (!exam) {
     return NextResponse.json({ success: false, message: 'Examination not found.' }, { status: 404 });
   }

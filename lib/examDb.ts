@@ -50,7 +50,7 @@ export async function getExamDb(): Promise<Db | null> {
   try {
     const db = (await Promise.race([
       getDb(),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500)),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 6500)),
     ])) as Db | null;
 
     if (db && !global._msiExamIndexesReady) {
@@ -164,13 +164,12 @@ export async function findOneExamDoc<T extends { id: string }>(
     try {
       const doc = await Promise.race([
         db.collection(collectionName).findOne(filter),
-        new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500)),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
       ]);
       if (doc) {
         const { _id, ...rest } = doc as any;
         return rest as T;
       }
-      return null;
     } catch (err) {
       console.warn(`[ExamDB FindOne Error: ${collectionName}]`, err);
     }
@@ -195,7 +194,10 @@ export async function upsertExamDoc<T extends { id: string }>(
   else disk.unshift(doc);
   writeExamCollectionToDisk(collectionName, disk);
 
-  const db = await getExamDb();
+  let db = await getExamDb();
+  if (!db && isMongoConfigured()) {
+    db = await getExamDb();
+  }
   if (db) {
     const { _id, ...clean }: any = doc;
     await db

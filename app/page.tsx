@@ -16,9 +16,9 @@ import TypewriterHeroBand from '@/components/home/TypewriterHeroBand';
 import Footer from '@/components/footer/Footer';
 import EnquiryModal from '@/components/modals/EnquiryModal';
 import VideoModal from '@/components/modals/VideoModal';
-import MockTestOfferPopup from '@/components/home/MockTestOfferPopup';
 import LiveMockBreakingTicker from '@/components/home/LiveMockBreakingTicker';
 import FreeMockRegisterModal from '@/components/modals/FreeMockRegisterModal';
+import HomePromoPopup from '@/components/home/HomePromoPopup';
 import TiltCard from '@/components/ui/TiltCard';
 import Reveal from '@/components/ui/Reveal';
 import Image from 'next/image';
@@ -473,8 +473,11 @@ export default function HomePage() {
         onClose={() => setIsVideoOpen(false)}
       />
 
-      {/* CLAT PG Mock Test Limited Offer Floating Popup */}
-      <MockTestOfferPopup />
+      {/* CLAT PG Mock Test Limited Offer Floating Popup — REMOVED */}
+      {/* <MockTestOfferPopup /> */}
+
+      {/* Home Promotional Popup — Admin Managed */}
+      <HomePromoPopup />
 
       {/* Free Mock Test Registration Modal */}
       <FreeMockRegisterModal

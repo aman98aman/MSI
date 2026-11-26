@@ -97,6 +97,7 @@ import * as XLSX from 'xlsx';
 import ExcelLeadManagerModal from '@/components/super-admin/ExcelLeadManagerModal';
 import FeeReceiptModal from '@/components/student/FeeReceiptModal';
 import ThemeToggle from '@/components/glass/ThemeToggle';
+import HomePopupManager from '@/components/super-admin/HomePopupManager';
 
 
 type AdminTab =
@@ -107,7 +108,8 @@ type AdminTab =
   | 'courses'
   | 'gallery'
   | 'transactions'
-  | 'marketing';
+  | 'marketing'
+  | 'homePopup';
 
 interface RegisteredStudent {
   id: string;
@@ -3508,6 +3510,29 @@ export default function SuperAdminMasterDashboard() {
                 <span className="truncate">Open Marketing Portal</span>
               </div>
             </Link>
+          </div>
+
+          {/* Home Popup & Promotions */}
+          <div className="space-y-1">
+            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#8C716C] font-bold">
+              Promotions
+            </div>
+            <button
+              onClick={() => setActiveTab('homePopup')}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors text-left cursor-pointer ${
+                activeTab === 'homePopup'
+                  ? 'bg-[#E8EEFF] text-[#89190E] font-bold shadow-xs'
+                  : 'text-[#58413D] hover:bg-[#F0F3FF] hover:text-[#071B37]'
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <Sparkles className="w-4 h-4 shrink-0" />
+                <span className="truncate">Home Popup Manager</span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-[10px] font-bold">
+                LIVE
+              </span>
+            </button>
           </div>
         </div>
 
@@ -9707,6 +9732,15 @@ export default function SuperAdminMasterDashboard() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* TAB: HOME POPUP MANAGER                                          */}
+      {/* ================================================================ */}
+      {activeTab === 'homePopup' && (
+        <div className="p-6 sm:p-8">
+          <HomePopupManager />
         </div>
       )}
     </div>

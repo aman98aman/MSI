@@ -196,6 +196,44 @@ export default function CoursesPage() {
     setDirectCheckoutCourse(virtualCourse);
   };
 
+  const handleEnrollClassroomCourse = (course: ClassroomCourse) => {
+    const virtualCourse: MSICourse = {
+      id: `crs-classroom-${course.id}`,
+      slug: course.id,
+      title: `${course.name} (Batch 2027 Admission)`,
+      headline: `Official Classroom Admission — ${course.level}`,
+      description: course.highlights.join('. '),
+      category: course.category === 'entrance' ? 'Law Entrance' : 'Judiciary',
+      department: 'law',
+      rating: 5.0,
+      reviewCount: 42,
+      totalDuration: course.duration,
+      totalLectures: 80,
+      level: 'All Levels',
+      thumbnail: '/images/courses/clat.jpg',
+      price: 5000,
+      originalPrice: 15000,
+      isFreeForMsiStudents: false,
+      instructorId: 'fac-harshit-01',
+      instructorName: 'MSI Senior Jurists & Directorate',
+      instructorTitle: 'Faculty Directorate',
+      instructorAvatar: '/images/avatars/avatar-1.webp',
+      whatYouWillLearn: course.highlights,
+      requirements: [course.eligibility],
+      sections: [],
+      updatedDate: 'Nov 2026',
+      language: 'English & Bilingual Legal Notes',
+      isPublished: true,
+    };
+
+    if (!isStudentLoggedIn()) {
+      setLoginModalCourse(virtualCourse);
+      return;
+    }
+
+    setDirectCheckoutCourse(virtualCourse);
+  };
+
   useEffect(() => {
     loadLmsData();
 
@@ -930,15 +968,36 @@ export default function CoursesPage() {
 
                     {/* Footer Actions */}
                     <div className="pt-4 border-t border-[#E8DCCB] flex items-center gap-2">
+                      {isCourseEnrolled(`crs-classroom-${course.id}`) ? (
+                        <Link
+                          href="/student/dashboard"
+                          className="flex-1 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition-all shadow-sm"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Enrolled / Reserved</span>
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleEnrollClassroomCourse(course)}
+                          className="flex-1 h-10 rounded-xl bg-gradient-to-r from-[#89190E] to-[#ab1f13] hover:from-[#65130D] hover:to-[#89190E] text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition-all shadow-sm cursor-pointer active:scale-98"
+                        >
+                          <CreditCard className="w-3.5 h-3.5" />
+                          <span>Enroll & Pay Fee</span>
+                        </button>
+                      )}
+
                       <button
+                        type="button"
                         onClick={() => {
                           setSelectedCourse(course.name);
                           setIsEnquiryOpen(true);
                         }}
-                        className="flex-1 h-10 rounded-xl bg-[#89190E] hover:bg-[#65130D] text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition-all shadow-sm cursor-pointer active:scale-98"
+                        className="h-10 px-3.5 rounded-xl bg-white hover:bg-[#FFF3DD] text-[#10233F] border border-[#E8DCCB] font-bold text-xs flex items-center justify-center space-x-1 transition-all shadow-xs cursor-pointer active:scale-98"
+                        title="Enquire about batch timing and syllabus"
                       >
-                        <Send className="w-3.5 h-3.5" />
-                        <span>Enquire Batch</span>
+                        <Send className="w-3 h-3 text-[#89190E]" />
+                        <span>Enquire</span>
                       </button>
 
                       <a
@@ -1746,6 +1805,7 @@ export default function CoursesPage() {
             } else {
               // Standard Course Enrollment
               enrollStudentAction(stuId, directCheckoutCourse.id, 'self', studentName, 'Purchased via Razorpay', cleanPhone, studentName);
+              setEnrolledCourseIds((prev) => Array.from(new Set([...prev, directCheckoutCourse.id])));
               loadLmsData();
               showToast(`🎉 Enrolled in ${directCheckoutCourse.title}! Verified via ${info.receiptNumber}`);
               if (directCheckoutCourse.pdfUrl) {

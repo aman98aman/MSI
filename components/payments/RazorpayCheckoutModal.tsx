@@ -276,10 +276,10 @@ export default function RazorpayCheckoutModal({
 
       const orderData = await orderRes.json();
       const actualOrderId = orderData?.order?.id || orderId;
-      const keyId = orderData?.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      const keyId = orderData?.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TvhCxeD2cZdI3w';
 
-      // Launch official Razorpay Standard Checkout overlay if live
-      if (keyId && orderData?.isLiveOrder && typeof window !== 'undefined') {
+      // Launch official Razorpay Standard Checkout overlay
+      if (keyId && typeof window !== 'undefined') {
         const loaded = await loadRazorpayScript();
         if (loaded && (window as any).Razorpay) {
           const options: any = {
@@ -289,7 +289,6 @@ export default function RazorpayCheckoutModal({
             name: 'MSI Group of Institutes',
             description: course.title,
             image: '/images/msi-crest.png',
-            order_id: actualOrderId,
             prefill: {
               name: effectiveStudentName,
               contact: effectiveStudentPhone,
@@ -314,6 +313,10 @@ export default function RazorpayCheckoutModal({
               },
             },
           };
+
+          if (orderData?.isLiveOrder && actualOrderId) {
+            options.order_id = actualOrderId;
+          }
 
           const rzp = new (window as any).Razorpay(options);
           rzp.on('payment.failed', function (resp: any) {

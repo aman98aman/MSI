@@ -20,7 +20,7 @@ export default function HeroContent({
       <div className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-white/90 backdrop-blur-md border border-[#E8DCCB] shadow-xs mb-4 w-max max-w-full">
         <span className="w-2.5 h-2.5 rounded-full bg-[#89190E] animate-pulse-beacon flex-shrink-0" />
         <span className="text-[11px] sm:text-xs font-bold text-[#89190E] uppercase tracking-wider">
-          Admissions Open — New Batch 2025
+          Admissions Open — New Batch 2027
         </span>
       </div>
 

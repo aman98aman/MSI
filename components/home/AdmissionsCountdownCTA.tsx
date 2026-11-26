@@ -50,7 +50,7 @@ export default function AdmissionsCountdownCTA({
             <div className="inline-flex items-center space-x-2.5 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md mb-6">
               <span className="w-2.5 h-2.5 rounded-full bg-[#EFC988] animate-pulse-gold" />
               <span className="text-xs font-bold text-[#EFC988] uppercase tracking-wider">
-                New Batch 2025 — Enrollments Open
+                New Batch 2027 — Enrollments Open
               </span>
             </div>
 

@@ -21,6 +21,12 @@ export async function GET(
     if (!exam) {
       exam = await findOneExamDoc<ExamEvent>('exam_events', { code: clean.toUpperCase() });
     }
+    if (!exam) {
+      exam = await findOneExamDoc<ExamEvent>('exam_events', { id: clean });
+    }
+    if (!exam) {
+      exam = await findOneExamDoc<ExamEvent>('exam_events', { code: clean });
+    }
 
     if (!exam || exam.status === 'draft') {
       return NextResponse.json(

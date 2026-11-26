@@ -17,6 +17,8 @@ import Footer from '@/components/footer/Footer';
 import EnquiryModal from '@/components/modals/EnquiryModal';
 import VideoModal from '@/components/modals/VideoModal';
 import MockTestOfferPopup from '@/components/home/MockTestOfferPopup';
+import LiveMockBreakingTicker from '@/components/home/LiveMockBreakingTicker';
+import FreeMockRegisterModal from '@/components/modals/FreeMockRegisterModal';
 import TiltCard from '@/components/ui/TiltCard';
 import Reveal from '@/components/ui/Reveal';
 import Image from 'next/image';
@@ -98,6 +100,7 @@ const DEFAULT_HOME_COURSES = [
 export default function HomePage() {
   const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
+  const [isFreeMockOpen, setIsFreeMockOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState('PCS J — Punjab Civil Judge Coaching');
   const [dynamicCourses, setDynamicCourses] = useState<MSICourse[]>([]);
 
@@ -200,6 +203,9 @@ export default function HomePage() {
     <div className="relative min-h-screen bg-[#FFF9EF] flex flex-col selection:bg-[#EFC988] selection:text-[#89190E]">
       {/* Floating Glassmorphism Navbar with Active State & Admissions Ticker */}
       <Navbar onOpenEnquiry={() => setIsEnquiryOpen(true)} />
+
+      {/* Live Breaking News Ticker with Moving Boxes */}
+      <LiveMockBreakingTicker onOpenRegisterModal={() => setIsFreeMockOpen(true)} />
 
       {/* Main Content Flow */}
       <main className="flex-grow">
@@ -469,6 +475,12 @@ export default function HomePage() {
 
       {/* CLAT PG Mock Test Limited Offer Floating Popup */}
       <MockTestOfferPopup />
+
+      {/* Free Mock Test Registration Modal */}
+      <FreeMockRegisterModal
+        isOpen={isFreeMockOpen}
+        onClose={() => setIsFreeMockOpen(false)}
+      />
     </div>
   );
 }

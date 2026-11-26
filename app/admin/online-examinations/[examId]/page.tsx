@@ -47,6 +47,7 @@ function ExamDetailContent() {
   const [qrData, setQrData] = useState<any>(null);
   const [candidates, setCandidates] = useState<any[]>([]);
   const [candSearch, setCandSearch] = useState('');
+  const [streamFilter, setStreamFilter] = useState('ALL');
   const [questions, setQuestions] = useState<any[]>([]);
   const [paperVerified, setPaperVerified] = useState(false);
   const [attempts, setAttempts] = useState<any[]>([]);
@@ -644,8 +645,95 @@ function ExamDetailContent() {
           </div>
         )}
 
-        {tab === 'candidates' && (
+        {tab === 'candidates' && (() => {
+          const STREAM_OPTIONS = [
+            'CLAT (UG)',
+            'CLAT (PG)',
+            'AILET',
+            'UGC NET (LAW)',
+            'JUDICIARY',
+            'AIBE',
+            'ADA / APO',
+          ];
+          const streamCounts: Record<string, number> = {};
+          STREAM_OPTIONS.forEach((s) => {
+            streamCounts[s] = 0;
+          });
+          let unspecifiedCount = 0;
+          candidates.forEach((c) => {
+            const s = c.customFieldValues?.stream;
+            if (s && streamCounts[s] !== undefined) {
+              streamCounts[s] += 1;
+            } else if (s) {
+              streamCounts[s] = (streamCounts[s] || 0) + 1;
+            } else {
+              unspecifiedCount += 1;
+            }
+          });
+          const filteredCandidates =
+            streamFilter === 'ALL'
+              ? candidates
+              : streamFilter === 'UNSPECIFIED'
+              ? candidates.filter((c) => !c.customFieldValues?.stream)
+              : candidates.filter((c) => c.customFieldValues?.stream === streamFilter);
+
+          return (
           <div className="space-y-4">
+            {/* Stream-wise Registration Breakdown */}
+            <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF] space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-serif font-bold text-sm text-[#071B37]">
+                  Stream-wise Registrations ({candidates.length} Total)
+                </h3>
+                {streamFilter !== 'ALL' && (
+                  <button
+                    onClick={() => setStreamFilter('ALL')}
+                    className="text-[11px] font-bold text-[#89190E] hover:underline cursor-pointer"
+                  >
+                    Clear Filter
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
+                <button
+                  onClick={() => setStreamFilter('ALL')}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    streamFilter === 'ALL'
+                      ? 'bg-[#071B37] text-white border-[#071B37]'
+                      : 'bg-slate-50 text-[#071B37] border-gray-200 hover:border-[#071B37]'
+                  }`}
+                >
+                  <div className="text-[10px] font-bold uppercase opacity-75">All Streams</div>
+                  <div className="font-serif font-bold text-xl mt-0.5">{candidates.length}</div>
+                </button>
+                {STREAM_OPTIONS.map((streamName) => (
+                  <button
+                    key={streamName}
+                    onClick={() =>
+                      setStreamFilter(streamFilter === streamName ? 'ALL' : streamName)
+                    }
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      streamFilter === streamName
+                        ? 'bg-[#89190E] text-white border-[#89190E]'
+                        : 'bg-slate-50 text-[#071B37] border-gray-200 hover:border-[#89190E]'
+                    }`}
+                  >
+                    <div className="text-[10px] font-bold uppercase opacity-80 truncate">
+                      {streamName}
+                    </div>
+                    <div className="font-serif font-bold text-xl mt-0.5">
+                      {streamCounts[streamName] || 0}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {unspecifiedCount > 0 && (
+                <div className="text-[11px] text-gray-500">
+                  + {unspecifiedCount} earlier registration(s) without stream selection.
+                </div>
+              )}
+            </div>
+
             <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF] flex flex-wrap items-center justify-between gap-3">
               <div className="relative flex-1 min-w-[240px]">
                 <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
@@ -687,6 +775,7 @@ function ExamDetailContent() {
                   <tr className="bg-[#F0F3FF] text-[10px] uppercase font-bold text-gray-500 border-b">
                     <th className="py-3 px-4">Candidate UID</th>
                     <th className="py-3 px-4">Name &amp; Contact</th>
+                    <th className="py-3 px-4">Target Stream</th>
                     <th className="py-3 px-4">Mode / Source</th>
                     <th className="py-3 px-4">Payment</th>
                     <th className="py-3 px-4">Attempt</th>
@@ -694,12 +783,21 @@ function ExamDetailContent() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {candidates.map((c) => (
+                  {filteredCandidates.map((c) => (
                     <tr key={c.id}>
                       <td className="py-3 px-4 font-mono font-bold text-[#89190E]">{c.uid || 'PENDING'}</td>
                       <td className="py-3 px-4">
                         <div className="font-bold">{c.fullName}</div>
                         <div className="text-[11px] text-gray-500">{c.mobile} • {c.email}</div>
+                      </td>
+                      <td className="py-3 px-4">
+                        {c.customFieldValues?.stream ? (
+                          <span className="inline-block px-2.5 py-1 rounded-full bg-[#F0F3FF] text-[#071B37] font-bold text-[11px]">
+                            {c.customFieldValues.stream}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
                       </td>
                       <td className="py-3 px-4 capitalize">
                         <div>{c.participationMode}</div>
@@ -718,9 +816,9 @@ function ExamDetailContent() {
                       </td>
                     </tr>
                   ))}
-                  {candidates.length === 0 && (
+                  {filteredCandidates.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="py-10 text-center text-gray-400">
+                      <td colSpan={7} className="py-10 text-center text-gray-400">
                         No candidates found.
                       </td>
                     </tr>
@@ -729,7 +827,8 @@ function ExamDetailContent() {
               </table>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {tab === 'questions' && (
           <div className="space-y-6">

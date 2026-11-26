@@ -24,8 +24,8 @@ export function getRazorpayCredentials() {
     }
   }
 
-  const resolvedKeyId = keyId || '';
-  const resolvedKeySecret = keySecret || '';
+  const resolvedKeyId = keyId || 'rzp_live_TvhCxeD2cZdI3w';
+  const resolvedKeySecret = keySecret || '94pSpbt0Lf10DYPkfcKuHfl3';
   const isLive = resolvedKeyId.startsWith('rzp_live_');
 
   return {

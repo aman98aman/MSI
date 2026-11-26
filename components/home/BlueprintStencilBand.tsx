@@ -53,7 +53,7 @@ const PROGRAMMES: CoachingProgramme[] = [
     icon: Scale,
     title: 'PCS J — Punjab & Haryana Judiciary',
     level: 'Civil Judge (Junior Division) / JMFC',
-    badge: 'Admissions 2025–26 Open',
+    badge: 'Admissions 2027–28 Open',
     badgeVariant: 'crimson',
     desc: 'Flagship judicial coaching with daily Bare Act deconstructions, procedural codes, and intensive evaluated Mains judgment drafting.',
     features: [

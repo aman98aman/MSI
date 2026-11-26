@@ -4,36 +4,49 @@ import { Db } from 'mongodb';
 import { getDb, isMongoConfigured } from './mongodb';
 
 const EXAM_DATA_DIR = path.join(process.cwd(), 'data', 'exams');
+const TMP_EXAM_DATA_DIR = path.join('/tmp', 'msi-exams');
 
-function ensureExamDataDir() {
+function getWritableExamDataDir(): string {
   try {
     if (!fs.existsSync(EXAM_DATA_DIR)) {
       fs.mkdirSync(EXAM_DATA_DIR, { recursive: true });
     }
-  } catch (_) {}
+    fs.accessSync(EXAM_DATA_DIR, fs.constants.W_OK);
+    return EXAM_DATA_DIR;
+  } catch {
+    try {
+      if (!fs.existsSync(TMP_EXAM_DATA_DIR)) {
+        fs.mkdirSync(TMP_EXAM_DATA_DIR, { recursive: true });
+      }
+      return TMP_EXAM_DATA_DIR;
+    } catch {
+      return EXAM_DATA_DIR;
+    }
+  }
 }
 
 export function readExamCollectionFromDisk<T>(collectionName: string): T[] {
-  try {
-    ensureExamDataDir();
-    const filePath = path.join(EXAM_DATA_DIR, `${collectionName}.json`);
-    if (fs.existsSync(filePath)) {
-      const raw = fs.readFileSync(filePath, 'utf-8');
-      if (raw && raw.trim()) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed as T[];
+  for (const dir of [EXAM_DATA_DIR, TMP_EXAM_DATA_DIR]) {
+    try {
+      const filePath = path.join(dir, `${collectionName}.json`);
+      if (fs.existsSync(filePath)) {
+        const raw = fs.readFileSync(filePath, 'utf-8');
+        if (raw && raw.trim()) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed as T[];
+        }
       }
+    } catch (err) {
+      console.error(`[ExamDisk Read Error: ${collectionName}]`, err);
     }
-  } catch (err) {
-    console.error(`[ExamDisk Read Error: ${collectionName}]`, err);
   }
   return [];
 }
 
 export function writeExamCollectionToDisk<T>(collectionName: string, items: T[]): void {
   try {
-    ensureExamDataDir();
-    const filePath = path.join(EXAM_DATA_DIR, `${collectionName}.json`);
+    const dir = getWritableExamDataDir();
+    const filePath = path.join(dir, `${collectionName}.json`);
     fs.writeFileSync(filePath, JSON.stringify(items, null, 2), 'utf-8');
   } catch (err) {
     console.warn(`[ExamDisk Write Error: ${collectionName}]`, err);

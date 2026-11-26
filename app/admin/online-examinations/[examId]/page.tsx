@@ -112,6 +112,9 @@ function ExamDetailContent() {
         setSelectedBatchId((prev) => prev || loadedBatches[0]?.id || 'DEFAULT');
         setMetrics(data.metrics);
         setAuditLogs(data.auditLogs || []);
+      } else if (res.status === 401) {
+        window.location.reload();
+        return;
       } else if (res.status === 404 && retry) {
         await new Promise((r) => setTimeout(r, 600));
         return loadOverview(false);

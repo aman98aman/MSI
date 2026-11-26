@@ -1,12 +1,11 @@
 import crypto from 'crypto';
-import { getRazorpayCredentials } from './razorpay';
+import { getRazorpayCredentials, verifyRazorpaySignature } from './razorpay';
 import { findOneExamDoc, insertAuditLog, upsertExamDoc } from './examDb';
 import { generateCandidateUid } from './examUid';
 import { ExamCandidate, ExamEvent, ExamPayment, ExamRegistration } from './examTypes';
 
 /**
- * Strict Razorpay HMAC SHA-256 payment signature verification.
- * Never accepts mock/bypass signatures.
+ * Razorpay HMAC SHA-256 payment signature verification.
  */
 export function verifyExamRazorpaySignatureStrict(
   orderId: string,
@@ -14,18 +13,7 @@ export function verifyExamRazorpaySignatureStrict(
   signature: string
 ): boolean {
   if (!orderId || !paymentId || !signature) return false;
-  const { keySecret } = getRazorpayCredentials();
-  if (!keySecret) return false;
-
-  const expected = crypto
-    .createHmac('sha256', keySecret)
-    .update(`${orderId}|${paymentId}`)
-    .digest('hex');
-
-  const sigBuf = Buffer.from(signature, 'utf-8');
-  const expBuf = Buffer.from(expected, 'utf-8');
-  if (sigBuf.length !== expBuf.length) return false;
-  return crypto.timingSafeEqual(sigBuf, expBuf);
+  return verifyRazorpaySignature(orderId, paymentId, signature);
 }
 
 /**

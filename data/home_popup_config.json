@@ -1,0 +1,25 @@
+{
+  "enabled": true,
+  "title": "Register for Free Mock Test",
+  "subtitle": "MSI Group of Institutes — Official Mock Test Series 2027",
+  "description": "Attempt Full-Length Mock Tests for CLAT, PCS-J (Judiciary) & AILET. Instant Scorecard, Ranking & PDF Download.",
+  "badgeText": "FREE REGISTRATION",
+  "badgeColor": "#EFC988",
+  "scrollingTexts": [
+    "🏛️ CLAT 2027 Free Mock Test — Register Now!",
+    "⚖️ PCS-J (Judiciary) Mock Series — Online & Offline",
+    "📋 AILET & Law Entrance Mock Tests Available",
+    "🎯 All-India Ranking with Instant Scorecard",
+    "📄 Free PDF Download with Answer Key"
+  ],
+  "onlineLink": "https://msiinstitutes.com/exam",
+  "offlineLink": "https://msiinstitutes.com/contact",
+  "onlineLinkText": "Register Online",
+  "offlineLinkText": "Register Offline / Walk-In",
+  "ctaButtonText": "Register for Free Mock Test",
+  "ctaButtonLink": "/exam",
+  "showOnce": false,
+  "delaySeconds": 3,
+  "imageUrl": "",
+  "updatedAt": "2026-11-26T11:00:00+05:30"
+}

@@ -97,14 +97,41 @@ async function connectClient(uri: string): Promise<MongoClient> {
   }
 }
 
+export function resetMongoClientCache(): void {
+  global._mongoClientPromise = undefined;
+  clientPromise = null;
+  client = null;
+}
+
+function isCloudflareWorkersRuntime(): boolean {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.userAgent === 'Cloudflare-Workers') {
+      return true;
+    }
+    if (typeof globalThis !== 'undefined' && 'WebSocketPair' in globalThis) {
+      return true;
+    }
+  } catch {}
+  return false;
+}
+
 export async function getMongoClient(): Promise<MongoClient | null> {
   const uri = getSanitizedMongoUri();
   if (!uri) {
     return null;
   }
 
-  // Use global variable across both development and serverless production (Vercel)
-  // so warm serverless lambda invocations reuse existing TCP connections.
+  // Cloudflare Workers forbid reusing TCP sockets across different requests
+  if (isCloudflareWorkersRuntime()) {
+    try {
+      return await connectClient(uri);
+    } catch (err: any) {
+      console.error('[MongoDB] CF Worker connection error:', err?.message || err);
+      return null;
+    }
+  }
+
+  // Use global variable across Node.js dev and Vercel serverless invocations
   if (!global._mongoClientPromise) {
     global._mongoClientPromise = connectClient(uri).catch((err) => {
       console.error('[MongoDB] Connection attempt failed:', err?.message || err);
@@ -120,8 +147,7 @@ export async function getMongoClient(): Promise<MongoClient | null> {
     return connectedClient;
   } catch (err: any) {
     console.error('[MongoDB] Connection error:', err?.message || err);
-    global._mongoClientPromise = undefined;
-    clientPromise = null;
+    resetMongoClientCache();
     return null;
   }
 }

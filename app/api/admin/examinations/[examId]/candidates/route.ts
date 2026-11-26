@@ -13,6 +13,7 @@ import {
   ExamAttempt,
   ExamAttendance,
   ExamCandidate,
+  ExamConsentRecord,
   ExamEvent,
   ExamPayment,
   ExamRegistration,
@@ -39,19 +40,29 @@ export async function GET(
   const mode = (searchParams.get('mode') || '').trim();
   const exportType = (searchParams.get('export') || '').trim().toLowerCase();
 
-  const [registrations, payments, attempts, attendances] = await Promise.all([
+  const [registrations, payments, attempts, attendances, consents, candidates] = await Promise.all([
     listExamCollection<ExamRegistration>('exam_registrations', { examId }, { registeredAt: -1 }),
     listExamCollection<ExamPayment>('exam_payments', { examId }),
     listExamCollection<ExamAttempt>('exam_attempts', { examId }),
     listExamCollection<ExamAttendance>('exam_attendance', { examId }),
+    listExamCollection<ExamConsentRecord>('exam_consents', { examId }),
+    listExamCollection<ExamCandidate>('exam_candidates', {}),
   ]);
 
   let rows = registrations.map((reg) => {
     const payment = payments.find((p) => p.registrationId === reg.id);
     const attempt = attempts.find((a) => a.registrationId === reg.id);
     const attendance = attendances.find((at) => at.registrationId === reg.id);
+    const consent = consents.find((c) => c.registrationId === reg.id);
+    const candidateProfile = candidates.find((c) => c.id === reg.candidateId);
     return {
       ...reg,
+      photoUrl: reg.photoUrl || candidateProfile?.photoUrl || '',
+      consentStatus: consent?.accepted ? 'accepted' : 'pending',
+      consentAcceptedAt: consent?.acceptedAt || null,
+      consentVersion: consent?.consentVersion || null,
+      consentStatement: consent?.consentStatement || null,
+      consentId: consent?.id || null,
       paymentMethod: payment?.method || (reg.feeAmount === 0 ? 'free' : 'pending'),
       razorpayOrderId: payment?.razorpayOrderId,
       razorpayPaymentId: payment?.razorpayPaymentId,

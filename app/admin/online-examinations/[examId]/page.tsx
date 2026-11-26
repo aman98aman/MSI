@@ -29,6 +29,7 @@ type DetailTab =
   | 'overview'
   | 'qr'
   | 'candidates'
+  | 'consents'
   | 'questions'
   | 'monitoring'
   | 'attendance'
@@ -48,8 +49,12 @@ function ExamDetailContent() {
   const [candidates, setCandidates] = useState<any[]>([]);
   const [candSearch, setCandSearch] = useState('');
   const [streamFilter, setStreamFilter] = useState('ALL');
+  const [selectedCandidateDetail, setSelectedCandidateDetail] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [paperVerified, setPaperVerified] = useState(false);
+  const [selectedBatchId, setSelectedBatchId] = useState<string>('');
+  const [selectedSubPaper, setSelectedSubPaper] = useState<'PAPER_1' | 'PAPER_2'>('PAPER_1');
+  const [batchPaperStatuses, setBatchPaperStatuses] = useState<any[]>([]);
   const [attempts, setAttempts] = useState<any[]>([]);
   const [roster, setRoster] = useState<any[]>([]);
   const [results, setResults] = useState<any[]>([]);
@@ -61,6 +66,7 @@ function ExamDetailContent() {
   const [batchCode, setBatchCode] = useState('');
   const [batchName, setBatchName] = useState('');
   const [batchCapacity, setBatchCapacity] = useState('');
+  const [batchHasSubPapers, setBatchHasSubPapers] = useState(false);
 
   // Offline registration modal
   const [showOfflineModal, setShowOfflineModal] = useState(false);
@@ -99,7 +105,9 @@ function ExamDetailContent() {
       const data = await res.json();
       if (data.success) {
         setExam(data.exam);
-        setBatches(data.batches || []);
+        const loadedBatches = data.batches || [];
+        setBatches(loadedBatches);
+        setSelectedBatchId((prev) => prev || loadedBatches[0]?.id || 'DEFAULT');
         setMetrics(data.metrics);
         setAuditLogs(data.auditLogs || []);
       }
@@ -122,14 +130,31 @@ function ExamDetailContent() {
     if (data.success) setCandidates(data.candidates || []);
   }, [examId, candSearch]);
 
+  const selectedBatchObj = batches.find((b) => b.id === selectedBatchId);
+  const isSelectedBatchSubPaper = Boolean(
+    selectedBatchObj &&
+      (selectedBatchObj.hasSubPapers ||
+        /ugc[\s_-]*net/i.test(`${selectedBatchObj.batchCode} ${selectedBatchObj.batchName}`))
+  );
+
   const loadQuestions = useCallback(async () => {
-    const res = await fetch(`/api/admin/examinations/${examId}/questions`);
+    const query = new URLSearchParams();
+    if (selectedBatchId && selectedBatchId !== 'DEFAULT') {
+      query.set('batchId', selectedBatchId);
+      if (isSelectedBatchSubPaper) {
+        query.set('subPaper', selectedSubPaper);
+      }
+    }
+    const res = await fetch(`/api/admin/examinations/${examId}/questions?${query.toString()}`);
     const data = await res.json();
     if (data.success) {
       setQuestions(data.questions || []);
       setPaperVerified(Boolean(data.paperVerified));
+      if (Array.isArray(data.batchPaperStatuses)) {
+        setBatchPaperStatuses(data.batchPaperStatuses);
+      }
     }
-  }, [examId]);
+  }, [examId, selectedBatchId, isSelectedBatchSubPaper, selectedSubPaper]);
 
   const loadMonitoring = useCallback(async () => {
     const res = await fetch(`/api/admin/examinations/${examId}/attempts`);
@@ -158,7 +183,7 @@ function ExamDetailContent() {
 
   useEffect(() => {
     if (tab === 'qr') loadQr();
-    else if (tab === 'candidates') loadCandidates();
+    else if (tab === 'candidates' || tab === 'consents') loadCandidates();
     else if (tab === 'questions') loadQuestions();
     else if (tab === 'monitoring') loadMonitoring();
     else if (tab === 'attendance') loadAttendance();
@@ -189,6 +214,7 @@ function ExamDetailContent() {
       body: JSON.stringify({
         batchCode,
         batchName,
+        hasSubPapers: batchHasSubPapers,
         capacity: batchCapacity ? Number(batchCapacity) : undefined,
       }),
     });
@@ -197,10 +223,24 @@ function ExamDetailContent() {
       setBatchCode('');
       setBatchName('');
       setBatchCapacity('');
+      setBatchHasSubPapers(false);
       showToast('Batch added.');
       loadOverview();
     } else {
       showToast(data.message || 'Failed to add batch.');
+    }
+  };
+
+  const handleToggleSubPapers = async (bId: string, currentVal: boolean) => {
+    const res = await fetch(`/api/admin/examinations/${examId}/batches`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ batchId: bId, hasSubPapers: !currentVal }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(!currentVal ? 'Enabled Paper 1 & Paper 2 for batch.' : 'Disabled sub-papers for batch.');
+      loadOverview();
     }
   };
 
@@ -239,6 +279,8 @@ function ExamDetailContent() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         mode: 'manual',
+        batchId: selectedBatchId && selectedBatchId !== 'DEFAULT' ? selectedBatchId : undefined,
+        subPaper: isSelectedBatchSubPaper ? selectedSubPaper : undefined,
         section: qSection,
         text: qText,
         options: [
@@ -352,7 +394,12 @@ function ExamDetailContent() {
     const res = await fetch(`/api/admin/examinations/${examId}/questions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: 'bulk', questions: importPreview }),
+      body: JSON.stringify({
+        mode: 'bulk',
+        batchId: selectedBatchId && selectedBatchId !== 'DEFAULT' ? selectedBatchId : undefined,
+        subPaper: isSelectedBatchSubPaper ? selectedSubPaper : undefined,
+        questions: importPreview,
+      }),
     });
     const data = await res.json();
     if (data.success) {
@@ -370,7 +417,11 @@ function ExamDetailContent() {
     const res = await fetch(`/api/admin/examinations/${examId}/questions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: 'verify_and_publish' }),
+      body: JSON.stringify({
+        mode: 'verify_and_publish',
+        batchId: selectedBatchId && selectedBatchId !== 'DEFAULT' ? selectedBatchId : undefined,
+        subPaper: isSelectedBatchSubPaper ? selectedSubPaper : undefined,
+      }),
     });
     const data = await res.json();
     if (data.success) {
@@ -379,6 +430,21 @@ function ExamDetailContent() {
       loadOverview();
     } else {
       showToast(data.message || 'Verification failed.');
+    }
+  };
+
+  const handleDeleteQuestion = async (questionId: string) => {
+    if (!window.confirm('Delete this question?')) return;
+    const res = await fetch(
+      `/api/admin/examinations/${examId}/questions?questionId=${encodeURIComponent(questionId)}`,
+      { method: 'DELETE' }
+    );
+    const data = await res.json();
+    if (data.success) {
+      showToast('Question deleted.');
+      loadQuestions();
+    } else {
+      showToast(data.message || 'Failed to delete question.');
     }
   };
 
@@ -490,6 +556,7 @@ function ExamDetailContent() {
             { id: 'overview', label: 'Overview & Batches' },
             { id: 'qr', label: 'Link & QR Code' },
             { id: 'candidates', label: 'Candidates' },
+            { id: 'consents', label: 'Consent Records' },
             ...(exam.eventType === 'online_cbt' || exam.eventType === 'hybrid'
               ? [
                   { id: 'questions', label: 'Questions & Key' },
@@ -558,38 +625,66 @@ function ExamDetailContent() {
 
               <div className="bg-white p-6 rounded-2xl border border-[#E8EEFF] space-y-4">
                 <h2 className="font-serif font-bold text-base">Batches / Sessions ({batches.length})</h2>
-                <form onSubmit={handleCreateBatch} className="grid grid-cols-3 gap-2">
-                  <input
-                    value={batchCode}
-                    onChange={(e) => setBatchCode(e.target.value.toUpperCase())}
-                    placeholder="Code (B1)"
-                    required
-                    className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono"
-                  />
-                  <input
-                    value={batchName}
-                    onChange={(e) => setBatchName(e.target.value)}
-                    placeholder="Batch Name"
-                    required
-                    className="px-3 py-2 rounded-xl border border-gray-200 text-xs"
-                  />
-                  <button
-                    type="submit"
-                    className="px-3 py-2 rounded-xl bg-[#071B37] text-white text-xs font-bold cursor-pointer"
-                  >
-                    + Add Batch
-                  </button>
+                <form onSubmit={handleCreateBatch} className="space-y-2.5">
+                  <div className="grid grid-cols-3 gap-2">
+                    <input
+                      value={batchCode}
+                      onChange={(e) => setBatchCode(e.target.value.toUpperCase())}
+                      placeholder="Code (CLATUG)"
+                      required
+                      className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono"
+                    />
+                    <input
+                      value={batchName}
+                      onChange={(e) => setBatchName(e.target.value)}
+                      placeholder="Batch Name"
+                      required
+                      className="px-3 py-2 rounded-xl border border-gray-200 text-xs"
+                    />
+                    <button
+                      type="submit"
+                      className="px-3 py-2 rounded-xl bg-[#071B37] text-white text-xs font-bold cursor-pointer"
+                    >
+                      + Add Batch
+                    </button>
+                  </div>
+                  <label className="flex items-center gap-2 text-[11px] text-gray-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={batchHasSubPapers}
+                      onChange={(e) => setBatchHasSubPapers(e.target.checked)}
+                      className="w-3.5 h-3.5 accent-[#89190E]"
+                    />
+                    <span>Enable Paper 1 &amp; Paper 2 sub-sections (e.g. UGC NET Law)</span>
+                  </label>
                 </form>
                 <div className="space-y-2">
-                  {batches.map((b) => (
-                    <div key={b.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 text-xs">
-                      <div>
-                        <span className="font-mono font-bold mr-2">{b.batchCode}</span>
-                        <span>{b.batchName}</span>
+                  {batches.map((b) => {
+                    const isSub = Boolean(b.hasSubPapers) || /ugc[\s_-]*net/i.test(`${b.batchCode} ${b.batchName}`);
+                    return (
+                      <div key={b.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 text-xs gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono font-bold">{b.batchCode}</span>
+                          <span>{b.batchName}</span>
+                          {isSub && (
+                            <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-bold">
+                              Paper 1 &amp; Paper 2
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSubPapers(b.id, isSub)}
+                            className="text-[10px] font-bold text-[#071B37] hover:underline cursor-pointer"
+                          >
+                            {isSub ? 'Disable Sub-Papers' : 'Enable Paper 1 & 2'}
+                          </button>
+                          <span className="text-[11px] text-gray-500">{b.status}</span>
+                        </div>
                       </div>
-                      <span className="text-[11px] text-gray-500">{b.status}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -773,19 +868,34 @@ function ExamDetailContent() {
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="bg-[#F0F3FF] text-[10px] uppercase font-bold text-gray-500 border-b">
-                    <th className="py-3 px-4">Candidate UID</th>
+                    <th className="py-3 px-4">Photo &amp; UID</th>
                     <th className="py-3 px-4">Name &amp; Contact</th>
                     <th className="py-3 px-4">Target Stream</th>
-                    <th className="py-3 px-4">Mode / Source</th>
+                    <th className="py-3 px-4">Consent</th>
                     <th className="py-3 px-4">Payment</th>
                     <th className="py-3 px-4">Attempt</th>
-                    <th className="py-3 px-4">Score / Violations</th>
+                    <th className="py-3 px-4">Score / Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {filteredCandidates.map((c) => (
                     <tr key={c.id}>
-                      <td className="py-3 px-4 font-mono font-bold text-[#89190E]">{c.uid || 'PENDING'}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-10 rounded-lg overflow-hidden bg-slate-100 border border-gray-200 shrink-0 flex items-center justify-center text-[10px] text-gray-400">
+                            {c.photoUrl ? (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img src={c.photoUrl} alt={c.fullName} className="w-full h-full object-cover" />
+                            ) : (
+                              'N/A'
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-mono font-bold text-[#89190E]">{c.uid || 'PENDING'}</div>
+                            <div className="text-[10px] text-gray-400 font-mono">{c.id}</div>
+                          </div>
+                        </div>
+                      </td>
                       <td className="py-3 px-4">
                         <div className="font-bold">{c.fullName}</div>
                         <div className="text-[11px] text-gray-500">{c.mobile} • {c.email}</div>
@@ -799,9 +909,23 @@ function ExamDetailContent() {
                           <span className="text-gray-400">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 capitalize">
-                        <div>{c.participationMode}</div>
-                        <div className="text-[11px] text-gray-400">{c.source}</div>
+                      <td className="py-3 px-4">
+                        {c.consentStatus === 'accepted' ? (
+                          <div>
+                            <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                              Accepted
+                            </span>
+                            {c.consentAcceptedAt && (
+                              <div className="text-[10px] text-gray-400 mt-0.5">
+                                {new Date(c.consentAcceptedAt).toLocaleString('en-IN')}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="inline-block px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">
+                            Pending
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <span className="font-bold uppercase text-[11px]">{c.paymentStatus}</span>
@@ -809,10 +933,21 @@ function ExamDetailContent() {
                       </td>
                       <td className="py-3 px-4 capitalize">{String(c.attemptStatus).replace('_', ' ')}</td>
                       <td className="py-3 px-4">
-                        {c.rawScore !== undefined ? <strong>{c.rawScore}</strong> : '—'}
-                        {c.violationCount > 0 && (
-                          <span className="ml-2 text-[11px] text-rose-600 font-bold">({c.violationCount} flags)</span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <span>
+                            {c.rawScore !== undefined ? <strong>{c.rawScore}</strong> : '—'}
+                            {c.violationCount > 0 && (
+                              <span className="ml-1 text-[11px] text-rose-600 font-bold">({c.violationCount} flags)</span>
+                            )}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCandidateDetail(c)}
+                            className="px-2.5 py-1 rounded-lg bg-[#071B37] text-white text-[10px] font-bold cursor-pointer"
+                          >
+                            View Details
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -830,12 +965,224 @@ function ExamDetailContent() {
           );
         })()}
 
+        {tab === 'consents' && (() => {
+          const acceptedCount = candidates.filter((c) => c.consentStatus === 'accepted').length;
+          const pendingCount = candidates.length - acceptedCount;
+          return (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF]">
+                  <span className="text-[10px] font-bold uppercase text-gray-400">Total Registered</span>
+                  <div className="font-serif font-bold text-2xl mt-1">{candidates.length}</div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF]">
+                  <span className="text-[10px] font-bold uppercase text-gray-400">Consent Accepted</span>
+                  <div className="font-serif font-bold text-2xl text-emerald-700 mt-1">{acceptedCount}</div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF]">
+                  <span className="text-[10px] font-bold uppercase text-gray-400">Consent Pending</span>
+                  <div className="font-serif font-bold text-2xl text-amber-600 mt-1">{pendingCount}</div>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-[#E8EEFF]">
+                <div className="relative">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                  <input
+                    value={candSearch}
+                    onChange={(e) => setCandSearch(e.target.value)}
+                    placeholder="Search consent records by UID, name, mobile, or email..."
+                    className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-[#E8EEFF] overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-[#F0F3FF] text-[10px] uppercase font-bold text-gray-500 border-b">
+                      <th className="py-3 px-4">Photo &amp; Student</th>
+                      <th className="py-3 px-4">Registration ID / UID</th>
+                      <th className="py-3 px-4">Exam / Batch</th>
+                      <th className="py-3 px-4">Consent Status</th>
+                      <th className="py-3 px-4">Accepted Date &amp; Time</th>
+                      <th className="py-3 px-4 text-right">Record</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {candidates.map((c) => (
+                      <tr key={c.id}>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-9 h-10 rounded-lg overflow-hidden bg-slate-100 border border-gray-200 shrink-0 flex items-center justify-center text-[10px] text-gray-400">
+                              {c.photoUrl ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img src={c.photoUrl} alt={c.fullName} className="w-full h-full object-cover" />
+                              ) : (
+                                'N/A'
+                              )}
+                            </div>
+                            <div>
+                              <div className="font-bold text-[#071B37]">{c.fullName}</div>
+                              <div className="text-[11px] text-gray-500">{c.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 font-mono">
+                          <div className="font-bold text-[#89190E]">{c.uid || 'PENDING'}</div>
+                          <div className="text-[10px] text-gray-400">{c.id}</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-semibold">{exam.title}</div>
+                          <div className="text-[11px] text-gray-500">{c.customFieldValues?.stream || '—'}</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          {c.consentStatus === 'accepted' ? (
+                            <span className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                              Accepted ({c.consentVersion || 'v1.0'})
+                            </span>
+                          ) : (
+                            <span className="inline-block px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">
+                              Pending
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-[11px] text-gray-600">
+                          {c.consentAcceptedAt ? new Date(c.consentAcceptedAt).toLocaleString('en-IN') : '—'}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCandidateDetail(c)}
+                            className="px-3 py-1.5 rounded-lg bg-[#071B37] text-white text-[11px] font-bold cursor-pointer"
+                          >
+                            View Consent &amp; Photo
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {candidates.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="py-10 text-center text-gray-400">
+                          No registered students yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })()}
+
         {tab === 'questions' && (
           <div className="space-y-6">
+            {/* Batch / Course Question Paper Selector */}
+            {batches.length > 0 && (
+              <div className="bg-white p-5 rounded-2xl border border-[#E8EEFF] space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h3 className="font-serif font-bold text-sm text-[#071B37]">
+                      1. Select Batch / Course Question Paper
+                    </h3>
+                    <p className="text-[11px] text-gray-500">
+                      Each batch has its own separate question paper. Select a batch below to add, upload, or publish its questions.
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                  {batches.map((b) => {
+                    const st = batchPaperStatuses.find((s) => s.batchId === b.id);
+                    const isActive = selectedBatchId === b.id;
+                    return (
+                      <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedBatchId(b.id);
+                          setSelectedSubPaper('PAPER_1');
+                        }}
+                        className={`p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer ${
+                          isActive
+                            ? 'border-[#89190E] bg-[#89190E]/5 shadow-sm'
+                            : 'border-gray-200 bg-slate-50/70 hover:border-[#071B37]/40'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-mono font-bold text-xs text-[#071B37]">{b.batchCode}</span>
+                          {st?.verified ? (
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                              Published
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+                              Pending
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs font-semibold text-gray-700 mt-0.5">{b.batchName}</div>
+                        <div className="text-[11px] text-gray-500 mt-1">
+                          {st ? `${st.questionCount} question(s)` : 'Select to manage'}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Sub-paper Tabs for UGC NET Law */}
+                {isSelectedBatchSubPaper && (
+                  <div className="pt-3 border-t border-gray-100">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#89190E] mb-2">
+                      2. Select Sub-Paper for {selectedBatchObj?.batchCode} ({selectedBatchObj?.batchName})
+                    </div>
+                    <div className="flex flex-wrap gap-2.5">
+                      {[
+                        { code: 'PAPER_1' as const, label: 'Paper 1 (General / Teaching & Research)' },
+                        { code: 'PAPER_2' as const, label: 'Paper 2 (Law Subject Paper)' },
+                      ].map((sp) => {
+                        const batchStatus = batchPaperStatuses.find((s) => s.batchId === selectedBatchId);
+                        const subStatus = batchStatus?.subStatuses?.find((x: any) => x.subPaper === sp.code);
+                        const active = selectedSubPaper === sp.code;
+                        return (
+                          <button
+                            key={sp.code}
+                            type="button"
+                            onClick={() => setSelectedSubPaper(sp.code)}
+                            className={`px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                              active
+                                ? 'bg-[#071B37] text-white border-[#071B37]'
+                                : 'bg-white text-[#071B37] border-gray-200 hover:border-[#071B37]'
+                            }`}
+                          >
+                            <span>{sp.label}</span>
+                            {subStatus && (
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] ${
+                                  subStatus.verified
+                                    ? 'bg-emerald-500/20 text-emerald-300'
+                                    : 'bg-amber-500/20 text-amber-200'
+                                } ${!active ? (subStatus.verified ? '!bg-emerald-100 !text-emerald-800' : '!bg-amber-100 !text-amber-800') : ''}`}
+                              >
+                                {subStatus.questionCount} Qs • {subStatus.verified ? 'Published' : 'Unverified'}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="bg-white p-5 rounded-2xl border border-[#E8EEFF] flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h2 className="font-serif font-bold text-base flex items-center gap-2">
-                  Question Paper v{exam.activePaperVersion} ({questions.length} questions)
+                <h2 className="font-serif font-bold text-base flex flex-wrap items-center gap-2">
+                  <span>
+                    {selectedBatchObj ? `${selectedBatchObj.batchCode} (${selectedBatchObj.batchName})` : 'Exam'}
+                    {isSelectedBatchSubPaper ? ` — ${selectedSubPaper === 'PAPER_1' ? 'Paper 1' : 'Paper 2'}` : ''}
+                    {' '}• Paper v{exam.activePaperVersion} ({questions.length} questions)
+                  </span>
                   {paperVerified ? (
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
                       VERIFIED &amp; PUBLISHED
@@ -987,9 +1334,17 @@ function ExamDetailContent() {
                       ))}
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
+                  <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
                     <span className="font-mono font-bold text-emerald-700">Key: {q.correctOptionId}</span>
                     <div className="text-[11px] text-gray-400">+{q.marks} / -{q.negativeMarks}</div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteQuestion(q.id)}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Delete
+                    </button>
                   </div>
                 </div>
               ))}
@@ -1156,6 +1511,84 @@ function ExamDetailContent() {
           </div>
         )}
       </main>
+
+      {/* Candidate Photo & Consent Record Detail Modal */}
+      {selectedCandidateDetail && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-white rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between gap-4 border-b border-gray-100 pb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-24 rounded-2xl overflow-hidden bg-slate-100 border border-gray-200 shrink-0 flex items-center justify-center text-xs text-gray-400">
+                  {selectedCandidateDetail.photoUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={selectedCandidateDetail.photoUrl}
+                      alt={selectedCandidateDetail.fullName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    'No Photo'
+                  )}
+                </div>
+                <div className="space-y-1 text-xs">
+                  <div className="font-mono font-bold text-[#89190E]">{selectedCandidateDetail.uid}</div>
+                  <h3 className="font-serif font-bold text-xl text-[#071B37]">
+                    {selectedCandidateDetail.fullName}
+                  </h3>
+                  <div className="text-gray-600">
+                    {selectedCandidateDetail.mobile} • {selectedCandidateDetail.email}
+                  </div>
+                  <div className="text-[11px] text-gray-500">
+                    Registration ID: <span className="font-mono">{selectedCandidateDetail.id}</span>
+                  </div>
+                  {selectedCandidateDetail.customFieldValues?.stream && (
+                    <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#F0F3FF] text-[#071B37] font-bold text-[10px]">
+                      {selectedCandidateDetail.customFieldValues.stream}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedCandidateDetail(null)}
+                className="px-3 py-1.5 rounded-xl border border-gray-200 text-xs font-bold cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h4 className="font-serif font-bold text-sm text-[#071B37]">
+                  Examination Consent Record
+                </h4>
+                {selectedCandidateDetail.consentStatus === 'accepted' ? (
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                    ✓ Accepted on{' '}
+                    {selectedCandidateDetail.consentAcceptedAt
+                      ? new Date(selectedCandidateDetail.consentAcceptedAt).toLocaleString('en-IN')
+                      : ''}
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold">
+                    Consent Pending (Not Yet Accepted)
+                  </span>
+                )}
+              </div>
+
+              {selectedCandidateDetail.consentStatement ? (
+                <div className="p-4 rounded-2xl bg-slate-50 border border-gray-200 text-xs text-[#071B37] whitespace-pre-line leading-relaxed max-h-64 overflow-y-auto">
+                  {selectedCandidateDetail.consentStatement}
+                </div>
+              ) : (
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
+                  This student has not accepted the mandatory Declaration &amp; Consent form yet. They will be required to accept it before starting the examination.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Offline Admin Entry Modal */}
       {showOfflineModal && (

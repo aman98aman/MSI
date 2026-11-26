@@ -60,6 +60,7 @@ export async function POST(
     examId,
     batchCode,
     batchName,
+    hasSubPapers: Boolean(body.hasSubPapers) || /ugc[\s_-]*net/i.test(`${batchCode} ${batchName}`),
     scheduleOverride: body.scheduleOverride || undefined,
     venueOverride: body.venueOverride || undefined,
     capacity: body.capacity ? Number(body.capacity) : undefined,
@@ -79,6 +80,36 @@ export async function POST(
   });
 
   return NextResponse.json({ success: true, batch }, { status: 201 });
+}
+
+export async function PATCH(
+  req: NextRequest,
+  context: { params: Promise<{ examId: string }> }
+) {
+  const admin = getAdminSession(req);
+  if (!admin) return unauthorizedAdminResponse();
+
+  const { examId } = await context.params;
+  const body = await req.json().catch(() => ({}));
+  const batchId = String(body.batchId || '').trim();
+  if (!batchId) {
+    return NextResponse.json({ success: false, message: 'batchId is required.' }, { status: 400 });
+  }
+
+  const batch = await findOneExamDoc<ExamBatch>('exam_batches', { id: batchId, examId });
+  if (!batch) {
+    return NextResponse.json({ success: false, message: 'Batch not found.' }, { status: 404 });
+  }
+
+  const updated: ExamBatch = {
+    ...batch,
+    ...(body.hasSubPapers !== undefined ? { hasSubPapers: Boolean(body.hasSubPapers) } : {}),
+    ...(body.status ? { status: body.status } : {}),
+    ...(body.batchName ? { batchName: String(body.batchName).trim() } : {}),
+  };
+
+  await upsertExamDoc('exam_batches', updated);
+  return NextResponse.json({ success: true, batch: updated });
 }
 
 export async function DELETE(

@@ -55,7 +55,7 @@ function CreateExamContent() {
   const [passingMarks, setPassingMarks] = useState('');
   const [randomizeQuestions, setRandomizeQuestions] = useState(true);
   const [randomizeOptions, setRandomizeOptions] = useState(true);
-  const [disablePreviousNav, setDisablePreviousNav] = useState(true);
+  const [disablePreviousNav, setDisablePreviousNav] = useState(false);
   const [requireFullscreen, setRequireFullscreen] = useState(true);
   const [tabSwitchThreshold, setTabSwitchThreshold] = useState('3');
   const [fullscreenExitThreshold, setFullscreenExitThreshold] = useState('3');

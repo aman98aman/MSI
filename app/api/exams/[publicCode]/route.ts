@@ -132,6 +132,7 @@ export async function GET(
           id: b.id,
           batchCode: b.batchCode,
           batchName: b.batchName,
+          hasSubPapers: Boolean(b.hasSubPapers) || /ugc[\s_-]*net/i.test(`${b.batchCode} ${b.batchName}`),
           scheduleOverride: b.scheduleOverride,
           venueOverride: b.venueOverride,
           capacity: b.capacity,

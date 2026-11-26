@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCandidateSession, unauthorizedCandidateResponse } from '@/lib/examAuth';
+import { CONSENT_VERSION } from '@/lib/examConsent';
 import { findOneExamDoc, upsertExamDoc } from '@/lib/examDb';
 import { canEnterCbtExam } from '@/lib/examLifecycle';
-import { ExamAttempt, ExamBatch, ExamEvent, ExamProctorEvent } from '@/lib/examTypes';
+import { ExamAttempt, ExamBatch, ExamConsentRecord, ExamEvent, ExamProctorEvent } from '@/lib/examTypes';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +37,22 @@ export async function POST(
     : null;
 
   if (attempt.status === 'not_started') {
+    const consentDoc = await findOneExamDoc<ExamConsentRecord>('exam_consents', {
+      registrationId: attempt.registrationId,
+      examId: exam.id,
+      consentVersion: CONSENT_VERSION,
+    });
+    if (!consentDoc) {
+      return NextResponse.json(
+        {
+          success: false,
+          consentRequired: true,
+          message: 'You must accept the mandatory Declaration & Consent form before starting the examination.',
+        },
+        { status: 403 }
+      );
+    }
+
     const enterCheck = canEnterCbtExam(exam, batch, new Date());
     if (!enterCheck.allowed) {
       return NextResponse.json(

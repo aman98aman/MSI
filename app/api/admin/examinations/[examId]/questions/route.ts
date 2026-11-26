@@ -8,7 +8,13 @@ import {
   listExamCollection,
   upsertExamDoc,
 } from '@/lib/examDb';
-import { ExamEvent, ExamPaperVersion, ExamQuestion } from '@/lib/examTypes';
+import { ExamBatch, ExamEvent, ExamPaperVersion, ExamQuestion } from '@/lib/examTypes';
+import {
+  filterQuestionsForTarget,
+  isSubPaperBatch,
+  isTargetPaperVerified,
+  SUB_PAPERS,
+} from '@/lib/examBatchHelper';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,22 +62,90 @@ export async function GET(
   }
 
   const version = Number(searchParams.get('version') || exam.activePaperVersion || 1);
-  const [questions, paperVersions] = await Promise.all([
+  const batchId = searchParams.get('batchId') || undefined;
+  const subPaper = searchParams.get('subPaper') || undefined;
+
+  const [allQuestions, paperVersions, batches] = await Promise.all([
     listExamCollection<ExamQuestion>(
       'exam_questions',
       { examId, paperVersion: version },
       { orderIndex: 1 }
     ),
     listExamCollection<ExamPaperVersion>('exam_paper_versions', { examId }, { version: -1 }),
+    listExamCollection<ExamBatch>('exam_batches', { examId }, { createdAt: 1 }),
   ]);
+
+  const targetBatchId = batchId && batchId !== 'DEFAULT' ? batchId : undefined;
+  const targetSubPaper = subPaper && subPaper !== 'DEFAULT' ? subPaper : undefined;
+
+  const questions = filterQuestionsForTarget(allQuestions, {
+    batchId: targetBatchId,
+    subPaper: targetSubPaper,
+    strictBatch: Boolean(targetBatchId),
+  });
+
+  const currentTargetVerified = isTargetPaperVerified(paperVersions, exam.paperVerified, {
+    batchId: targetBatchId,
+    subPaper: targetSubPaper,
+  });
+
+  const batchPaperStatuses = batches.map((b) => {
+    const hasSubs = isSubPaperBatch(b);
+    if (hasSubs) {
+      const subStatuses = SUB_PAPERS.map((sp) => {
+        const qs = filterQuestionsForTarget(allQuestions, {
+          batchId: b.id,
+          subPaper: sp.code,
+          strictBatch: true,
+        });
+        const verified = isTargetPaperVerified(paperVersions, exam.paperVerified, {
+          batchId: b.id,
+          subPaper: sp.code,
+        });
+        return {
+          subPaper: sp.code,
+          label: sp.label,
+          questionCount: qs.length,
+          verified,
+        };
+      });
+      return {
+        batchId: b.id,
+        batchCode: b.batchCode,
+        batchName: b.batchName,
+        hasSubPapers: true,
+        questionCount: subStatuses.reduce((sum, s) => sum + s.questionCount, 0),
+        verified: subStatuses.every((s) => s.verified && s.questionCount > 0),
+        subStatuses,
+      };
+    }
+
+    const qs = filterQuestionsForTarget(allQuestions, {
+      batchId: b.id,
+      strictBatch: true,
+    });
+    const verified = isTargetPaperVerified(paperVersions, exam.paperVerified, {
+      batchId: b.id,
+    });
+    return {
+      batchId: b.id,
+      batchCode: b.batchCode,
+      batchName: b.batchName,
+      hasSubPapers: false,
+      questionCount: qs.length,
+      verified,
+    };
+  });
 
   return NextResponse.json({
     success: true,
     activePaperVersion: exam.activePaperVersion,
-    paperVerified: exam.paperVerified,
+    paperVerified: currentTargetVerified,
+    examPaperVerified: exam.paperVerified,
     hasStartedAttempts: exam.hasStartedAttempts,
     questions,
     paperVersions,
+    batchPaperStatuses,
   });
 }
 
@@ -91,25 +165,39 @@ export async function POST(
   const body = await req.json().catch(() => ({}));
   const mode = String(body.mode || 'manual');
   const paperVersion = exam.activePaperVersion || 1;
+  const batchId = body.batchId && body.batchId !== 'DEFAULT' ? String(body.batchId).trim() : undefined;
+  const subPaper = body.subPaper && body.subPaper !== 'DEFAULT' ? String(body.subPaper).trim() : undefined;
   const nowIso = new Date().toISOString();
 
   if (mode === 'verify_and_publish') {
-    const questions = await listExamCollection<ExamQuestion>(
+    const allActiveQuestions = await listExamCollection<ExamQuestion>(
       'exam_questions',
       { examId, paperVersion, status: 'active' },
       { orderIndex: 1 }
     );
+    const questions = filterQuestionsForTarget(allActiveQuestions, {
+      batchId,
+      subPaper,
+      strictBatch: Boolean(batchId),
+    });
+
     if (questions.length === 0) {
       return NextResponse.json(
-        { success: false, message: 'Cannot verify an empty question paper. Add at least 1 active question.' },
+        { success: false, message: 'Cannot verify an empty question paper. Add at least 1 active question for this batch/paper.' },
         { status: 400 }
       );
     }
 
     const totalMarks = questions.reduce((sum, q) => sum + (Number(q.marks) || 1), 0);
+    const versionDocId = batchId
+      ? `PV-${examId}-${batchId}-${subPaper || 'DEFAULT'}-V${paperVersion}`
+      : `PV-${examId}-V${paperVersion}`;
+
     const versionDoc: ExamPaperVersion = {
-      id: `PV-${examId}-V${paperVersion}`,
+      id: versionDocId,
       examId,
+      ...(batchId ? { batchId } : {}),
+      ...(subPaper ? { subPaper } : {}),
       version: paperVersion,
       questionIds: questions.map((q) => q.id),
       totalQuestions: questions.length,
@@ -132,13 +220,13 @@ export async function POST(
       actorId: admin.actorId,
       actorName: admin.actorName,
       action: 'VERIFY_AND_PUBLISH_PAPER',
-      summary: `Verified & published Paper v${paperVersion} (${questions.length} questions, ${totalMarks} marks)`,
+      summary: `Verified & published Paper v${paperVersion}${batchId ? ` (Batch: ${batchId}${subPaper ? `, ${subPaper}` : ''})` : ''} (${questions.length} questions, ${totalMarks} marks)`,
     });
 
     return NextResponse.json({ success: true, paperVersion: versionDoc });
   }
 
-  if (exam.hasStartedAttempts && !body.emergencyOverrideReason) {
+  if (exam.hasStartedAttempts && !body.emergencyOverrideReason && !batchId) {
     return NextResponse.json(
       {
         success: false,
@@ -148,9 +236,14 @@ export async function POST(
     );
   }
 
-  const existingQuestions = await listExamCollection<ExamQuestion>('exam_questions', {
+  const allExistingQuestions = await listExamCollection<ExamQuestion>('exam_questions', {
     examId,
     paperVersion,
+  });
+  const existingQuestions = filterQuestionsForTarget(allExistingQuestions, {
+    batchId,
+    subPaper,
+    strictBatch: Boolean(batchId),
   });
 
   if (mode === 'bulk') {
@@ -190,6 +283,8 @@ export async function POST(
       const q: ExamQuestion = {
         id: `Q-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`,
         examId,
+        ...(batchId ? { batchId } : {}),
+        ...(subPaper ? { subPaper } : {}),
         paperVersion,
         orderIndex: nextOrder++,
         section: String(r.section || 'General').trim(),
@@ -212,8 +307,13 @@ export async function POST(
       saved.push(q);
     }
 
-    // Mark paper unverified after edits until admin clicks Verify & Publish
-    await upsertExamDoc('exam_events', { ...exam, paperVerified: false, updatedAt: nowIso });
+    // Mark this specific paper unverified after edits until admin clicks Verify & Publish
+    if (batchId) {
+      const targetPvId = `PV-${examId}-${batchId}-${subPaper || 'DEFAULT'}-V${paperVersion}`;
+      await deleteExamDoc('exam_paper_versions', { id: targetPvId });
+    } else {
+      await upsertExamDoc('exam_events', { ...exam, paperVerified: false, updatedAt: nowIso });
+    }
     await insertAuditLog({
       entityType: 'paper',
       entityId: examId,
@@ -242,6 +342,8 @@ export async function POST(
   const q: ExamQuestion = {
     id: body.id || `Q-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
     examId,
+    ...(batchId ? { batchId } : {}),
+    ...(subPaper ? { subPaper } : {}),
     paperVersion,
     orderIndex: body.orderIndex ? Number(body.orderIndex) : existingQuestions.length + 1,
     section: String(body.section || 'General').trim(),
@@ -260,7 +362,12 @@ export async function POST(
   };
 
   await upsertExamDoc('exam_questions', q);
-  await upsertExamDoc('exam_events', { ...exam, paperVerified: false, updatedAt: nowIso });
+  if (batchId) {
+    const targetPvId = `PV-${examId}-${batchId}-${subPaper || 'DEFAULT'}-V${paperVersion}`;
+    await deleteExamDoc('exam_paper_versions', { id: targetPvId });
+  } else {
+    await upsertExamDoc('exam_events', { ...exam, paperVerified: false, updatedAt: nowIso });
+  }
   await insertAuditLog({
     entityType: 'paper',
     entityId: q.id,

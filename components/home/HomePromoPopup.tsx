@@ -151,7 +151,7 @@ export default function HomePromoPopup() {
             <div className="absolute top-4 left-4 flex items-center gap-2">
               <div className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.png" alt="MSI" className="w-7 h-7 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                <img src="/images/msi-crest.png" alt="MSI" className="w-7 h-7 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
               </div>
               <span className="text-white text-xs font-bold uppercase tracking-widest opacity-90">MSI Group</span>
             </div>

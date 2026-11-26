@@ -5,12 +5,21 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
   AlertTriangle,
+  ArrowLeft,
   ArrowRight,
   CheckCircle2,
   Clock,
+  FileCheck2,
   Maximize2,
   ShieldAlert,
 } from 'lucide-react';
+import {
+  MSI_CONSENT_BUTTON_TEXT,
+  MSI_CONSENT_CHECKBOX_TEXT,
+  MSI_MOCK_CONSENT_PARAGRAPHS,
+  MSI_MOCK_CONSENT_SUBTITLE,
+  MSI_MOCK_CONSENT_TITLE,
+} from '@/lib/examConsent';
 
 function formatSeconds(sec: number): string {
   const s = Math.max(0, sec);
@@ -37,6 +46,8 @@ export default function CandidateAttemptPage() {
   const [warningBanner, setWarningBanner] = useState('');
   const [fsSupported, setFsSupported] = useState(true);
   const [starting, setStarting] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [savingConsent, setSavingConsent] = useState(false);
 
   const isStartedRef = useRef(false);
 
@@ -157,6 +168,32 @@ export default function CandidateAttemptPage() {
     };
   }, [state?.attemptStatus, logProctorEvent]);
 
+  const handleAcceptConsent = async () => {
+    if (!consentChecked) {
+      setError('Please read and tick the consent checkbox to proceed.');
+      return;
+    }
+    setError('');
+    setSavingConsent(true);
+    try {
+      const res = await fetch(`/api/exams/attempts/${attemptId}/consent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accepted: true }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        await fetchState();
+      } else {
+        setError(data.message || 'Unable to record consent. Please try again.');
+      }
+    } catch {
+      setError('Network error saving consent.');
+    } finally {
+      setSavingConsent(false);
+    }
+  };
+
   const handleStartExam = async () => {
     setError('');
     setStarting(true);
@@ -218,7 +255,7 @@ export default function CandidateAttemptPage() {
     }
   };
 
-  const handleNext = async () => {
+  const handleNavigate = async (direction: 'next' | 'prev' | 'jump', targetIndex?: number) => {
     if (!state?.currentQuestion) return;
     setAdvancing(true);
     try {
@@ -228,6 +265,8 @@ export default function CandidateAttemptPage() {
         body: JSON.stringify({
           currentIndex: state.currentIndex,
           selectedOptionId,
+          direction,
+          targetIndex,
         }),
       });
       const data = await res.json();
@@ -245,6 +284,9 @@ export default function CandidateAttemptPage() {
       setAdvancing(false);
     }
   };
+
+  const handleNext = () => handleNavigate('next');
+  const handlePrevious = () => handleNavigate('prev');
 
   const handleConfirmSubmit = async () => {
     setSubmitting(true);
@@ -299,9 +341,13 @@ export default function CandidateAttemptPage() {
           <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-700">
             {state.attemptStatus === 'auto_submitted' ? 'Auto-Submitted' : 'Examination Submitted'}
           </span>
-          <h1 className="font-serif font-bold text-2xl text-[#071B37]">{state.examTitle}</h1>
+          <h1 className="font-serif font-bold text-2xl text-[#071B37]">
+            {state.examTitle}
+            {state.subPaperLabel ? ` — ${state.subPaperLabel}` : ''}
+          </h1>
           <div className="p-4 rounded-2xl bg-slate-50 border border-gray-200 text-xs space-y-1.5">
             <div><strong>Candidate UID:</strong> <span className="font-mono font-bold">{state.uid}</span></div>
+            {state.subPaperLabel && <div><strong>Paper:</strong> {state.subPaperLabel}</div>}
             <div><strong>Total Questions:</strong> {state.totalQuestions}</div>
             <div><strong>Submitted At:</strong> {new Date(state.submittedAt).toLocaleString('en-IN')}</div>
           </div>
@@ -320,9 +366,80 @@ export default function CandidateAttemptPage() {
               Your responses have been securely recorded. Results will be visible once published by MSI Super Admin.
             </p>
           )}
-          <Link href="/" className="inline-block px-5 py-2.5 rounded-xl bg-[#071B37] text-white text-xs font-bold">
-            Return to MSI Home
-          </Link>
+          <div className="flex flex-wrap justify-center gap-3 pt-1">
+            {state.hasSubPapers && (
+              <Link
+                href="/exam/papers"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#89190E] hover:bg-[#6e130b] text-white text-xs font-bold"
+              >
+                <span>Back to Paper 1 / Paper 2 Portal</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            )}
+            <Link href="/" className="inline-block px-5 py-2.5 rounded-xl bg-[#071B37] text-white text-xs font-bold">
+              Return to MSI Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Pre-Start Mandatory Consent Form (when not yet accepted)
+  if (state?.attemptStatus === 'not_started' && !state?.consentAccepted) {
+    return (
+      <div className="min-h-screen bg-[#F6F8FC] flex items-center justify-center p-4 py-8">
+        <div className="max-w-2xl w-full bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#E8EEFF] space-y-5">
+          <div className="flex items-start justify-between gap-4 border-b border-gray-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-[#89190E]/10 text-[#89190E] flex items-center justify-center shrink-0">
+                <FileCheck2 className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-widest text-[#89190E]">
+                  {MSI_MOCK_CONSENT_TITLE}
+                </div>
+                <h1 className="font-serif font-bold text-xl sm:text-2xl text-[#071B37]">
+                  {MSI_MOCK_CONSENT_SUBTITLE}
+                </h1>
+              </div>
+            </div>
+            <div className="text-right text-[11px] font-mono font-bold text-[#071B37] shrink-0">
+              {state.uid}
+            </div>
+          </div>
+
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-gray-200 max-h-72 overflow-y-auto space-y-3 text-xs sm:text-[13px] text-[#071B37] leading-relaxed">
+            {MSI_MOCK_CONSENT_PARAGRAPHS.map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
+          </div>
+
+          <label className="flex items-start gap-3 p-4 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consentChecked}
+              onChange={(e) => setConsentChecked(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-[#89190E] shrink-0"
+            />
+            <span className="leading-relaxed font-medium">{MSI_CONSENT_CHECKBOX_TEXT}</span>
+          </label>
+
+          {error && (
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-700">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="button"
+            disabled={!consentChecked || savingConsent}
+            onClick={handleAcceptConsent}
+            className="w-full py-3.5 rounded-xl bg-[#89190E] hover:bg-[#6e130b] text-white font-bold text-sm shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <span>{savingConsent ? 'Recording Consent...' : MSI_CONSENT_BUTTON_TEXT}</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
     );
@@ -355,7 +472,7 @@ export default function CandidateAttemptPage() {
               Your examination will run in fullscreen mode. Exiting fullscreen or switching tabs may be recorded as a violation.
             </p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Questions appear one at a time. Once you click <strong>Next</strong>, the previous question is permanently locked.</li>
+              <li>Use <strong>Previous</strong>, <strong>Save &amp; Next</strong>, or the Question Palette to navigate and review your answers anytime before submitting.</li>
               <li>Marking Scheme: +{state.rules?.marksPerQuestion} per correct answer, -{state.rules?.negativeMarking} per wrong answer.</li>
               <li>Your answers autosave automatically and remain safe on refresh or reconnection.</li>
             </ul>
@@ -440,13 +557,14 @@ export default function CandidateAttemptPage() {
         </div>
       )}
 
-      {/* Question Card */}
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-6 sm:py-10 flex flex-col justify-between">
+      {/* Question Card & Palette */}
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-6 sm:py-8 grid lg:grid-cols-4 gap-5 items-start">
+        <div className="lg:col-span-3">
         {q ? (
           <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-[#E8EEFF] space-y-6">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-[#89190E]">
-                Question {state.currentIndex + 1} of {state.totalQuestions} • {q.section}
+                {state.subPaperLabel ? `${state.subPaperLabel} • ` : ''}Question {state.currentIndex + 1} of {state.totalQuestions} • {q.section}
               </span>
               <span className="text-[11px] font-semibold text-gray-500">
                 +{q.marks} / -{q.negativeMarks}
@@ -492,10 +610,21 @@ export default function CandidateAttemptPage() {
                 {saveStatus === 'error' && (
                   <span className="text-rose-600">Save failed — click option again to retry</span>
                 )}
-                {saveStatus === 'idle' && 'No previous navigation allowed after Next'}
+                {saveStatus === 'idle' && 'Use Previous / Next to navigate'}
               </div>
 
-              <div className="flex gap-2.5">
+              <div className="flex flex-wrap gap-2.5">
+                {state.currentIndex > 0 && (
+                  <button
+                    type="button"
+                    disabled={advancing}
+                    onClick={handlePrevious}
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-[#071B37] text-[#071B37] hover:bg-slate-50 text-xs font-bold cursor-pointer disabled:opacity-50"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Previous</span>
+                  </button>
+                )}
                 {!isLastQuestion ? (
                   <button
                     type="button"
@@ -523,6 +652,54 @@ export default function CandidateAttemptPage() {
             No active question found.
           </div>
         )}
+        </div>
+
+        {/* Question Palette Sidebar */}
+        <aside className="bg-white rounded-3xl p-5 shadow-lg border border-[#E8EEFF] space-y-4">
+          <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
+            <h2 className="font-serif font-bold text-sm text-[#071B37]">Question Palette</h2>
+            <span className="text-[11px] font-bold text-gray-500">
+              {state?.attemptedCount || 0}/{state?.totalQuestions || 0}
+            </span>
+          </div>
+          <div className="grid grid-cols-5 gap-2 max-h-72 overflow-y-auto pr-1">
+            {(state?.questionStatuses || []).map((qs: { index: number; answered: boolean }) => {
+              const isCurrent = qs.index === state.currentIndex;
+              return (
+                <button
+                  key={qs.index}
+                  type="button"
+                  disabled={advancing}
+                  onClick={() => handleNavigate('jump', qs.index)}
+                  className={`h-9 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    isCurrent
+                      ? 'bg-[#071B37] text-white ring-2 ring-[#EFC988]'
+                      : qs.answered
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : 'bg-slate-100 text-gray-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {qs.index + 1}
+                </button>
+              );
+            })}
+          </div>
+          <div className="pt-2 border-t border-gray-100 space-y-2 text-[11px] text-gray-500">
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded bg-emerald-200 border border-emerald-400 inline-block" />
+              <span>Answered</span>
+              <span className="w-3 h-3 rounded bg-slate-200 inline-block ml-2" />
+              <span>Unanswered</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowSubmitModal(true)}
+              className="w-full py-2.5 rounded-xl bg-[#89190E] hover:bg-[#6e130b] text-white text-xs font-bold cursor-pointer"
+            >
+              Finish &amp; Submit Paper
+            </button>
+          </div>
+        </aside>
       </main>
 
       {/* Submit Confirmation Modal */}

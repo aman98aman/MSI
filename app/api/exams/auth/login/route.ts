@@ -14,9 +14,15 @@ import {
   ExamAttempt,
   ExamBatch,
   ExamEvent,
+  ExamPaperVersion,
   ExamQuestion,
   ExamRegistration,
 } from '@/lib/examTypes';
+import {
+  filterQuestionsForTarget,
+  isSubPaperBatch,
+  isTargetPaperVerified,
+} from '@/lib/examBatchHelper';
 
 export const dynamic = 'force-dynamic';
 
@@ -96,6 +102,58 @@ export async function POST(req: NextRequest) {
       ? await findOneExamDoc<ExamBatch>('exam_batches', { id: reg.batchId })
       : null;
 
+    const hasSubPapers = isSubPaperBatch(batch);
+
+    if (hasSubPapers) {
+      const existingAttempts = await listExamCollection<ExamAttempt>('exam_attempts', {
+        registrationId: reg.id,
+      });
+
+      const enterCheck = canEnterCbtExam(exam, batch, new Date());
+      if (!enterCheck.allowed && existingAttempts.length === 0) {
+        return NextResponse.json(
+          { success: false, message: enterCheck.reason || 'Examination is not open for login.' },
+          { status: 403 }
+        );
+      }
+
+      const activeAttempt = existingAttempts.find((a) => a.status === 'in_progress');
+      const sessionTokenId =
+        (exam.scheduleConfig.reconnectPolicy === 'allow_resume' ? null : activeAttempt?.sessionTokenId) ||
+        `SES-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+
+      if (activeAttempt && exam.scheduleConfig.reconnectPolicy === 'allow_resume') {
+        await upsertExamDoc('exam_attempts', { ...activeAttempt, sessionTokenId });
+      }
+
+      const token = createCandidateSessionToken({
+        candidateId: reg.candidateId,
+        registrationId: reg.id,
+        examId: exam.id,
+        uid: reg.uid,
+        sessionTokenId,
+      });
+
+      const res = NextResponse.json({
+        success: true,
+        hasSubPapers: true,
+        redirectTo: '/exam/papers',
+        examTitle: exam.title,
+        batchName: batch?.batchName,
+        uid: reg.uid,
+      });
+
+      res.cookies.set(CANDIDATE_COOKIE_NAME, token, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 8 * 60 * 60,
+      });
+
+      return res;
+    }
+
     const existingAttempt = await findOneExamDoc<ExamAttempt>('exam_attempts', {
       registrationId: reg.id,
     });
@@ -119,9 +177,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!exam.paperVerified) {
+    const paperVersions = await listExamCollection<ExamPaperVersion>('exam_paper_versions', {
+      examId: exam.id,
+      version: exam.activePaperVersion || 1,
+    });
+    const paperVerified = isTargetPaperVerified(paperVersions, exam.paperVerified, {
+      batchId: reg.batchId,
+    });
+
+    if (!paperVerified) {
       return NextResponse.json(
-        { success: false, message: 'Question paper has not been verified by the administrator yet.' },
+        { success: false, message: 'Question paper for your selected batch has not been verified & published by the administrator yet.' },
         { status: 503 }
       );
     }
@@ -132,15 +198,18 @@ export async function POST(req: NextRequest) {
     let attempt = existingAttempt;
 
     if (!attempt) {
-      const questions = await listExamCollection<ExamQuestion>(
+      const allQuestions = await listExamCollection<ExamQuestion>(
         'exam_questions',
         { examId: exam.id, paperVersion: exam.activePaperVersion || 1, status: 'active' },
         { orderIndex: 1 }
       );
+      const questions = filterQuestionsForTarget(allQuestions, {
+        batchId: reg.batchId,
+      });
 
       if (questions.length === 0) {
         return NextResponse.json(
-          { success: false, message: 'No active questions configured for this examination.' },
+          { success: false, message: 'No active questions configured for your selected batch.' },
           { status: 503 }
         );
       }

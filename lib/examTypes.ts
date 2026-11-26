@@ -128,6 +128,7 @@ export interface ExamBatch {
   examId: string;
   batchCode: string;
   batchName: string;
+  hasSubPapers?: boolean;
   scheduleOverride?: Partial<ExamScheduleConfig>;
   venueOverride?: Partial<OfflineVenueConfig>;
   capacity?: number;
@@ -198,6 +199,8 @@ export interface ExamQuestionOption {
 export interface ExamQuestion {
   id: string;
   examId: string;
+  batchId?: string;
+  subPaper?: string; // e.g. 'PAPER_1' | 'PAPER_2'
   paperVersion: number;
   orderIndex: number;
   section: string;
@@ -215,6 +218,8 @@ export interface ExamQuestion {
 export interface ExamPaperVersion {
   id: string;
   examId: string;
+  batchId?: string;
+  subPaper?: string;
   version: number;
   questionIds: string[];
   totalQuestions: number;
@@ -234,6 +239,8 @@ export interface ExamAttempt {
   id: string;
   examId: string;
   batchId?: string;
+  subPaper?: string; // e.g. 'PAPER_1' | 'PAPER_2'
+  subPaperLabel?: string; // e.g. 'Paper 1' | 'Paper 2'
   registrationId: string;
   candidateId: string;
   uid: string;

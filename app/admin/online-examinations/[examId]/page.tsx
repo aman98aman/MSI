@@ -50,6 +50,9 @@ function ExamDetailContent() {
   const [streamFilter, setStreamFilter] = useState('ALL');
   const [questions, setQuestions] = useState<any[]>([]);
   const [paperVerified, setPaperVerified] = useState(false);
+  const [selectedBatchId, setSelectedBatchId] = useState<string>('');
+  const [selectedSubPaper, setSelectedSubPaper] = useState<'PAPER_1' | 'PAPER_2'>('PAPER_1');
+  const [batchPaperStatuses, setBatchPaperStatuses] = useState<any[]>([]);
   const [attempts, setAttempts] = useState<any[]>([]);
   const [roster, setRoster] = useState<any[]>([]);
   const [results, setResults] = useState<any[]>([]);
@@ -61,6 +64,7 @@ function ExamDetailContent() {
   const [batchCode, setBatchCode] = useState('');
   const [batchName, setBatchName] = useState('');
   const [batchCapacity, setBatchCapacity] = useState('');
+  const [batchHasSubPapers, setBatchHasSubPapers] = useState(false);
 
   // Offline registration modal
   const [showOfflineModal, setShowOfflineModal] = useState(false);
@@ -99,7 +103,9 @@ function ExamDetailContent() {
       const data = await res.json();
       if (data.success) {
         setExam(data.exam);
-        setBatches(data.batches || []);
+        const loadedBatches = data.batches || [];
+        setBatches(loadedBatches);
+        setSelectedBatchId((prev) => prev || loadedBatches[0]?.id || 'DEFAULT');
         setMetrics(data.metrics);
         setAuditLogs(data.auditLogs || []);
       }
@@ -122,14 +128,31 @@ function ExamDetailContent() {
     if (data.success) setCandidates(data.candidates || []);
   }, [examId, candSearch]);
 
+  const selectedBatchObj = batches.find((b) => b.id === selectedBatchId);
+  const isSelectedBatchSubPaper = Boolean(
+    selectedBatchObj &&
+      (selectedBatchObj.hasSubPapers ||
+        /ugc[\s_-]*net/i.test(`${selectedBatchObj.batchCode} ${selectedBatchObj.batchName}`))
+  );
+
   const loadQuestions = useCallback(async () => {
-    const res = await fetch(`/api/admin/examinations/${examId}/questions`);
+    const query = new URLSearchParams();
+    if (selectedBatchId && selectedBatchId !== 'DEFAULT') {
+      query.set('batchId', selectedBatchId);
+      if (isSelectedBatchSubPaper) {
+        query.set('subPaper', selectedSubPaper);
+      }
+    }
+    const res = await fetch(`/api/admin/examinations/${examId}/questions?${query.toString()}`);
     const data = await res.json();
     if (data.success) {
       setQuestions(data.questions || []);
       setPaperVerified(Boolean(data.paperVerified));
+      if (Array.isArray(data.batchPaperStatuses)) {
+        setBatchPaperStatuses(data.batchPaperStatuses);
+      }
     }
-  }, [examId]);
+  }, [examId, selectedBatchId, isSelectedBatchSubPaper, selectedSubPaper]);
 
   const loadMonitoring = useCallback(async () => {
     const res = await fetch(`/api/admin/examinations/${examId}/attempts`);
@@ -189,6 +212,7 @@ function ExamDetailContent() {
       body: JSON.stringify({
         batchCode,
         batchName,
+        hasSubPapers: batchHasSubPapers,
         capacity: batchCapacity ? Number(batchCapacity) : undefined,
       }),
     });
@@ -197,10 +221,24 @@ function ExamDetailContent() {
       setBatchCode('');
       setBatchName('');
       setBatchCapacity('');
+      setBatchHasSubPapers(false);
       showToast('Batch added.');
       loadOverview();
     } else {
       showToast(data.message || 'Failed to add batch.');
+    }
+  };
+
+  const handleToggleSubPapers = async (bId: string, currentVal: boolean) => {
+    const res = await fetch(`/api/admin/examinations/${examId}/batches`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ batchId: bId, hasSubPapers: !currentVal }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(!currentVal ? 'Enabled Paper 1 & Paper 2 for batch.' : 'Disabled sub-papers for batch.');
+      loadOverview();
     }
   };
 
@@ -239,6 +277,8 @@ function ExamDetailContent() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         mode: 'manual',
+        batchId: selectedBatchId && selectedBatchId !== 'DEFAULT' ? selectedBatchId : undefined,
+        subPaper: isSelectedBatchSubPaper ? selectedSubPaper : undefined,
         section: qSection,
         text: qText,
         options: [
@@ -352,7 +392,12 @@ function ExamDetailContent() {
     const res = await fetch(`/api/admin/examinations/${examId}/questions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: 'bulk', questions: importPreview }),
+      body: JSON.stringify({
+        mode: 'bulk',
+        batchId: selectedBatchId && selectedBatchId !== 'DEFAULT' ? selectedBatchId : undefined,
+        subPaper: isSelectedBatchSubPaper ? selectedSubPaper : undefined,
+        questions: importPreview,
+      }),
     });
     const data = await res.json();
     if (data.success) {
@@ -370,7 +415,11 @@ function ExamDetailContent() {
     const res = await fetch(`/api/admin/examinations/${examId}/questions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: 'verify_and_publish' }),
+      body: JSON.stringify({
+        mode: 'verify_and_publish',
+        batchId: selectedBatchId && selectedBatchId !== 'DEFAULT' ? selectedBatchId : undefined,
+        subPaper: isSelectedBatchSubPaper ? selectedSubPaper : undefined,
+      }),
     });
     const data = await res.json();
     if (data.success) {
@@ -379,6 +428,21 @@ function ExamDetailContent() {
       loadOverview();
     } else {
       showToast(data.message || 'Verification failed.');
+    }
+  };
+
+  const handleDeleteQuestion = async (questionId: string) => {
+    if (!window.confirm('Delete this question?')) return;
+    const res = await fetch(
+      `/api/admin/examinations/${examId}/questions?questionId=${encodeURIComponent(questionId)}`,
+      { method: 'DELETE' }
+    );
+    const data = await res.json();
+    if (data.success) {
+      showToast('Question deleted.');
+      loadQuestions();
+    } else {
+      showToast(data.message || 'Failed to delete question.');
     }
   };
 
@@ -558,38 +622,66 @@ function ExamDetailContent() {
 
               <div className="bg-white p-6 rounded-2xl border border-[#E8EEFF] space-y-4">
                 <h2 className="font-serif font-bold text-base">Batches / Sessions ({batches.length})</h2>
-                <form onSubmit={handleCreateBatch} className="grid grid-cols-3 gap-2">
-                  <input
-                    value={batchCode}
-                    onChange={(e) => setBatchCode(e.target.value.toUpperCase())}
-                    placeholder="Code (B1)"
-                    required
-                    className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono"
-                  />
-                  <input
-                    value={batchName}
-                    onChange={(e) => setBatchName(e.target.value)}
-                    placeholder="Batch Name"
-                    required
-                    className="px-3 py-2 rounded-xl border border-gray-200 text-xs"
-                  />
-                  <button
-                    type="submit"
-                    className="px-3 py-2 rounded-xl bg-[#071B37] text-white text-xs font-bold cursor-pointer"
-                  >
-                    + Add Batch
-                  </button>
+                <form onSubmit={handleCreateBatch} className="space-y-2.5">
+                  <div className="grid grid-cols-3 gap-2">
+                    <input
+                      value={batchCode}
+                      onChange={(e) => setBatchCode(e.target.value.toUpperCase())}
+                      placeholder="Code (CLATUG)"
+                      required
+                      className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono"
+                    />
+                    <input
+                      value={batchName}
+                      onChange={(e) => setBatchName(e.target.value)}
+                      placeholder="Batch Name"
+                      required
+                      className="px-3 py-2 rounded-xl border border-gray-200 text-xs"
+                    />
+                    <button
+                      type="submit"
+                      className="px-3 py-2 rounded-xl bg-[#071B37] text-white text-xs font-bold cursor-pointer"
+                    >
+                      + Add Batch
+                    </button>
+                  </div>
+                  <label className="flex items-center gap-2 text-[11px] text-gray-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={batchHasSubPapers}
+                      onChange={(e) => setBatchHasSubPapers(e.target.checked)}
+                      className="w-3.5 h-3.5 accent-[#89190E]"
+                    />
+                    <span>Enable Paper 1 &amp; Paper 2 sub-sections (e.g. UGC NET Law)</span>
+                  </label>
                 </form>
                 <div className="space-y-2">
-                  {batches.map((b) => (
-                    <div key={b.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 text-xs">
-                      <div>
-                        <span className="font-mono font-bold mr-2">{b.batchCode}</span>
-                        <span>{b.batchName}</span>
+                  {batches.map((b) => {
+                    const isSub = Boolean(b.hasSubPapers) || /ugc[\s_-]*net/i.test(`${b.batchCode} ${b.batchName}`);
+                    return (
+                      <div key={b.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 text-xs gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono font-bold">{b.batchCode}</span>
+                          <span>{b.batchName}</span>
+                          {isSub && (
+                            <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-bold">
+                              Paper 1 &amp; Paper 2
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSubPapers(b.id, isSub)}
+                            className="text-[10px] font-bold text-[#071B37] hover:underline cursor-pointer"
+                          >
+                            {isSub ? 'Disable Sub-Papers' : 'Enable Paper 1 & 2'}
+                          </button>
+                          <span className="text-[11px] text-gray-500">{b.status}</span>
+                        </div>
                       </div>
-                      <span className="text-[11px] text-gray-500">{b.status}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -832,10 +924,112 @@ function ExamDetailContent() {
 
         {tab === 'questions' && (
           <div className="space-y-6">
+            {/* Batch / Course Question Paper Selector */}
+            {batches.length > 0 && (
+              <div className="bg-white p-5 rounded-2xl border border-[#E8EEFF] space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h3 className="font-serif font-bold text-sm text-[#071B37]">
+                      1. Select Batch / Course Question Paper
+                    </h3>
+                    <p className="text-[11px] text-gray-500">
+                      Each batch has its own separate question paper. Select a batch below to add, upload, or publish its questions.
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                  {batches.map((b) => {
+                    const st = batchPaperStatuses.find((s) => s.batchId === b.id);
+                    const isActive = selectedBatchId === b.id;
+                    return (
+                      <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedBatchId(b.id);
+                          setSelectedSubPaper('PAPER_1');
+                        }}
+                        className={`p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer ${
+                          isActive
+                            ? 'border-[#89190E] bg-[#89190E]/5 shadow-sm'
+                            : 'border-gray-200 bg-slate-50/70 hover:border-[#071B37]/40'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-mono font-bold text-xs text-[#071B37]">{b.batchCode}</span>
+                          {st?.verified ? (
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                              Published
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+                              Pending
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs font-semibold text-gray-700 mt-0.5">{b.batchName}</div>
+                        <div className="text-[11px] text-gray-500 mt-1">
+                          {st ? `${st.questionCount} question(s)` : 'Select to manage'}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Sub-paper Tabs for UGC NET Law */}
+                {isSelectedBatchSubPaper && (
+                  <div className="pt-3 border-t border-gray-100">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#89190E] mb-2">
+                      2. Select Sub-Paper for {selectedBatchObj?.batchCode} ({selectedBatchObj?.batchName})
+                    </div>
+                    <div className="flex flex-wrap gap-2.5">
+                      {[
+                        { code: 'PAPER_1' as const, label: 'Paper 1 (General / Teaching & Research)' },
+                        { code: 'PAPER_2' as const, label: 'Paper 2 (Law Subject Paper)' },
+                      ].map((sp) => {
+                        const batchStatus = batchPaperStatuses.find((s) => s.batchId === selectedBatchId);
+                        const subStatus = batchStatus?.subStatuses?.find((x: any) => x.subPaper === sp.code);
+                        const active = selectedSubPaper === sp.code;
+                        return (
+                          <button
+                            key={sp.code}
+                            type="button"
+                            onClick={() => setSelectedSubPaper(sp.code)}
+                            className={`px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                              active
+                                ? 'bg-[#071B37] text-white border-[#071B37]'
+                                : 'bg-white text-[#071B37] border-gray-200 hover:border-[#071B37]'
+                            }`}
+                          >
+                            <span>{sp.label}</span>
+                            {subStatus && (
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] ${
+                                  subStatus.verified
+                                    ? 'bg-emerald-500/20 text-emerald-300'
+                                    : 'bg-amber-500/20 text-amber-200'
+                                } ${!active ? (subStatus.verified ? '!bg-emerald-100 !text-emerald-800' : '!bg-amber-100 !text-amber-800') : ''}`}
+                              >
+                                {subStatus.questionCount} Qs • {subStatus.verified ? 'Published' : 'Unverified'}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="bg-white p-5 rounded-2xl border border-[#E8EEFF] flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h2 className="font-serif font-bold text-base flex items-center gap-2">
-                  Question Paper v{exam.activePaperVersion} ({questions.length} questions)
+                <h2 className="font-serif font-bold text-base flex flex-wrap items-center gap-2">
+                  <span>
+                    {selectedBatchObj ? `${selectedBatchObj.batchCode} (${selectedBatchObj.batchName})` : 'Exam'}
+                    {isSelectedBatchSubPaper ? ` — ${selectedSubPaper === 'PAPER_1' ? 'Paper 1' : 'Paper 2'}` : ''}
+                    {' '}• Paper v{exam.activePaperVersion} ({questions.length} questions)
+                  </span>
                   {paperVerified ? (
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
                       VERIFIED &amp; PUBLISHED
@@ -987,9 +1181,17 @@ function ExamDetailContent() {
                       ))}
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
+                  <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
                     <span className="font-mono font-bold text-emerald-700">Key: {q.correctOptionId}</span>
                     <div className="text-[11px] text-gray-400">+{q.marks} / -{q.negativeMarks}</div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteQuestion(q.id)}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Delete
+                    </button>
                   </div>
                 </div>
               ))}

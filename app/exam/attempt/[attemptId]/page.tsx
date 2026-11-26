@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
   AlertTriangle,
+  ArrowLeft,
   ArrowRight,
   CheckCircle2,
   Clock,
@@ -218,7 +219,7 @@ export default function CandidateAttemptPage() {
     }
   };
 
-  const handleNext = async () => {
+  const handleNavigate = async (direction: 'next' | 'prev' | 'jump', targetIndex?: number) => {
     if (!state?.currentQuestion) return;
     setAdvancing(true);
     try {
@@ -228,6 +229,8 @@ export default function CandidateAttemptPage() {
         body: JSON.stringify({
           currentIndex: state.currentIndex,
           selectedOptionId,
+          direction,
+          targetIndex,
         }),
       });
       const data = await res.json();
@@ -245,6 +248,9 @@ export default function CandidateAttemptPage() {
       setAdvancing(false);
     }
   };
+
+  const handleNext = () => handleNavigate('next');
+  const handlePrevious = () => handleNavigate('prev');
 
   const handleConfirmSubmit = async () => {
     setSubmitting(true);
@@ -299,9 +305,13 @@ export default function CandidateAttemptPage() {
           <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-700">
             {state.attemptStatus === 'auto_submitted' ? 'Auto-Submitted' : 'Examination Submitted'}
           </span>
-          <h1 className="font-serif font-bold text-2xl text-[#071B37]">{state.examTitle}</h1>
+          <h1 className="font-serif font-bold text-2xl text-[#071B37]">
+            {state.examTitle}
+            {state.subPaperLabel ? ` — ${state.subPaperLabel}` : ''}
+          </h1>
           <div className="p-4 rounded-2xl bg-slate-50 border border-gray-200 text-xs space-y-1.5">
             <div><strong>Candidate UID:</strong> <span className="font-mono font-bold">{state.uid}</span></div>
+            {state.subPaperLabel && <div><strong>Paper:</strong> {state.subPaperLabel}</div>}
             <div><strong>Total Questions:</strong> {state.totalQuestions}</div>
             <div><strong>Submitted At:</strong> {new Date(state.submittedAt).toLocaleString('en-IN')}</div>
           </div>
@@ -320,9 +330,20 @@ export default function CandidateAttemptPage() {
               Your responses have been securely recorded. Results will be visible once published by MSI Super Admin.
             </p>
           )}
-          <Link href="/" className="inline-block px-5 py-2.5 rounded-xl bg-[#071B37] text-white text-xs font-bold">
-            Return to MSI Home
-          </Link>
+          <div className="flex flex-wrap justify-center gap-3 pt-1">
+            {state.hasSubPapers && (
+              <Link
+                href="/exam/papers"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#89190E] hover:bg-[#6e130b] text-white text-xs font-bold"
+              >
+                <span>Back to Paper 1 / Paper 2 Portal</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            )}
+            <Link href="/" className="inline-block px-5 py-2.5 rounded-xl bg-[#071B37] text-white text-xs font-bold">
+              Return to MSI Home
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -355,7 +376,7 @@ export default function CandidateAttemptPage() {
               Your examination will run in fullscreen mode. Exiting fullscreen or switching tabs may be recorded as a violation.
             </p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Questions appear one at a time. Once you click <strong>Next</strong>, the previous question is permanently locked.</li>
+              <li>Use <strong>Previous</strong>, <strong>Save &amp; Next</strong>, or the Question Palette to navigate and review your answers anytime before submitting.</li>
               <li>Marking Scheme: +{state.rules?.marksPerQuestion} per correct answer, -{state.rules?.negativeMarking} per wrong answer.</li>
               <li>Your answers autosave automatically and remain safe on refresh or reconnection.</li>
             </ul>
@@ -440,13 +461,14 @@ export default function CandidateAttemptPage() {
         </div>
       )}
 
-      {/* Question Card */}
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-6 sm:py-10 flex flex-col justify-between">
+      {/* Question Card & Palette */}
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-6 sm:py-8 grid lg:grid-cols-4 gap-5 items-start">
+        <div className="lg:col-span-3">
         {q ? (
           <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-[#E8EEFF] space-y-6">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-[#89190E]">
-                Question {state.currentIndex + 1} of {state.totalQuestions} • {q.section}
+                {state.subPaperLabel ? `${state.subPaperLabel} • ` : ''}Question {state.currentIndex + 1} of {state.totalQuestions} • {q.section}
               </span>
               <span className="text-[11px] font-semibold text-gray-500">
                 +{q.marks} / -{q.negativeMarks}
@@ -492,10 +514,21 @@ export default function CandidateAttemptPage() {
                 {saveStatus === 'error' && (
                   <span className="text-rose-600">Save failed — click option again to retry</span>
                 )}
-                {saveStatus === 'idle' && 'No previous navigation allowed after Next'}
+                {saveStatus === 'idle' && 'Use Previous / Next to navigate'}
               </div>
 
-              <div className="flex gap-2.5">
+              <div className="flex flex-wrap gap-2.5">
+                {state.currentIndex > 0 && (
+                  <button
+                    type="button"
+                    disabled={advancing}
+                    onClick={handlePrevious}
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-[#071B37] text-[#071B37] hover:bg-slate-50 text-xs font-bold cursor-pointer disabled:opacity-50"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Previous</span>
+                  </button>
+                )}
                 {!isLastQuestion ? (
                   <button
                     type="button"
@@ -523,6 +556,54 @@ export default function CandidateAttemptPage() {
             No active question found.
           </div>
         )}
+        </div>
+
+        {/* Question Palette Sidebar */}
+        <aside className="bg-white rounded-3xl p-5 shadow-lg border border-[#E8EEFF] space-y-4">
+          <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
+            <h2 className="font-serif font-bold text-sm text-[#071B37]">Question Palette</h2>
+            <span className="text-[11px] font-bold text-gray-500">
+              {state?.attemptedCount || 0}/{state?.totalQuestions || 0}
+            </span>
+          </div>
+          <div className="grid grid-cols-5 gap-2 max-h-72 overflow-y-auto pr-1">
+            {(state?.questionStatuses || []).map((qs: { index: number; answered: boolean }) => {
+              const isCurrent = qs.index === state.currentIndex;
+              return (
+                <button
+                  key={qs.index}
+                  type="button"
+                  disabled={advancing}
+                  onClick={() => handleNavigate('jump', qs.index)}
+                  className={`h-9 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    isCurrent
+                      ? 'bg-[#071B37] text-white ring-2 ring-[#EFC988]'
+                      : qs.answered
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : 'bg-slate-100 text-gray-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {qs.index + 1}
+                </button>
+              );
+            })}
+          </div>
+          <div className="pt-2 border-t border-gray-100 space-y-2 text-[11px] text-gray-500">
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded bg-emerald-200 border border-emerald-400 inline-block" />
+              <span>Answered</span>
+              <span className="w-3 h-3 rounded bg-slate-200 inline-block ml-2" />
+              <span>Unanswered</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowSubmitModal(true)}
+              className="w-full py-2.5 rounded-xl bg-[#89190E] hover:bg-[#6e130b] text-white text-xs font-bold cursor-pointer"
+            >
+              Finish &amp; Submit Paper
+            </button>
+          </div>
+        </aside>
       </main>
 
       {/* Submit Confirmation Modal */}

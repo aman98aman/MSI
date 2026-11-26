@@ -50,6 +50,7 @@ export async function GET(
       mobile: reg?.mobile || '',
       email: reg?.email || '',
       status: a.status,
+      subPaperLabel: a.subPaperLabel || '',
       startedAt: a.startedAt,
       submittedAt: a.submittedAt,
       rawScore: a.rawScore ?? 0,

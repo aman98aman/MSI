@@ -67,6 +67,12 @@ export async function getExamDb(): Promise<Db | null> {
 }
 
 async function ensureExamIndexes(db: Db): Promise<void> {
+  // Drop legacy single-paper unique indexes that prevent multi-batch papers & multi-paper attempts
+  await Promise.allSettled([
+    db.collection('exam_paper_versions').dropIndex('examId_1_version_1'),
+    db.collection('exam_attempts').dropIndex('registrationId_1'),
+  ]);
+
   await Promise.allSettled([
     db.collection('exam_events').createIndex({ id: 1 }, { unique: true }),
     db.collection('exam_events').createIndex({ code: 1 }, { unique: true }),
@@ -92,13 +98,13 @@ async function ensureExamIndexes(db: Db): Promise<void> {
     db.collection('exam_payments').createIndex({ registrationId: 1 }),
 
     db.collection('exam_paper_versions').createIndex({ id: 1 }, { unique: true }),
-    db.collection('exam_paper_versions').createIndex({ examId: 1, version: 1 }, { unique: true }),
+    db.collection('exam_paper_versions').createIndex({ examId: 1, batchId: 1, subPaper: 1, version: 1 }),
 
     db.collection('exam_questions').createIndex({ id: 1 }, { unique: true }),
-    db.collection('exam_questions').createIndex({ examId: 1, paperVersion: 1, orderIndex: 1 }),
+    db.collection('exam_questions').createIndex({ examId: 1, batchId: 1, subPaper: 1, paperVersion: 1, orderIndex: 1 }),
 
     db.collection('exam_attempts').createIndex({ id: 1 }, { unique: true }),
-    db.collection('exam_attempts').createIndex({ registrationId: 1 }, { unique: true }),
+    db.collection('exam_attempts').createIndex({ registrationId: 1, subPaper: 1 }),
     db.collection('exam_attempts').createIndex({ examId: 1, status: 1 }),
 
     db.collection('exam_answers').createIndex({ id: 1 }, { unique: true }),

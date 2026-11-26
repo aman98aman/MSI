@@ -1,0 +1,16 @@
+[
+  {
+    "id": "PV-EXM-1795686456008-VEV1-BAT-1795689692311-BI6A-DEFAULT-V1",
+    "examId": "EXM-1795686456008-VEV1",
+    "batchId": "BAT-1795689692311-BI6A",
+    "version": 1,
+    "questionIds": [
+      "Q-1795715190668-2VWR"
+    ],
+    "totalQuestions": 1,
+    "totalMarks": 1,
+    "verifiedBy": "MSI Administrator",
+    "verifiedAt": "2026-11-26T17:46:34.760Z",
+    "locked": false
+  }
+]

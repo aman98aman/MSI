@@ -60,6 +60,7 @@ function ExamDetailContent() {
   const [results, setResults] = useState<any[]>([]);
   const [resultsPublished, setResultsPublished] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [toast, setToast] = useState('');
 
   // Batch form
@@ -98,19 +99,27 @@ function ExamDetailContent() {
     setTimeout(() => setToast(''), 3500);
   };
 
-  const loadOverview = useCallback(async () => {
+  const loadOverview = useCallback(async (retry = true) => {
     setLoading(true);
+    setLoadError('');
     try {
       const res = await fetch(`/api/admin/examinations/${examId}`);
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.exam) {
         setExam(data.exam);
         const loadedBatches = data.batches || [];
         setBatches(loadedBatches);
         setSelectedBatchId((prev) => prev || loadedBatches[0]?.id || 'DEFAULT');
         setMetrics(data.metrics);
         setAuditLogs(data.auditLogs || []);
+      } else if (res.status === 404 && retry) {
+        await new Promise((r) => setTimeout(r, 600));
+        return loadOverview(false);
+      } else {
+        setLoadError(data.message || 'Examination not found.');
       }
+    } catch {
+      setLoadError('Unable to load examination details. Please refresh.');
     } finally {
       setLoading(false);
     }
@@ -485,11 +494,20 @@ function ExamDetailContent() {
 
   if (!exam) {
     return (
-      <div className="min-h-screen bg-[#F6F8FC] flex flex-col items-center justify-center gap-3">
-        <p className="text-sm font-bold text-rose-700">Examination not found.</p>
-        <Link href="/admin/online-examinations" className="text-xs font-bold underline">
-          Back to Examinations
-        </Link>
+      <div className="min-h-screen bg-[#F6F8FC] flex flex-col items-center justify-center gap-3 p-4 text-center">
+        <p className="text-sm font-bold text-rose-700">{loadError || 'Examination not found.'}</p>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => loadOverview(true)}
+            className="px-4 py-2 rounded-xl bg-[#071B37] text-white text-xs font-bold cursor-pointer"
+          >
+            Retry
+          </button>
+          <Link href="/admin/online-examinations" className="text-xs font-bold underline">
+            Back to Examinations
+          </Link>
+        </div>
       </div>
     );
   }

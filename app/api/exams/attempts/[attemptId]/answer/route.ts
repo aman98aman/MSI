@@ -68,13 +68,6 @@ export async function POST(
     questionId,
   });
 
-  if (existing?.locked) {
-    return NextResponse.json(
-      { success: false, message: 'This question has already been locked.' },
-      { status: 403 }
-    );
-  }
-
   const answerDoc: CandidateAnswer = {
     id: existing?.id || `ANS-${attempt.id}-${questionId}`,
     attemptId: attempt.id,

@@ -4,8 +4,9 @@ import {
   getAttemptAndExamForCandidate,
 } from '@/lib/examAttemptHelper';
 import { getCandidateSession, unauthorizedCandidateResponse } from '@/lib/examAuth';
-import { listExamCollection } from '@/lib/examDb';
-import { CandidateAnswer, ExamQuestion } from '@/lib/examTypes';
+import { findOneExamDoc, listExamCollection } from '@/lib/examDb';
+import { CONSENT_VERSION } from '@/lib/examConsent';
+import { CandidateAnswer, ExamConsentRecord, ExamQuestion } from '@/lib/examTypes';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +49,9 @@ export async function GET(
       submittedAt: attempt.submittedAt,
       uid: attempt.uid,
       examTitle: exam.title,
+      subPaper: attempt.subPaper || null,
+      subPaperLabel: attempt.subPaperLabel || null,
+      hasSubPapers: Boolean(attempt.subPaper),
       totalQuestions: attempt.questionSequence.length,
       resultsPublished: exam.status === 'results_published',
       // Never expose answer key; only show score if Super Admin published results
@@ -66,12 +70,17 @@ export async function GET(
     });
   }
 
-  const [questions, answers] = await Promise.all([
+  const [questions, answers, consentDoc] = await Promise.all([
     listExamCollection<ExamQuestion>('exam_questions', {
       examId: exam.id,
       paperVersion: attempt.paperVersion,
     }),
     listExamCollection<CandidateAnswer>('exam_answers', { attemptId: attempt.id }),
+    findOneExamDoc<ExamConsentRecord>('exam_consents', {
+      registrationId: attempt.registrationId,
+      examId: exam.id,
+      consentVersion: CONSENT_VERSION,
+    }),
   ]);
 
   const qMap = new Map(questions.map((q) => [q.id, q]));
@@ -104,24 +113,35 @@ export async function GET(
       ? (exam.scheduleConfig.durationMinutes || 60) * 60
       : Math.max(0, Math.floor((Date.parse(attempt.expiresAt) - Date.now()) / 1000));
 
+  const questionStatuses = attempt.questionSequence.map((seq, idx) => ({
+    index: idx,
+    answered: Boolean(aMap.get(seq.questionId)?.selectedOptionId),
+  }));
+
   return NextResponse.json({
     success: true,
     attemptStatus: attempt.status,
+    consentAccepted: Boolean(consentDoc),
+    consentAcceptedAt: consentDoc?.acceptedAt || null,
     uid: attempt.uid,
     examTitle: exam.title,
     examCategory: exam.category,
+    subPaper: attempt.subPaper || null,
+    subPaperLabel: attempt.subPaperLabel || null,
+    hasSubPapers: Boolean(attempt.subPaper),
     instructions: exam.instructions,
     durationMinutes: exam.scheduleConfig.durationMinutes,
     currentIndex: attempt.currentIndex,
     totalQuestions,
     attemptedCount,
-    unansweredCount: Math.max(0, attempt.currentIndex - attemptedCount),
-    remainingCount: Math.max(0, totalQuestions - attempt.currentIndex),
+    unansweredCount: Math.max(0, totalQuestions - attemptedCount),
+    remainingCount: Math.max(0, totalQuestions - attemptedCount),
     remainingSeconds,
     expiresAt: attempt.expiresAt,
     violationCount: attempt.violationCount,
+    questionStatuses,
     rules: {
-      disablePreviousNav: exam.cbtRules?.disablePreviousNav ?? true,
+      disablePreviousNav: false,
       requireFullscreen: exam.cbtRules?.requireFullscreen ?? true,
       tabSwitchThreshold: exam.cbtRules?.tabSwitchThreshold ?? 3,
       fullscreenExitThreshold: exam.cbtRules?.fullscreenExitThreshold ?? 3,

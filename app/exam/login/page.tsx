@@ -26,8 +26,14 @@ function CandidateLoginForm() {
         body: JSON.stringify({ uid, mobile, examCode }),
       });
       const data = await res.json();
-      if (res.ok && data.success && data.attemptId) {
-        router.push(`/exam/attempt/${data.attemptId}`);
+      if (res.ok && data.success) {
+        if (data.hasSubPapers) {
+          router.push(data.redirectTo || '/exam/papers');
+        } else if (data.attemptId) {
+          router.push(`/exam/attempt/${data.attemptId}`);
+        } else {
+          setError('Unable to locate your examination attempt.');
+        }
       } else {
         setError(data.message || 'Unable to verify candidate credentials.');
       }

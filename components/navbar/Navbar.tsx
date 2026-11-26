@@ -23,10 +23,12 @@ interface NavbarProps {
 }
 
 const MSI_TICKER_ITEMS = [
-  { icon: '⚖️', text: 'PREMIER INSTITUTE FOR PCS-J (PUNJAB & HARYANA JUDICIAL SERVICES)' },
+  { icon: '📝', text: 'REGISTER FOR FREE MOCK TEST 2027 — CLICK TO APPLY', isMockCta: true },
+  { icon: '⚖️', text: 'PREMIER INSTITUTE FOR PCS-J (JUDICIAL SERVICES)' },
+  { icon: '🎯', text: 'REGISTER FOR FREE MOCK TEST — CLAT UG / PG, AILET & UGC NET LAW', isMockCta: true },
   { icon: '🚀', text: 'ADMISSIONS OPEN 2026–2027: JUDICIAL FOUNDATION & CLAT BATCHES' },
   { icon: '🏆', text: '500+ JUDICIAL OFFICERS, ADVOCATES & TOP NLU SELECTIONS' },
-  { icon: '🏛️', text: 'STUDY SANCTUMS, LAW ARCHIVES & COMPREHENSIVE BARE ACTS' },
+  { icon: '📝', text: 'REGISTER FOR FREE MOCK TEST — ONLINE CBT & INSTANT SCORECARD', isMockCta: true },
   { icon: '📍', text: 'CAMPUS: MONGA CITY CENTRE, KHARAR (CHANDIGARH TRICITY)' },
   { icon: '⭐', text: '1-ON-1 JUDICIAL MENTORSHIP & SPEED OMR SIMULATIONS' },
   { icon: '📞', text: 'ADMISSIONS HELPLINE: +91 79863 13013 / +91 96342 99858' },
@@ -40,6 +42,21 @@ export default function Navbar({ onOpenEnquiry }: NavbarProps) {
   const [mobileLoginOpen, setMobileLoginOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileLoginRef = useRef<HTMLDivElement>(null);
+  const [liveTicker, setLiveTicker] = useState<{
+    isLive: boolean;
+    liveText: string;
+    liveBadge: string;
+    liveLink: string;
+  } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/live-ticker')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.success && d.config) setLiveTicker(d.config);
+      })
+      .catch(() => {});
+  }, []);
 
   // Logged in user detection
   const [currentUser, setCurrentUser] = useState<{
@@ -151,17 +168,60 @@ export default function Navbar({ onOpenEnquiry }: NavbarProps) {
     return false;
   };
 
+  const activeTickerItems = React.useMemo(() => {
+    if (liveTicker?.isLive && liveTicker.liveText) {
+      const liveEntry = {
+        icon: '🔴',
+        text: `${liveTicker.liveBadge || 'LIVE'}: ${liveTicker.liveText}`,
+        isLiveBroadcast: true,
+        href: liveTicker.liveLink || '/exam',
+      };
+      // Alternate Super Admin Live broadcast with Free Mock Test & MSI items continuously
+      return [
+        liveEntry,
+        MSI_TICKER_ITEMS[0],
+        liveEntry,
+        MSI_TICKER_ITEMS[1],
+        liveEntry,
+        MSI_TICKER_ITEMS[2],
+        MSI_TICKER_ITEMS[3],
+        liveEntry,
+        MSI_TICKER_ITEMS[6],
+        MSI_TICKER_ITEMS[8],
+      ];
+    }
+    return MSI_TICKER_ITEMS;
+  }, [liveTicker]);
+
+  const handleTickerClick = (item: any) => {
+    if (item.isLiveBroadcast && item.href) {
+      window.location.href = item.href;
+      return;
+    }
+    if (item.isMockCta && typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('msi_open_free_mock_modal'));
+      return;
+    }
+    onOpenEnquiry?.();
+  };
+
   return (
     <>
       {/* ── TOP ANNOUNCEMENT TICKER (Continuous Infinite Loop for MSI) ─────── */}
       <div className="fixed top-0 left-0 right-0 z-50 h-7 sm:h-8 bg-[#091524] text-white flex items-center overflow-hidden border-b border-[#EFC988]/25 shadow-xs select-none">
         <div className="marquee-container w-full">
           <div className="marquee-track flex items-center whitespace-nowrap space-x-8 py-1">
-            {MSI_TICKER_ITEMS.map((item, idx) => (
+            {activeTickerItems.map((item: any, idx: number) => (
               <div
                 key={`t1-${idx}`}
-                onClick={onOpenEnquiry}
-                className="inline-flex items-center space-x-2 text-[10px] sm:text-[11px] uppercase tracking-wider text-gray-200 font-semibold cursor-pointer hover:text-white transition-colors"
+                onClick={() => handleTickerClick(item)}
+                className={`inline-flex items-center space-x-2 text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold cursor-pointer hover:text-white transition-colors ${
+                  item.isLiveBroadcast
+                    ? 'text-amber-300 font-extrabold'
+                    : item.isMockCta
+                    ? 'text-[#EFC988]'
+                    : 'text-gray-200'
+                }`}
               >
                 <span>{item.icon}</span>
                 <span>{item.text}</span>
@@ -169,11 +229,17 @@ export default function Navbar({ onOpenEnquiry }: NavbarProps) {
               </div>
             ))}
             {/* Seamless duplicate track for infinite scrolling */}
-            {MSI_TICKER_ITEMS.map((item, idx) => (
+            {activeTickerItems.map((item: any, idx: number) => (
               <div
                 key={`t2-${idx}`}
-                onClick={onOpenEnquiry}
-                className="inline-flex items-center space-x-2 text-[10px] sm:text-[11px] uppercase tracking-wider text-gray-200 font-semibold cursor-pointer hover:text-white transition-colors"
+                onClick={() => handleTickerClick(item)}
+                className={`inline-flex items-center space-x-2 text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold cursor-pointer hover:text-white transition-colors ${
+                  item.isLiveBroadcast
+                    ? 'text-amber-300 font-extrabold'
+                    : item.isMockCta
+                    ? 'text-[#EFC988]'
+                    : 'text-gray-200'
+                }`}
               >
                 <span>{item.icon}</span>
                 <span>{item.text}</span>

@@ -76,13 +76,19 @@ export async function POST(
       examId: exam.id,
       questionId: currentSeq.questionId,
       selectedOptionId,
-      locked: exam.cbtRules?.disablePreviousNav ?? true,
+      locked: false,
       savedAt: new Date().toISOString(),
     });
   }
 
-  const nextIndex = attempt.currentIndex + 1;
-  if (nextIndex >= attempt.questionSequence.length) {
+  const direction = String(body.direction || 'next').toLowerCase();
+  let nextIndex = attempt.currentIndex + 1;
+
+  if (direction === 'prev') {
+    nextIndex = Math.max(0, attempt.currentIndex - 1);
+  } else if (direction === 'jump' && typeof body.targetIndex === 'number') {
+    nextIndex = Math.max(0, Math.min(attempt.questionSequence.length - 1, Math.floor(body.targetIndex)));
+  } else if (nextIndex >= attempt.questionSequence.length) {
     return NextResponse.json({
       success: true,
       reachedEnd: true,

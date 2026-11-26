@@ -1202,3 +1202,33 @@ img, video {
 .blog-html-content tr:nth-child(even) {
   background-color: rgba(232, 220, 203, 0.2);
 }
+
+
+/* -------------------------------------------------------------------------- */
+/* Clean A4 Print Rules for Exam Confirmation Slip                            */
+/* -------------------------------------------------------------------------- */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 16mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide floating dock, custom cursor, and non-slip UI elements when printing confirmation */
+  body:has(#exam-confirmation-slip) > *:not(:has(#exam-confirmation-slip)) {
+    display: none !important;
+  }
+
+  #exam-confirmation-slip {
+    box-shadow: none !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 560px !important;
+    page-break-inside: avoid;
+  }
+}

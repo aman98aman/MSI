@@ -74,6 +74,7 @@ export async function POST(
     const fullName = String(body.fullName || '').trim();
     const mobile = sanitizeIndianPhone(String(body.mobile || ''));
     const email = String(body.email || '').trim().toLowerCase();
+    const photoUrl = String(body.photoUrl || '').trim();
     const batchId = body.batchId ? String(body.batchId).trim() : undefined;
     const participationMode: 'online' | 'offline' =
       exam.participationMode === 'both'
@@ -96,22 +97,52 @@ export async function POST(
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ success: false, message: 'Please enter a valid email address.' }, { status: 400 });
     }
+    if (!photoUrl) {
+      return NextResponse.json(
+        { success: false, message: 'Please upload your profile photograph (JPG, JPEG, or PNG).' },
+        { status: 400 }
+      );
+    }
 
-    // Validate batch if provided
-    if (batchId) {
+    // Validate batch — mandatory if exam has active batches configured
+    const activeBatches = await listExamCollection<ExamBatch>('exam_batches', {
+      examId: exam.id,
+      status: 'active',
+    });
+    let selectedBatch: ExamBatch | undefined;
+    if (activeBatches.length > 0) {
+      if (!batchId) {
+        return NextResponse.json(
+          { success: false, message: 'Please select a mock test batch / course before registering.' },
+          { status: 400 }
+        );
+      }
+      selectedBatch = activeBatches.find((b) => b.id === batchId);
+      if (!selectedBatch) {
+        return NextResponse.json({ success: false, message: 'Selected batch is unavailable.' }, { status: 400 });
+      }
+      if (selectedBatch.capacity && selectedBatch.capacity > 0) {
+        const batchCount = existingRegs.filter(
+          (r) => r.batchId === batchId && r.registrationStatus === 'confirmed'
+        ).length;
+        if (batchCount >= selectedBatch.capacity) {
+          return NextResponse.json({ success: false, message: 'Selected batch is full.' }, { status: 409 });
+        }
+      }
+    } else if (batchId) {
       const batch = await findOneExamDoc<ExamBatch>('exam_batches', { id: batchId, examId: exam.id });
       if (!batch || batch.status !== 'active') {
         return NextResponse.json({ success: false, message: 'Selected batch is unavailable.' }, { status: 400 });
       }
-      if (batch.capacity && batch.capacity > 0) {
-        const batchCount = existingRegs.filter(
-          (r) => r.batchId === batchId && r.registrationStatus === 'confirmed'
-        ).length;
-        if (batchCount >= batch.capacity) {
-          return NextResponse.json({ success: false, message: 'Selected batch is full.' }, { status: 409 });
-        }
-      }
+      selectedBatch = batch;
     }
+
+    const resolvedCustomFields = {
+      ...(body.customFieldValues || {}),
+      ...(selectedBatch && !(body.customFieldValues && body.customFieldValues.stream)
+        ? { stream: `${selectedBatch.batchCode} (${selectedBatch.batchName})` }
+        : {}),
+    };
 
     // Check duplicate confirmed registration for the SAME exam
     const duplicateConfirmed = existingRegs.find(
@@ -138,12 +169,16 @@ export async function POST(
         fullName,
         mobile,
         email,
+        photoUrl,
         institution: body.institution ? String(body.institution).trim() : undefined,
         classOrCourse: body.classOrCourse ? String(body.classOrCourse).trim() : undefined,
         city: body.city ? String(body.city).trim() : undefined,
         createdAt: nowIso,
         updatedAt: nowIso,
       };
+      await upsertExamDoc('exam_candidates', candidate);
+    } else if (photoUrl && candidate.photoUrl !== photoUrl) {
+      candidate = { ...candidate, photoUrl, updatedAt: nowIso };
       await upsertExamDoc('exam_candidates', candidate);
     }
 
@@ -171,12 +206,13 @@ export async function POST(
         fullName,
         mobile,
         email,
+        photoUrl,
         participationMode,
         source: 'website',
         registrationStatus: 'confirmed',
         paymentStatus: 'free',
         feeAmount: 0,
-        customFieldValues: body.customFieldValues || undefined,
+        customFieldValues: Object.keys(resolvedCustomFields).length > 0 ? resolvedCustomFields : undefined,
         teamName: body.teamName ? String(body.teamName).trim() : undefined,
         teamMembers: Array.isArray(body.teamMembers) ? body.teamMembers : undefined,
         registeredAt: registration?.registeredAt || nowIso,
@@ -213,12 +249,13 @@ export async function POST(
         fullName,
         mobile,
         email,
+        photoUrl,
         participationMode,
         source: 'website',
         registrationStatus: 'pending_payment',
         paymentStatus: 'pending',
         feeAmount,
-        customFieldValues: body.customFieldValues || undefined,
+        customFieldValues: Object.keys(resolvedCustomFields).length > 0 ? resolvedCustomFields : undefined,
         teamName: body.teamName ? String(body.teamName).trim() : undefined,
         teamMembers: Array.isArray(body.teamMembers) ? body.teamMembers : undefined,
         registeredAt: nowIso,

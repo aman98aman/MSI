@@ -121,17 +121,33 @@ export default function FreeMockRegisterModal({
 
           {/* Modal Header */}
           <div className="p-5 sm:p-6 pb-2">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-              </span>
-              <span className="text-[10px] font-extrabold tracking-widest uppercase text-emerald-400 bg-emerald-950/70 border border-emerald-500/40 px-2.5 py-0.5 rounded-full">
-                100% FREE ADMISSION MOCK
-              </span>
-              <span className="text-[10px] font-bold text-amber-300 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded-full">
-                BATCH 2027
-              </span>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-white/15 border border-[#EFC988]/50 p-1 flex items-center justify-center shrink-0">
+                <Image
+                  src="/images/msi-crest.png"
+                  alt="MSI Group of Institutes"
+                  width={34}
+                  height={34}
+                  className="object-contain"
+                />
+              </div>
+              <div>
+                <div className="text-[11px] font-serif font-bold tracking-wider uppercase text-[#EFC988]">
+                  MSI Group of Institutes
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <span className="text-[9px] font-extrabold tracking-widest uppercase text-emerald-400 bg-emerald-950/70 border border-emerald-500/40 px-2 py-0.5 rounded-full">
+                    100% FREE ADMISSION MOCK
+                  </span>
+                  <span className="text-[9px] font-bold text-amber-300 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded-full">
+                    BATCH 2027
+                  </span>
+                </div>
+              </div>
             </div>
 
             <h3 className="font-serif text-xl sm:text-2xl font-bold text-white tracking-tight">
@@ -271,8 +287,8 @@ export default function FreeMockRegisterModal({
                     <option value="CLAT PG — LL.M. Entrance 2027">
                       CLAT PG — LL.M. Entrance 2027
                     </option>
-                    <option value="PCS J — Punjab & Haryana Judiciary">
-                      PCS J — Punjab & Haryana Judiciary (Civil Judge)
+                    <option value="PCS J — Judiciary (Civil Judge)">
+                      PCS J — Judiciary (Civil Judge)
                     </option>
                     <option value="AILET — NLU Delhi Specialized">
                       AILET — National Law University Delhi

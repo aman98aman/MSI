@@ -128,6 +128,7 @@ export interface ExamBatch {
   examId: string;
   batchCode: string;
   batchName: string;
+  hasSubPapers?: boolean;
   scheduleOverride?: Partial<ExamScheduleConfig>;
   venueOverride?: Partial<OfflineVenueConfig>;
   capacity?: number;
@@ -141,6 +142,7 @@ export interface ExamCandidate {
   fullName: string;
   mobile: string; // sanitized 10-digit
   email: string;
+  photoUrl?: string;
   institution?: string;
   classOrCourse?: string;
   city?: string;
@@ -157,6 +159,7 @@ export interface ExamRegistration {
   fullName: string;
   mobile: string;
   email: string;
+  photoUrl?: string;
   participationMode: 'online' | 'offline';
   source: 'website' | 'offline_admin';
   registrationStatus: 'pending_payment' | 'confirmed' | 'cancelled';
@@ -198,6 +201,8 @@ export interface ExamQuestionOption {
 export interface ExamQuestion {
   id: string;
   examId: string;
+  batchId?: string;
+  subPaper?: string; // e.g. 'PAPER_1' | 'PAPER_2'
   paperVersion: number;
   orderIndex: number;
   section: string;
@@ -215,6 +220,8 @@ export interface ExamQuestion {
 export interface ExamPaperVersion {
   id: string;
   examId: string;
+  batchId?: string;
+  subPaper?: string;
   version: number;
   questionIds: string[];
   totalQuestions: number;
@@ -234,6 +241,8 @@ export interface ExamAttempt {
   id: string;
   examId: string;
   batchId?: string;
+  subPaper?: string; // e.g. 'PAPER_1' | 'PAPER_2'
+  subPaperLabel?: string; // e.g. 'Paper 1' | 'Paper 2'
   registrationId: string;
   candidateId: string;
   uid: string;
@@ -303,6 +312,26 @@ export interface ExamAttendance {
   checkedInAt?: string;
   operatorId: string;
   notes?: string;
+}
+
+export interface ExamConsentRecord {
+  id: string;
+  registrationId: string;
+  candidateId: string;
+  uid: string;
+  fullName: string;
+  email: string;
+  mobile: string;
+  examId: string;
+  examTitle: string;
+  batchId?: string;
+  batchName?: string;
+  consentVersion: string;
+  consentStatement: string;
+  accepted: boolean;
+  acceptedAt: string;
+  ipAddress?: string;
+  userAgent?: string;
 }
 
 export interface ExamAuditLog {

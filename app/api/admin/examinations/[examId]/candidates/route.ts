@@ -92,9 +92,13 @@ export async function GET(
     const attendance = attendances.find((at) => at.registrationId === reg.id);
     const consent = consents.find((c) => c.registrationId === reg.id);
     const candidateProfile = candidates.find((c) => c.id === reg.candidateId);
+    const rawPhoto = reg.photoUrl || candidateProfile?.photoUrl || '';
+    // Prevent oversized base64 data URLs from blowing past Vercel's 4.5MB serverless payload limit
+    const safePhotoUrl =
+      rawPhoto.startsWith('data:') && rawPhoto.length > 50_000 ? '' : rawPhoto;
     return {
       ...reg,
-      photoUrl: reg.photoUrl || candidateProfile?.photoUrl || '',
+      photoUrl: safePhotoUrl,
       consentStatus: consent?.accepted ? 'accepted' : 'pending',
       consentAcceptedAt: consent?.acceptedAt || null,
       consentVersion: consent?.consentVersion || null,

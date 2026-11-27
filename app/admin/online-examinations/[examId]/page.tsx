@@ -135,11 +135,19 @@ function ExamDetailContent() {
   }, [examId]);
 
   const loadCandidates = useCallback(async () => {
-    const res = await fetch(
-      `/api/admin/examinations/${examId}/candidates?search=${encodeURIComponent(candSearch)}`
-    );
-    const data = await res.json();
-    if (data.success) setCandidates(data.candidates || []);
+    try {
+      const res = await fetch(
+        `/api/admin/examinations/${examId}/candidates?search=${encodeURIComponent(candSearch)}`
+      );
+      if (!res.ok) {
+        console.error('[loadCandidates] HTTP error:', res.status);
+        return;
+      }
+      const data = await res.json();
+      if (data.success) setCandidates(data.candidates || []);
+    } catch (err) {
+      console.error('[loadCandidates] Fetch failed:', err);
+    }
   }, [examId, candSearch]);
 
   const selectedBatchObj = batches.find((b) => b.id === selectedBatchId);

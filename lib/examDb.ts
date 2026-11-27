@@ -179,13 +179,16 @@ export async function listExamCollection<T extends { id: string }>(
   filter: Record<string, any> = {},
   sort: Record<string, 1 | -1> = { createdAt: -1 }
 ): Promise<T[]> {
+  // When MongoDB is configured, always use it — never fall back to stale disk files
+  const mongoConfigured = isMongoConfigured();
+
   for (let attempt = 0; attempt < 2; attempt++) {
     const db = await getExamDb();
     if (db) {
       try {
         const docs = await Promise.race([
           db.collection(collectionName).find(filter).sort(sort).toArray(),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
         ]);
         if (docs) {
           return docs.map((d: any) => {
@@ -193,6 +196,7 @@ export async function listExamCollection<T extends { id: string }>(
             return rest as T;
           });
         }
+        // MongoDB timed out — retry once, then give up (no disk fallback when Mongo is configured)
       } catch (err) {
         console.warn(`[ExamDB List Error: ${collectionName}]`, err);
         resetMongoClientCache();
@@ -202,7 +206,12 @@ export async function listExamCollection<T extends { id: string }>(
     break;
   }
 
-  // Disk fallback with basic equality filter
+  // Disk fallback ONLY when MongoDB is not configured at all (pure offline local dev)
+  if (mongoConfigured) {
+    console.warn(`[ExamDB] MongoDB unavailable for ${collectionName} — returning empty (disk fallback disabled when MONGODB_URI is set)`);
+    return [];
+  }
+
   const disk = readExamCollectionFromDisk<T>(collectionName);
   return disk.filter((item: any) =>
     Object.entries(filter).every(([k, v]) => item[k] === v)
@@ -213,18 +222,22 @@ export async function findOneExamDoc<T extends { id: string }>(
   collectionName: string,
   filter: Record<string, any>
 ): Promise<T | null> {
+  const mongoConfigured = isMongoConfigured();
+
   for (let attempt = 0; attempt < 2; attempt++) {
     const db = await getExamDb();
     if (db) {
       try {
         const doc = await Promise.race([
           db.collection(collectionName).findOne(filter),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
         ]);
         if (doc) {
           const { _id, ...rest } = doc as any;
           return rest as T;
         }
+        // null result = document not found in MongoDB (not a timeout)
+        if (mongoConfigured) return null;
         break;
       } catch (err) {
         console.warn(`[ExamDB FindOne Error: ${collectionName}]`, err);
@@ -233,6 +246,12 @@ export async function findOneExamDoc<T extends { id: string }>(
       }
     }
     break;
+  }
+
+  // Disk fallback ONLY when MongoDB is not configured at all
+  if (mongoConfigured) {
+    console.warn(`[ExamDB] MongoDB unavailable for findOne ${collectionName} — returning null (disk fallback disabled)`);
+    return null;
   }
 
   const disk = readExamCollectionFromDisk<T>(collectionName);
@@ -247,12 +266,18 @@ export async function upsertExamDoc<T extends { id: string }>(
   collectionName: string,
   doc: T
 ): Promise<T> {
-  // Always sync disk for local dev resilience
-  const disk = readExamCollectionFromDisk<T>(collectionName);
-  const idx = disk.findIndex((item) => item.id === doc.id);
-  if (idx >= 0) disk[idx] = doc;
-  else disk.unshift(doc);
-  writeExamCollectionToDisk(collectionName, disk);
+  const mongoConfigured = isMongoConfigured();
+
+  // Write to disk only in pure offline mode (no MONGODB_URI).
+  // When MongoDB is configured, disk writes are skipped to prevent stale local data
+  // diverging from the live Atlas database.
+  if (!mongoConfigured) {
+    const disk = readExamCollectionFromDisk<T>(collectionName);
+    const idx = disk.findIndex((item) => item.id === doc.id);
+    if (idx >= 0) disk[idx] = doc;
+    else disk.unshift(doc);
+    writeExamCollectionToDisk(collectionName, disk);
+  }
 
   for (let attempt = 0; attempt < 2; attempt++) {
     const db = await getExamDb();
@@ -279,11 +304,14 @@ export async function deleteExamDoc(
   collectionName: string,
   filter: Record<string, any>
 ): Promise<void> {
-  const disk = readExamCollectionFromDisk<any>(collectionName);
-  const remaining = disk.filter(
-    (item) => !Object.entries(filter).every(([k, v]) => item[k] === v)
-  );
-  writeExamCollectionToDisk(collectionName, remaining);
+  // Disk delete only in pure offline mode
+  if (!isMongoConfigured()) {
+    const disk = readExamCollectionFromDisk<any>(collectionName);
+    const remaining = disk.filter(
+      (item) => !Object.entries(filter).every(([k, v]) => item[k] === v)
+    );
+    writeExamCollectionToDisk(collectionName, remaining);
+  }
 
   const db = await getExamDb();
   if (db) {

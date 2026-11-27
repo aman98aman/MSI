@@ -37,26 +37,6 @@ export default function FloatingActionDock() {
         aria-label="Quick Contact & Enquiry"
         className="fixed right-0 top-1/2 -translate-y-1/2 z-40 flex flex-col items-end gap-2.5 sm:gap-3 pointer-events-auto select-none"
       >
-        {/* 0. REGISTER FOR FREE MOCK TEST Floating Favicon / Action Tab */}
-        <button
-          type="button"
-          onClick={() => setIsFreeMockOpen(true)}
-          className="group relative flex items-center justify-center bg-gradient-to-b from-[#10233F] via-[#0E1B2E] to-[#89190E] hover:from-[#162e54] hover:to-[#a11e11] text-[#FFF9EF] px-2 sm:px-2.5 py-3 sm:py-4 rounded-l-xl border-l-2 border-y border-[#D4AF37] shadow-[-4px_4px_18px_rgba(212,175,55,0.4)] transition-all duration-300 hover:pr-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
-          style={{ writingMode: 'vertical-rl' }}
-          aria-label="Register for Free Mock Test"
-          title="Click to Register for Free Mock Test 2027"
-        >
-          <div className="flex items-center gap-1.5 rotate-180 mb-1">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-90"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
-            </span>
-          </div>
-          <span className="font-sans font-black text-[10px] sm:text-[11px] tracking-[0.16em] uppercase whitespace-nowrap text-amber-300 drop-shadow-sm transition-transform duration-200 group-hover:scale-105">
-            FREE MOCK TEST
-          </span>
-        </button>
-
         {/* 1. ENQUIRE NOW Vertical Tab — Matches Navbar Crimson #89190E & Gold #EFC988 */}
         <button
           type="button"

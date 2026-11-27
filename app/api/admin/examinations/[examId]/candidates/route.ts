@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import { getAdminSession, unauthorizedAdminResponse } from '@/lib/examAuth';
 import {
   findOneExamDoc,
+  getExamDb,
   insertAuditLog,
   listExamCollection,
   upsertExamDoc,
@@ -40,14 +41,50 @@ export async function GET(
   const mode = (searchParams.get('mode') || '').trim();
   const exportType = (searchParams.get('export') || '').trim().toLowerCase();
 
-  const [registrations, payments, attempts, attendances, consents, candidates] = await Promise.all([
-    listExamCollection<ExamRegistration>('exam_registrations', { examId }, { registeredAt: -1 }),
-    listExamCollection<ExamPayment>('exam_payments', { examId }),
-    listExamCollection<ExamAttempt>('exam_attempts', { examId }),
-    listExamCollection<ExamAttendance>('exam_attendance', { examId }),
-    listExamCollection<ExamConsentRecord>('exam_consents', { examId }),
-    listExamCollection<ExamCandidate>('exam_candidates', {}),
-  ]);
+  const db = await getExamDb();
+  let registrations: ExamRegistration[] = [];
+  let payments: ExamPayment[] = [];
+  let attempts: ExamAttempt[] = [];
+  let attendances: ExamAttendance[] = [];
+  let consents: ExamConsentRecord[] = [];
+  let candidates: ExamCandidate[] = [];
+
+  if (db) {
+    const cleanDocs = <T>(docs: any[]): T[] =>
+      docs.map(({ _id, ...rest }) => rest as T);
+
+    const [regDocs, payDocs, attDocs, atnDocs, conDocs] = await Promise.all([
+      db.collection('exam_registrations').find({ examId }).sort({ registeredAt: -1 }).toArray(),
+      db.collection('exam_payments').find({ examId }).toArray(),
+      db.collection('exam_attempts').find({ examId }).toArray(),
+      db.collection('exam_attendance').find({ examId }).toArray(),
+      db.collection('exam_consents').find({ examId }).toArray(),
+    ]);
+
+    registrations = cleanDocs<ExamRegistration>(regDocs);
+    payments = cleanDocs<ExamPayment>(payDocs);
+    attempts = cleanDocs<ExamAttempt>(attDocs);
+    attendances = cleanDocs<ExamAttendance>(atnDocs);
+    consents = cleanDocs<ExamConsentRecord>(conDocs);
+
+    const candIds = Array.from(new Set(registrations.map((r) => r.candidateId).filter(Boolean)));
+    if (candIds.length > 0) {
+      const candDocs = await db
+        .collection('exam_candidates')
+        .find({ id: { $in: candIds } })
+        .toArray();
+      candidates = cleanDocs<ExamCandidate>(candDocs);
+    }
+  } else {
+    [registrations, payments, attempts, attendances, consents, candidates] = await Promise.all([
+      listExamCollection<ExamRegistration>('exam_registrations', { examId }, { registeredAt: -1 }),
+      listExamCollection<ExamPayment>('exam_payments', { examId }),
+      listExamCollection<ExamAttempt>('exam_attempts', { examId }),
+      listExamCollection<ExamAttendance>('exam_attendance', { examId }),
+      listExamCollection<ExamConsentRecord>('exam_consents', { examId }),
+      listExamCollection<ExamCandidate>('exam_candidates', {}),
+    ]);
+  }
 
   let rows = registrations.map((reg) => {
     const payment = payments.find((p) => p.registrationId === reg.id);
@@ -55,9 +92,13 @@ export async function GET(
     const attendance = attendances.find((at) => at.registrationId === reg.id);
     const consent = consents.find((c) => c.registrationId === reg.id);
     const candidateProfile = candidates.find((c) => c.id === reg.candidateId);
+    const rawPhoto = reg.photoUrl || candidateProfile?.photoUrl || '';
+    // Prevent oversized base64 data URLs from blowing past Vercel's 4.5MB serverless payload limit
+    const safePhotoUrl =
+      rawPhoto.startsWith('data:') && rawPhoto.length > 50_000 ? '' : rawPhoto;
     return {
       ...reg,
-      photoUrl: reg.photoUrl || candidateProfile?.photoUrl || '',
+      photoUrl: safePhotoUrl,
       consentStatus: consent?.accepted ? 'accepted' : 'pending',
       consentAcceptedAt: consent?.acceptedAt || null,
       consentVersion: consent?.consentVersion || null,

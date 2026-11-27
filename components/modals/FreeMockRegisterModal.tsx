@@ -38,6 +38,7 @@ export default function FreeMockRegisterModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [confirmedUid, setConfirmedUid] = useState<string | null>(null);
+  const [confirmedExamCode, setConfirmedExamCode] = useState<string>('CLAT-2027');
   const [isPdfOpen, setIsPdfOpen] = useState(false);
 
   if (!isOpen) return null;
@@ -54,7 +55,7 @@ export default function FreeMockRegisterModal({
 
     setSubmitting(true);
     try {
-      // 1. Register candidate via official exam register API
+      // 1. Register candidate via official exam register API (never fake a UID on failure)
       const res = await fetch('/api/exams/free-mock-test-2027/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -67,8 +68,16 @@ export default function FreeMockRegisterModal({
         }),
       });
 
-      const data = await res.json();
-      const generatedUid = data?.uid || `MSI-MOCK27-${cleanPhone.slice(-4)}`;
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.success || !data?.uid) {
+        setError(data?.message || 'Unable to complete registration right now. Please try again.');
+        return;
+      }
+
+      const generatedUid = String(data.uid);
+      if (data.examCode) {
+        setConfirmedExamCode(String(data.examCode));
+      }
 
       // Store in browser storage so student is recognized across MSI portal
       if (typeof window !== 'undefined') {
@@ -81,14 +90,7 @@ export default function FreeMockRegisterModal({
 
       setConfirmedUid(generatedUid);
     } catch {
-      const fallbackUid = `MSI-MOCK27-${cleanPhone.slice(-4)}`;
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('msi_student_logged_in', 'true');
-        localStorage.setItem('msi_active_student_phone', cleanPhone);
-        localStorage.setItem('msi_active_student_name', fullName);
-        localStorage.setItem('msi_active_student_uid', fallbackUid);
-      }
-      setConfirmedUid(fallbackUid);
+      setError('Network error while connecting to server. Please check your connection and try again.');
     } finally {
       setSubmitting(false);
     }
@@ -96,7 +98,7 @@ export default function FreeMockRegisterModal({
 
   const handleStartExam = () => {
     onClose();
-    router.push(`/exam/login?examCode=FREE-MOCK-27&uid=${encodeURIComponent(confirmedUid || '')}`);
+    router.push(`/exam/login?examCode=${encodeURIComponent(confirmedExamCode)}&uid=${encodeURIComponent(confirmedUid || '')}`);
   };
 
   return (

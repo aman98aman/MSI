@@ -73,10 +73,14 @@ export function isMongoConfigured(): boolean {
 }
 
 async function connectClient(uri: string): Promise<MongoClient> {
-  const options = {
-    serverSelectionTimeoutMS: 5000,
-    connectTimeoutMS: 7000,
+  const options: Record<string, any> = {
+    serverSelectionTimeoutMS: 7000,
+    connectTimeoutMS: 8000,
   };
+  // Force IPv4 on Node.js (Windows/Vercel) to prevent IPv6 DNS/socket hangs with MongoDB Atlas
+  if (!isCloudflareWorkersRuntime()) {
+    options.family = 4;
+  }
 
   try {
     const c = new MongoClient(uri, options);

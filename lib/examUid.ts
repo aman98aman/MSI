@@ -60,5 +60,18 @@ export async function generateCandidateUid(examCode: string, year?: number): Pro
   }
 
   const padded = String(seq).padStart(4, '0');
-  return `MSI-${cleanCode}-${yy}-${padded}`;
+  const candidateUid = `MSI-${cleanCode}-${yy}-${padded}`;
+
+  // Extra safety: if MongoDB already has this UID (e.g. counter was reset), append a short random suffix
+  if (db) {
+    try {
+      const exists = await db.collection('exam_candidates').findOne({ uid: candidateUid }, { projection: { _id: 1 } });
+      if (exists) {
+        const rand = Math.random().toString(36).slice(2, 5).toUpperCase();
+        return `MSI-${cleanCode}-${yy}-${padded}-${rand}`;
+      }
+    } catch {}
+  }
+
+  return candidateUid;
 }

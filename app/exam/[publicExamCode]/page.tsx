@@ -8,12 +8,15 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Download,
   IndianRupee,
   LogIn,
   MapPin,
   Printer,
+  RefreshCw,
   ShieldAlert,
 } from 'lucide-react';
+import { generateRegistrationConfirmationPdf } from '@/lib/examConfirmationPdf';
 import RazorpayCheckoutModal, {
   RazorpayPaymentSuccessInfo,
 } from '@/components/payments/RazorpayCheckoutModal';
@@ -46,6 +49,13 @@ export default function PublicExamRegistrationPage() {
   const [error, setError] = useState('');
   const [confirmedUid, setConfirmedUid] = useState('');
   const [confirmedReg, setConfirmedReg] = useState<any>(null);
+  const [alreadyRegisteredNotice, setAlreadyRegisteredNotice] = useState(false);
+  const [pdfState, setPdfState] = useState<{
+    generating: boolean;
+    blobUrl: string;
+    fileName: string;
+    error: string;
+  }>({ generating: false, blobUrl: '', fileName: '', error: '' });
   const [checkoutModal, setCheckoutModal] = useState<{
     isOpen: boolean;
     order: any;
@@ -65,8 +75,68 @@ export default function PublicExamRegistrationPage() {
       .finally(() => setLoading(false));
   }, [publicCode]);
 
+  const triggerPdfGeneration = async (regObj: any, uidVal: string, batchLabel?: string) => {
+    if (!data?.exam || !uidVal) return;
+    setPdfState({ generating: true, blobUrl: '', fileName: '', error: '' });
+    try {
+      const ex = data.exam;
+      const resolvedBatch =
+        batchLabel ||
+        regObj?.customFieldValues?.stream ||
+        (batches.find((b: any) => b.id === (regObj?.batchId || batchId))
+          ? `${batches.find((b: any) => b.id === (regObj?.batchId || batchId)).batchCode} — ${batches.find((b: any) => b.id === (regObj?.batchId || batchId)).batchName}`
+          : ex.category);
+
+      const pdf = await generateRegistrationConfirmationPdf({
+        uid: uidVal,
+        fullName: regObj?.fullName || fullName,
+        mobile: regObj?.mobile || mobile,
+        email: regObj?.email || email,
+        examTitle: ex.title,
+        examCode: ex.code,
+        courseOrStream: regObj?.customFieldValues?.stream || resolvedBatch || ex.category,
+        assignedBatch: resolvedBatch,
+        registeredAt: regObj?.confirmedAt || regObj?.registeredAt || new Date().toISOString(),
+        examDate: ex.scheduleConfig?.examDate || '',
+        durationMinutes: ex.scheduleConfig?.durationMinutes,
+        participationMode: regObj?.participationMode || participationMode,
+        venueText: ex.offlineVenue?.venueName
+          ? `${ex.offlineVenue.venueName} ${ex.offlineVenue.fullAddress || ''}`.trim()
+          : undefined,
+        instructions: ex.instructions,
+        contactPhones: ex.contactPhones,
+      });
+
+      setPdfState({ generating: false, blobUrl: pdf.blobUrl, fileName: pdf.fileName, error: '' });
+      try {
+        localStorage.setItem(
+          `msi_exam_reg_${uidVal}`,
+          JSON.stringify({ uid: uidVal, mobile: regObj?.mobile || mobile, savedAt: new Date().toISOString() })
+        );
+      } catch {}
+    } catch {
+      setPdfState({
+        generating: false,
+        blobUrl: '',
+        fileName: '',
+        error: 'Could not generate PDF automatically. Your registration is saved — click Retry PDF Generation.',
+      });
+    }
+  };
+
+  const handleDownloadPdf = () => {
+    if (!pdfState.blobUrl) return;
+    const a = document.createElement('a');
+    a.href = pdfState.blobUrl;
+    a.download = pdfState.fileName || `MSI-Registration-${confirmedUid}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     setError('');
     const hasBatches = (data?.batches?.length || 0) > 0;
     if (hasBatches && !batchId) {
@@ -114,7 +184,9 @@ export default function PublicExamRegistrationPage() {
       if (!regData.requiresPayment) {
         setConfirmedUid(regData.uid);
         setConfirmedReg(regData.registration);
+        setAlreadyRegisteredNotice(Boolean(regData.alreadyRegistered));
         setSubmitting(false);
+        void triggerPdfGeneration(regData.registration, regData.uid, regData.batchName);
         return;
       }
 
@@ -156,11 +228,15 @@ export default function PublicExamRegistrationPage() {
       });
       const verifyData = await verifyRes.json();
       if (verifyRes.ok && verifyData.success) {
-        setConfirmedUid(verifyData.uid || regUid);
-        setConfirmedReg(verifyData.registration || regObject);
+        const finalUid = verifyData.uid || regUid;
+        const finalReg = verifyData.registration || regObject;
+        setConfirmedUid(finalUid);
+        setConfirmedReg(finalReg);
+        void triggerPdfGeneration(finalReg, finalUid);
       } else {
         setConfirmedUid(regUid);
         setConfirmedReg(regObject);
+        void triggerPdfGeneration(regObject, regUid);
       }
     } catch {
       setConfirmedUid(regUid);
@@ -215,10 +291,15 @@ export default function PublicExamRegistrationPage() {
           <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto print:border print:border-emerald-300">
             <CheckCircle2 className="w-9 h-9" />
           </div>
-          <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-700">
-            Registration Confirmed
+          <span className="inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold uppercase tracking-widest">
+            {alreadyRegisteredNotice ? 'Already Registered • Existing Confirmation' : 'SUCCESSFULLY REGISTERED'}
           </span>
           <h1 className="font-serif font-bold text-2xl text-[#071B37]">{exam.title}</h1>
+          {alreadyRegisteredNotice && (
+            <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-2.5">
+              A registration with this mobile/email already exists for this exam. Showing your existing Candidate UID &amp; confirmation.
+            </p>
+          )}
           <div className="p-4 rounded-2xl bg-[#071B37] text-white space-y-1 print:bg-[#071B37] print:text-white">
             <div className="text-[11px] uppercase tracking-wider text-[#EFC988]">Your Unique Candidate UID</div>
             <div className="font-mono font-bold text-2xl tracking-wider">{confirmedUid}</div>
@@ -227,6 +308,7 @@ export default function PublicExamRegistrationPage() {
             <div className="space-y-1.5">
               <div><strong>Candidate Name:</strong> {confirmedReg?.fullName || fullName}</div>
               <div><strong>Mobile:</strong> {confirmedReg?.mobile || mobile}</div>
+              <div><strong>Email:</strong> {confirmedReg?.email || email}</div>
               {(confirmedReg?.customFieldValues?.stream || stream) && (
                 <div><strong>Selected Mock Test / Batch:</strong> {confirmedReg?.customFieldValues?.stream || stream}</div>
               )}
@@ -248,10 +330,32 @@ export default function PublicExamRegistrationPage() {
               </div>
             )}
           </div>
+          {pdfState.error && (
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-2 print:hidden">
+              <p>{pdfState.error}</p>
+              <button
+                type="button"
+                onClick={() => triggerPdfGeneration(confirmedReg, confirmedUid)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#071B37] text-white font-bold cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Retry PDF Generation
+              </button>
+            </div>
+          )}
           <p className="text-[11px] text-gray-500">
-            Save or print your Candidate UID. You will need your UID and registered mobile number to enter the examination.
+            Save or download your Registration Confirmation PDF. You will need your UID and registered mobile number to enter the examination.
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-2 print:hidden">
+            <button
+              type="button"
+              disabled={pdfState.generating || !pdfState.blobUrl}
+              onClick={handleDownloadPdf}
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md cursor-pointer disabled:opacity-50"
+            >
+              <Download className="w-4 h-4" />
+              <span>{pdfState.generating ? 'Generating PDF...' : 'Download Confirmation PDF'}</span>
+            </button>
             <button
               onClick={() => window.print()}
               className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-bold cursor-pointer"

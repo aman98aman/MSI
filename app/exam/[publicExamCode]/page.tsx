@@ -6,7 +6,6 @@ import Script from 'next/script';
 import { useParams } from 'next/navigation';
 import {
   Calendar,
-  Camera,
   CheckCircle2,
   Clock,
   IndianRupee,
@@ -14,7 +13,6 @@ import {
   MapPin,
   Printer,
   ShieldAlert,
-  Upload,
 } from 'lucide-react';
 import RazorpayCheckoutModal, {
   RazorpayPaymentSuccessInfo,
@@ -42,9 +40,6 @@ export default function PublicExamRegistrationPage() {
   const [participationMode, setParticipationMode] = useState<'online' | 'offline'>('online');
   const [institution, setInstitution] = useState('');
   const [city, setCity] = useState('');
-  const [photoUrl, setPhotoUrl] = useState('');
-  const [photoPreview, setPhotoPreview] = useState('');
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [consentAccepted, setConsentAccepted] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
@@ -70,48 +65,6 @@ export default function PublicExamRegistrationPage() {
       .finally(() => setLoading(false));
   }, [publicCode]);
 
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setError('');
-
-    const ext = file.name.split('.').pop()?.toLowerCase() || '';
-    if (!['jpg', 'jpeg', 'png'].includes(ext) && !['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
-      setError('Only JPG, JPEG, and PNG formats are allowed for the profile photograph.');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Profile photograph must be 5MB or smaller.');
-      return;
-    }
-
-    // Immediate local preview
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') setPhotoPreview(reader.result);
-    };
-    reader.readAsDataURL(file);
-
-    setUploadingPhoto(true);
-    try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/exams/upload-photo', { method: 'POST', body: fd });
-      const d = await res.json();
-      if (res.ok && d.success && d.url) {
-        setPhotoUrl(d.url);
-      } else {
-        setError(d.message || 'Failed to upload profile photograph.');
-        setPhotoUrl('');
-      }
-    } catch {
-      setError('Network error while uploading photograph.');
-      setPhotoUrl('');
-    } finally {
-      setUploadingPhoto(false);
-    }
-  };
-
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -122,10 +75,6 @@ export default function PublicExamRegistrationPage() {
     }
     if (!hasBatches && !stream) {
       setError('Please select your target exam / stream.');
-      return;
-    }
-    if (!photoUrl) {
-      setError('Please upload your profile photograph (JPG, JPEG, or PNG) before submitting.');
       return;
     }
     if (!consentAccepted) {
@@ -147,7 +96,6 @@ export default function PublicExamRegistrationPage() {
           fullName,
           mobile,
           email,
-          photoUrl,
           batchId: batchId || undefined,
           participationMode,
           institution,
@@ -289,11 +237,11 @@ export default function PublicExamRegistrationPage() {
                 <div><strong>Venue:</strong> {exam.offlineVenue.venueName} {exam.offlineVenue.fullAddress}</div>
               )}
             </div>
-            {(confirmedReg?.photoUrl || photoPreview || photoUrl) && (
+            {confirmedReg?.photoUrl && (
               <div className="w-20 h-24 rounded-xl overflow-hidden border-2 border-[#071B37]/20 shrink-0 bg-white">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={confirmedReg?.photoUrl || photoPreview || photoUrl}
+                  src={confirmedReg.photoUrl}
                   alt="Candidate Photograph"
                   className="w-full h-full object-cover"
                 />
@@ -516,50 +464,6 @@ export default function PublicExamRegistrationPage() {
                     placeholder="Optional"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm"
                   />
-                </div>
-              </div>
-
-              {/* Mandatory Profile Photograph Upload */}
-              <div>
-                <label className="block text-xs font-bold mb-1.5">
-                  Profile Photograph * <span className="text-gray-500 font-normal">(JPG, JPEG, PNG • Max 5MB)</span>
-                </label>
-                <div className="flex items-center gap-4 p-3.5 rounded-2xl border border-dashed border-gray-300 bg-slate-50/70">
-                  <div className="w-16 h-20 rounded-xl overflow-hidden border border-gray-200 bg-white flex items-center justify-center shrink-0">
-                    {photoPreview || photoUrl ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={photoPreview || photoUrl}
-                        alt="Profile Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Camera className="w-6 h-6 text-gray-300" />
-                    )}
-                  </div>
-                  <div className="flex-1 space-y-1.5">
-                    <label className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#071B37] hover:bg-[#0e2d57] text-white text-xs font-bold cursor-pointer">
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>
-                        {uploadingPhoto
-                          ? 'Uploading...'
-                          : photoUrl
-                          ? 'Change / Re-upload Photo'
-                          : 'Upload Profile Photo'}
-                      </span>
-                      <input
-                        type="file"
-                        accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                        onChange={handlePhotoChange}
-                        className="hidden"
-                      />
-                    </label>
-                    <div className="text-[11px] text-gray-500">
-                      {photoUrl
-                        ? '✓ Photograph uploaded and ready for submission.'
-                        : 'Clear passport-size photograph is mandatory for admit slip & records.'}
-                    </div>
-                  </div>
                 </div>
               </div>
 

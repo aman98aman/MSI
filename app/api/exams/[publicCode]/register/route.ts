@@ -97,12 +97,6 @@ export async function POST(
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ success: false, message: 'Please enter a valid email address.' }, { status: 400 });
     }
-    if (!photoUrl) {
-      return NextResponse.json(
-        { success: false, message: 'Please upload your profile photograph (JPG, JPEG, or PNG).' },
-        { status: 400 }
-      );
-    }
 
     // Validate batch — mandatory if exam has active batches configured
     const activeBatches = await listExamCollection<ExamBatch>('exam_batches', {

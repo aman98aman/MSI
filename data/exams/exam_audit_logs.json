@@ -1,5 +1,54 @@
 [
   {
+    "id": "AUD-1795715195166-zb9w7",
+    "entityType": "paper",
+    "entityId": "PV-EXM-1795686456008-VEV1-BAT-1795689692311-BI6A-DEFAULT-V1",
+    "examId": "EXM-1795686456008-VEV1",
+    "actorId": "super-admin-01",
+    "actorName": "MSI Administrator",
+    "action": "VERIFY_AND_PUBLISH_PAPER",
+    "summary": "Verified & published Paper v1 (Batch: BAT-1795689692311-BI6A) (1 questions, 1 marks)",
+    "createdAt": "2026-11-26T17:46:35.166Z"
+  },
+  {
+    "id": "AUD-1795715190853-crpe9",
+    "entityType": "paper",
+    "entityId": "Q-1795715190668-2VWR",
+    "examId": "EXM-1795686456008-VEV1",
+    "actorId": "super-admin-01",
+    "actorName": "MSI Administrator",
+    "action": "SAVE_QUESTION",
+    "summary": "Saved question #1 in Paper v1",
+    "createdAt": "2026-11-26T17:46:30.853Z"
+  },
+  {
+    "id": "AUD-1795714884238-l2tj5",
+    "entityType": "registration",
+    "entityId": "REG-1795714884169-2TDH",
+    "examId": "EXM-1795686456008-VEV1",
+    "actorId": "CND-1795714883994-A8QK",
+    "actorName": "harshit",
+    "action": "FREE_REGISTRATION_CONFIRMED",
+    "summary": "Free registration confirmed for harshit (MSI-CLATUG20-26-0001)",
+    "createdAt": "2026-11-26T17:41:24.238Z"
+  },
+  {
+    "id": "AUD-1795713635970-4c20g",
+    "entityType": "exam",
+    "entityId": "EXM-1795713635882-8LDN",
+    "examId": "EXM-1795713635882-8LDN",
+    "actorId": "super-admin-01",
+    "actorName": "MSI Administrator",
+    "action": "CREATE_EXAM",
+    "summary": "Created online_cbt \"test\" (87) as published",
+    "after": {
+      "code": "87",
+      "status": "published",
+      "feeAmount": 0
+    },
+    "createdAt": "2026-11-26T17:20:35.970Z"
+  },
+  {
     "id": "AUD-1795590859136-f0ti6",
     "entityType": "paper",
     "entityId": "EXM-1795590575968-D1L6",

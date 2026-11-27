@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit, getClientIp } from '@/lib/examAuth';
-import { findOneExamDoc, insertAuditLog, listExamCollection, upsertExamDoc } from '@/lib/examDb';
+import { findOneExamDoc, getExamDb, insertAuditLog, listExamCollection, repairEmptyCandidateUids, upsertExamDoc } from '@/lib/examDb';
 import { canAcceptRegistration } from '@/lib/examLifecycle';
 import { generateCandidateUid } from '@/lib/examUid';
 import { getRazorpayClient, getRazorpayCredentials } from '@/lib/razorpay';
@@ -57,9 +57,10 @@ export async function POST(
       );
     }
 
-    const existingRegs = await listExamCollection<ExamRegistration>('exam_registrations', {
-      examId: exam.id,
-    });
+    const [existingRegs, activeBatches] = await Promise.all([
+      listExamCollection<ExamRegistration>('exam_registrations', { examId: exam.id }),
+      listExamCollection<ExamBatch>('exam_batches', { examId: exam.id, status: 'active' }),
+    ]);
     const confirmedCount = existingRegs.filter((r) => r.registrationStatus === 'confirmed').length;
 
     const regCheck = canAcceptRegistration(exam, confirmedCount, new Date());
@@ -99,10 +100,6 @@ export async function POST(
     }
 
     // Validate batch — mandatory if exam has active batches configured
-    const activeBatches = await listExamCollection<ExamBatch>('exam_batches', {
-      examId: exam.id,
-      status: 'active',
-    });
     let selectedBatch: ExamBatch | undefined;
     if (activeBatches.length > 0) {
       if (!batchId) {
@@ -138,41 +135,71 @@ export async function POST(
         : {}),
     };
 
-    // Check duplicate confirmed registration for the SAME exam
+    // Idempotent duplicate check: if already confirmed for this exam (by mobile or email),
+    // return existing registration details & existing UID without creating a duplicate.
     const duplicateConfirmed = existingRegs.find(
-      (r) => r.mobile === mobile && r.registrationStatus === 'confirmed'
+      (r) =>
+        r.registrationStatus === 'confirmed' &&
+        (r.mobile === mobile || r.email.toLowerCase() === email)
     );
     if (duplicateConfirmed) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'This mobile number is already registered and confirmed for this examination.',
-        },
-        { status: 409 }
-      );
+      const existingBatch = duplicateConfirmed.batchId
+        ? activeBatches.find((b) => b.id === duplicateConfirmed.batchId)
+        : selectedBatch;
+      return NextResponse.json({
+        success: true,
+        alreadyRegistered: true,
+        requiresPayment: false,
+        registration: duplicateConfirmed,
+        uid: duplicateConfirmed.uid,
+        batchName: existingBatch ? `${existingBatch.batchCode} — ${existingBatch.batchName}` : undefined,
+        message: 'You are already registered for this examination. Showing your existing registration confirmation.',
+      });
     }
 
     const nowIso = new Date().toISOString();
 
-    // Reuse or create candidate profile
+    // Reuse existing candidate profile (by mobile) or create with a valid, non-empty UID BEFORE saving
     let candidate = await findOneExamDoc<ExamCandidate>('exam_candidates', { mobile });
+    const assignedUid =
+      candidate?.uid && candidate.uid.trim()
+        ? candidate.uid.trim()
+        : await generateCandidateUid(exam.code);
+
     if (!candidate) {
       candidate = {
         id: `CND-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
-        uid: '',
+        uid: assignedUid,
         fullName,
         mobile,
         email,
-        photoUrl,
+        ...(photoUrl ? { photoUrl } : {}),
         institution: body.institution ? String(body.institution).trim() : undefined,
         classOrCourse: body.classOrCourse ? String(body.classOrCourse).trim() : undefined,
         city: body.city ? String(body.city).trim() : undefined,
         createdAt: nowIso,
         updatedAt: nowIso,
       };
-      await upsertExamDoc('exam_candidates', candidate);
-    } else if (photoUrl && candidate.photoUrl !== photoUrl) {
-      candidate = { ...candidate, photoUrl, updatedAt: nowIso };
+      try {
+        await upsertExamDoc('exam_candidates', candidate);
+      } catch (candErr: any) {
+        // If legacy empty uid_1 record existed in MongoDB, repair & retry once automatically
+        if (String(candErr?.message || '').includes('E11000') || candErr?.code === 11000) {
+          const db = await getExamDb();
+          if (db) await repairEmptyCandidateUids(db);
+          candidate.uid = await generateCandidateUid(exam.code);
+          await upsertExamDoc('exam_candidates', candidate);
+        } else {
+          throw candErr;
+        }
+      }
+    } else if (!candidate.uid || !candidate.uid.trim() || (photoUrl && candidate.photoUrl !== photoUrl)) {
+      candidate = {
+        ...candidate,
+        uid: assignedUid,
+        ...(photoUrl ? { photoUrl } : {}),
+        updatedAt: nowIso,
+      };
       await upsertExamDoc('exam_candidates', candidate);
     }
 
@@ -185,11 +212,7 @@ export async function POST(
     );
 
     if (isFree) {
-      const uid = candidate.uid || (await generateCandidateUid(exam.code));
-      if (!candidate.uid) {
-        candidate = { ...candidate, uid, updatedAt: nowIso };
-        await upsertExamDoc('exam_candidates', candidate);
-      }
+      const uid = assignedUid;
 
       const confirmedReg: ExamRegistration = {
         id: registration?.id || `REG-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
@@ -200,7 +223,7 @@ export async function POST(
         fullName,
         mobile,
         email,
-        photoUrl,
+        ...(photoUrl ? { photoUrl } : {}),
         participationMode,
         source: 'website',
         registrationStatus: 'confirmed',
@@ -214,7 +237,8 @@ export async function POST(
       };
 
       await upsertExamDoc('exam_registrations', confirmedReg);
-      await insertAuditLog({
+      // Fire audit log asynchronously so registration response returns in <1s
+      void insertAuditLog({
         entityType: 'registration',
         entityId: confirmedReg.id,
         examId: exam.id,
@@ -222,13 +246,14 @@ export async function POST(
         actorName: fullName,
         action: 'FREE_REGISTRATION_CONFIRMED',
         summary: `Free registration confirmed for ${fullName} (${uid})`,
-      });
+      }).catch(() => {});
 
       return NextResponse.json({
         success: true,
         requiresPayment: false,
         registration: confirmedReg,
         uid,
+        batchName: selectedBatch ? `${selectedBatch.batchCode} — ${selectedBatch.batchName}` : undefined,
       });
     }
 
@@ -239,11 +264,11 @@ export async function POST(
         examId: exam.id,
         batchId,
         candidateId: candidate.id,
-        uid: '',
+        uid: assignedUid,
         fullName,
         mobile,
         email,
-        photoUrl,
+        ...(photoUrl ? { photoUrl } : {}),
         participationMode,
         source: 'website',
         registrationStatus: 'pending_payment',
@@ -317,8 +342,13 @@ export async function POST(
     });
   } catch (err: any) {
     console.error('[POST /api/exams/[publicCode]/register Error]', err);
+    const rawMsg = String(err?.message || '');
+    const friendlyMessage =
+      rawMsg.includes('E11000') || err?.code === 11000
+        ? 'A registration with this mobile number or email already exists. Please use Candidate Login or try again.'
+        : 'Unable to complete registration right now. Please try again.';
     return NextResponse.json(
-      { success: false, message: err?.message || 'Registration failed.' },
+      { success: false, message: friendlyMessage },
       { status: 500 }
     );
   }

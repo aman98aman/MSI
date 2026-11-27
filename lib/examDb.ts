@@ -79,11 +79,44 @@ export async function getExamDb(): Promise<Db | null> {
   }
 }
 
+export async function repairEmptyCandidateUids(db: Db): Promise<void> {
+  try {
+    const brokenCandidates = await db
+      .collection('exam_candidates')
+      .find({ $or: [{ uid: '' }, { uid: null }, { uid: { $exists: false } }] })
+      .toArray();
+
+    for (const cand of brokenCandidates) {
+      let resolvedUid = '';
+      if (cand.id) {
+        const reg = await db.collection('exam_registrations').findOne({
+          candidateId: cand.id,
+          uid: { $type: 'string', $ne: '' },
+        });
+        if (reg?.uid) resolvedUid = String(reg.uid);
+      }
+      if (!resolvedUid) {
+        const suffix = `${Date.now().toString().slice(-4)}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+        resolvedUid = `MSI-CND-${new Date().getFullYear().toString().slice(-2)}-${suffix}`;
+      }
+      await db
+        .collection('exam_candidates')
+        .updateOne({ _id: cand._id }, { $set: { uid: resolvedUid, updatedAt: new Date().toISOString() } });
+    }
+  } catch (err) {
+    console.warn('[ExamDB] repairEmptyCandidateUids warning:', err);
+  }
+}
+
 async function ensureExamIndexes(db: Db): Promise<void> {
+  // Repair any legacy candidate documents that have uid: "" before enforcing unique index
+  await repairEmptyCandidateUids(db);
+
   // Drop legacy single-paper unique indexes that prevent multi-batch papers & multi-paper attempts
   await Promise.allSettled([
     db.collection('exam_paper_versions').dropIndex('examId_1_version_1'),
     db.collection('exam_attempts').dropIndex('registrationId_1'),
+    db.collection('exam_candidates').dropIndex('uid_1'),
   ]);
 
   await Promise.allSettled([
@@ -96,7 +129,10 @@ async function ensureExamIndexes(db: Db): Promise<void> {
     db.collection('exam_batches').createIndex({ examId: 1, batchCode: 1 }, { unique: true }),
 
     db.collection('exam_candidates').createIndex({ id: 1 }, { unique: true }),
-    db.collection('exam_candidates').createIndex({ uid: 1 }, { unique: true }),
+    db.collection('exam_candidates').createIndex(
+      { uid: 1 },
+      { unique: true, partialFilterExpression: { uid: { $type: 'string', $gt: '' } } }
+    ),
     db.collection('exam_candidates').createIndex({ mobile: 1 }),
     db.collection('exam_candidates').createIndex({ email: 1 }),
 

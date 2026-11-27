@@ -1,5 +1,44 @@
 [
   {
+    "id": "REG-1795766664187-5YYI",
+    "examId": "EXM-1795721009222-8E6J",
+    "batchId": "BAT-1795721220186-S841",
+    "candidateId": "CND-1795766664141-SFDO",
+    "uid": "MSI-MSI2027-26-0004",
+    "fullName": "ytrewq",
+    "mobile": "9792383434",
+    "email": "harsh2334@gmail.com",
+    "participationMode": "online",
+    "source": "website",
+    "registrationStatus": "confirmed",
+    "paymentStatus": "free",
+    "feeAmount": 0,
+    "customFieldValues": {
+      "stream": "CLATUG (B1)"
+    },
+    "registeredAt": "2026-11-27T08:04:24.013Z",
+    "confirmedAt": "2026-11-27T08:04:24.013Z"
+  },
+  {
+    "id": "REG-1795766489884-PUZC",
+    "examId": "EXM-1795683629665-UUXX",
+    "candidateId": "CND-1795766489826-ADNU",
+    "uid": "MSI-LAW2027-26-0002",
+    "fullName": "ytre",
+    "mobile": "9876452310",
+    "email": "harsh@gmail.com",
+    "participationMode": "offline",
+    "source": "website",
+    "registrationStatus": "confirmed",
+    "paymentStatus": "free",
+    "feeAmount": 0,
+    "customFieldValues": {
+      "stream": "UGC NET (LAW)"
+    },
+    "registeredAt": "2026-11-27T08:01:29.670Z",
+    "confirmedAt": "2026-11-27T08:01:29.670Z"
+  },
+  {
     "id": "REG-1795714884169-2TDH",
     "examId": "EXM-1795686456008-VEV1",
     "batchId": "BAT-1795689692311-BI6A",

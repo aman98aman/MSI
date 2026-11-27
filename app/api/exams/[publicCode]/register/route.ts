@@ -42,6 +42,13 @@ export async function POST(
     if (!exam) {
       exam = await findOneExamDoc<ExamEvent>('exam_events', { code: cleanSlug });
     }
+    if (!exam && cleanSlug === 'free-mock-test-2027') {
+      const allExams = await listExamCollection<ExamEvent>('exam_events', { status: 'published' }, { createdAt: -1 });
+      exam =
+        allExams.find(
+          (e) => e.registrationConfig?.isFree && e.registrationConfig?.allowWebsiteRegistration
+        ) || null;
+    }
 
     if (!exam || exam.status === 'draft') {
       return NextResponse.json(
@@ -76,7 +83,7 @@ export async function POST(
     const mobile = sanitizeIndianPhone(String(body.mobile || ''));
     const email = String(body.email || '').trim().toLowerCase();
     const photoUrl = String(body.photoUrl || '').trim();
-    const batchId = body.batchId ? String(body.batchId).trim() : undefined;
+    let batchId = body.batchId ? String(body.batchId).trim() : undefined;
     const participationMode: 'online' | 'offline' =
       exam.participationMode === 'both'
         ? body.participationMode === 'offline'
@@ -102,6 +109,16 @@ export async function POST(
     // Validate batch — mandatory if exam has active batches configured
     let selectedBatch: ExamBatch | undefined;
     if (activeBatches.length > 0) {
+      if (!batchId && cleanSlug === 'free-mock-test-2027') {
+        const streamText = String(body.customFieldValues?.stream || '').toLowerCase();
+        selectedBatch =
+          activeBatches.find(
+            (b) =>
+              streamText.includes(b.batchName.toLowerCase()) ||
+              streamText.includes(b.batchCode.toLowerCase())
+          ) || activeBatches[0];
+        batchId = selectedBatch?.id;
+      }
       if (!batchId) {
         return NextResponse.json(
           { success: false, message: 'Please select a mock test batch / course before registering.' },
@@ -152,6 +169,7 @@ export async function POST(
         requiresPayment: false,
         registration: duplicateConfirmed,
         uid: duplicateConfirmed.uid,
+        examCode: exam.code,
         batchName: existingBatch ? `${existingBatch.batchCode} — ${existingBatch.batchName}` : undefined,
         message: 'You are already registered for this examination. Showing your existing registration confirmation.',
       });
@@ -253,6 +271,7 @@ export async function POST(
         requiresPayment: false,
         registration: confirmedReg,
         uid,
+        examCode: exam.code,
         batchName: selectedBatch ? `${selectedBatch.batchCode} — ${selectedBatch.batchName}` : undefined,
       });
     }
